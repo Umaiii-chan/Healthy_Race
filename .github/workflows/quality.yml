@@ -1,0 +1,65 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-validation:
+    name: Repository validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Validate repository
+        shell: bash
+        run: bash .github/scripts/validate-repository.sh
+
+  text-lint:
+    name: Markdown and YAML lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Markdown lint
+        run: npx --yes markdownlint-cli2 "**/*.md" "#Library" "#Temp"
+
+      - name: YAML lint
+        run: |
+          pip install --disable-pip-version-check yamllint
+          yamllint .github
+
+  csharp-format:
+    name: C# format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Check C# formatting
+        shell: bash
+        run: |
+          if find Assets -type f -name '*.cs' -print -quit 2>/dev/null | grep -q .; then
+            dotnet tool install csharpier --tool-path .tools --version 1.*
+            .tools/csharpier check Assets
+          else
+            echo "No C# files yet; formatting check skipped."
+          fi
