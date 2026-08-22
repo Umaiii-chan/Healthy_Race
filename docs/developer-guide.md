@@ -1,33 +1,30 @@
 # Guia de Desenvolvimento e Boas Práticas
 
-Este documento define o fluxo de trabalho recomendado para desenvolvimento,
-versionamento, organização de arquivos, criação de scripts, Pull Requests,
-validações e releases do projeto Healthy Race.
+Este documento define o fluxo recomendado de desenvolvimento, versionamento,
+organização de arquivos, criação de scripts, Pull Requests, CI/CD e releases do
+Healthy Race.
 
-O objetivo é reduzir conflitos, evitar arquivos indevidos no repositório e manter
-um padrão previsível para todos os colaboradores.
+O objetivo é manter o repositório previsível, reduzir conflitos e garantir que
+as mudanças cheguem às branches estáveis apenas após revisão e validação.
 
-## 1. Visão geral do fluxo
+## 1. Branches do projeto
 
-O projeto utiliza as seguintes branches principais:
+O projeto utiliza duas branches permanentes:
 
-- `main`: código estável e versões distribuíveis.
+- `main`: versões estáveis e distribuíveis.
 - `develop`: integração das funcionalidades aprovadas.
 
-Branches temporárias devem nascer da branch apropriada e ser integradas por
-Pull Request.
+Branches temporárias:
 
-Tipos de branch:
-
-- `feature/<nome>`: nova funcionalidade.
-- `fix/<nome>`: correção de bug.
-- `chore/<nome>`: infraestrutura, ferramentas e manutenção.
+- `feature/<nome>`: novas funcionalidades.
+- `fix/<nome>`: correções de bugs.
+- `chore/<nome>`: manutenção, ferramentas e infraestrutura.
 - `docs/<nome>`: documentação.
 - `test/<nome>`: criação ou manutenção de testes.
 - `release/<versao>`: estabilização de uma versão.
 - `hotfix/<nome>`: correção urgente originada de `main`.
 
-Exemplo:
+Fluxo padrão:
 
 ```text
 develop
@@ -36,20 +33,19 @@ develop
               └── develop
 ```
 
-Código não deve ser enviado diretamente para `main` ou `develop` quando a
-proteção de branch estiver ativa.
+Não envie código diretamente para `main` ou `develop`.
 
 ## 2. Ferramentas necessárias
 
-Antes de começar, instale:
+Instale antes de começar:
 
 - Git.
 - Git LFS.
 - Unity na versão definida pelo projeto.
 - Visual Studio, JetBrains Rider ou VS Code com suporte a C#.
-- Opcionalmente, GitHub CLI (`gh`).
+- GitHub CLI (`gh`), opcional, mas recomendado.
 
-Confirme as instalações:
+Validação rápida:
 
 ```bash
 git --version
@@ -57,83 +53,49 @@ git lfs version
 gh --version
 ```
 
-O comando `gh --version` é necessário apenas para quem utilizar GitHub CLI.
-
 ## 3. Configuração inicial do Git
 
-Configure seu nome e e-mail:
+Configure identidade e comportamento básico:
 
 ```bash
 git config --global user.name "Seu Nome"
 git config --global user.email "seu-email@exemplo.com"
-```
-
-Recomenda-se habilitar o uso de `main` como nome padrão para novos
-repositórios:
-
-```bash
 git config --global init.defaultBranch main
-```
-
-No Windows, confirme que o projeto não está alterando automaticamente o padrão
-de fim de linha definido pelo repositório:
-
-```bash
 git config --global core.autocrlf false
 ```
 
-O projeto já utiliza `.gitattributes` com `eol=lf` para normalizar arquivos de
-texto.
+O repositório utiliza `.gitattributes` para normalizar arquivos de texto com
+`LF`.
 
-## 4. Clonando o projeto
-
-Clone o repositório:
+## 4. Clonando o repositório
 
 ```bash
 git clone https://github.com/Umaiii-chan/Healthy_Race.git
 cd Healthy_Race
-```
-
-Inicialize o Git LFS:
-
-```bash
 git lfs install
-```
-
-Baixe os arquivos LFS, se necessário:
-
-```bash
 git lfs pull
-```
-
-Confira o estado do projeto:
-
-```bash
 git status
 ```
 
 ## 5. Atualizando referências remotas
 
-Antes de iniciar qualquer tarefa:
+Antes de iniciar uma tarefa:
 
 ```bash
 git fetch --all --prune
 ```
 
-Esse comando:
+Esse comando busca novas referências e remove referências locais de branches
+remotas que já foram excluídas.
 
-- busca commits e branches remotas;
-- não altera seus arquivos locais;
-- remove referências locais para branches remotas já excluídas.
-
-Para atualizar `develop`:
+Atualizar `develop`:
 
 ```bash
 git switch develop
 git pull --rebase origin develop
 ```
 
-Para atualizar `main`:
+Atualizar `main`:
 
 ```bash
 git switch main
@@ -141,13 +103,11 @@ git pull --rebase origin main
 ```
 
 Prefira `pull --rebase` durante o trabalho diário para evitar merge commits
-acidentais em branches locais.
+acidentais.
 
-## 6. Criando uma branch de trabalho
+## 6. Criando branches de trabalho
 
-Nunca comece uma feature diretamente em `main`.
-
-Para uma feature comum:
+Nova feature:
 
 ```bash
 git switch develop
@@ -155,7 +115,7 @@ git pull --rebase origin develop
 git switch -c feature/player-movement
 ```
 
-Para uma correção:
+Correção:
 
 ```bash
 git switch develop
@@ -163,7 +123,7 @@ git pull --rebase origin develop
 git switch -c fix/fatigue-trigger
 ```
 
-Para documentação:
+Documentação:
 
 ```bash
 git switch develop
@@ -171,7 +131,7 @@ git pull --rebase origin develop
 git switch -c docs/update-developer-guide
 ```
 
-Para hotfix de produção:
+Hotfix:
 
 ```bash
 git switch main
@@ -181,83 +141,75 @@ git switch -c hotfix/critical-save-error
 
 ## 7. Comandos Git usados no dia a dia
 
-### Ver o estado do repositório
+Ver o estado atual:
 
 ```bash
 git status
 ```
 
-Use antes de qualquer commit.
-
-### Ver alterações não commitadas
+Ver alterações ainda não adicionadas ao stage:
 
 ```bash
 git diff
 ```
 
-Para alterações já adicionadas ao stage:
+Ver alterações já adicionadas ao stage:
 
 ```bash
 git diff --staged
 ```
 
-### Adicionar um arquivo ao stage
+Adicionar um arquivo:
 
 ```bash
 git add Assets/_Game/Scripts/Player/PlayerMovement.cs
 ```
 
-Evite usar `git add .` sem antes conferir `git status`.
-
-Quando desejar adicionar todas as alterações intencionalmente:
+Adicionar todas as alterações intencionalmente:
 
 ```bash
 git add -A
 ```
 
-### Remover um arquivo do stage
+Remover um arquivo do stage:
 
 ```bash
 git restore --staged caminho/do/arquivo
 ```
 
-O arquivo continua no disco, apenas deixa de fazer parte do próximo commit.
-
-### Descartar uma alteração local
+Descartar uma alteração local ainda não commitada:
 
 ```bash
 git restore caminho/do/arquivo
 ```
 
-Atenção: esse comando remove alterações ainda não commitadas no arquivo.
-
-### Ver histórico
+Ver histórico:
 
 ```bash
 git log --oneline --graph --decorate --all
 ```
 
-### Criar commit
+Criar commit:
 
 ```bash
 git commit -m "feat: implement player movement"
 ```
 
-### Enviar a branch pela primeira vez
+Enviar uma branch pela primeira vez:
 
 ```bash
 git push -u origin feature/player-movement
 ```
 
-Depois disso, basta:
+Nos próximos pushes:
 
 ```bash
 git push
 ```
 
-## 8. Padrão de commits
+Sempre confira `git status` antes de usar `git add -A`.
 
-O projeto utiliza Conventional Commits.
+## 8. Conventional Commits
 
 Formato:
 
@@ -265,19 +217,19 @@ Formato:
 <tipo>: <descrição curta>
 ```
 
-Tipos mais usados:
+Tipos adotados:
 
 - `feat`: nova funcionalidade.
 - `fix`: correção.
-- `refactor`: alteração estrutural sem nova funcionalidade.
+- `refactor`: refatoração sem alteração de comportamento esperado.
 - `test`: testes.
 - `docs`: documentação.
-- `chore`: manutenção e ferramentas.
+- `chore`: manutenção.
 - `ci`: CI/CD.
-- `build`: sistema de build ou dependências.
-- `perf`: melhoria de desempenho.
+- `build`: build ou dependências.
+- `perf`: desempenho.
 
-Exemplos:
+Exemplos válidos:
 
 ```text
 feat: implement wellbeing system
@@ -288,7 +240,7 @@ ci: add Unity test workflow
 chore: configure git lfs
 ```
 
-Evite mensagens como:
+Evite mensagens vagas como:
 
 ```text
 fix
@@ -299,46 +251,40 @@ changes
 update
 ```
 
-Um commit deve representar uma alteração lógica e compreensível.
+## 9. Mantendo a branch atualizada
 
-## 9. Atualizando sua branch com `develop`
-
-Antes de abrir um Pull Request, atualize sua branch:
+Antes de abrir um Pull Request para `develop`:
 
 ```bash
 git fetch origin
 git rebase origin/develop
 ```
 
-Se houver conflitos, o Git indicará os arquivos afetados.
-
-Após resolver cada conflito:
+Se houver conflitos, resolva os arquivos e execute:
 
 ```bash
 git add caminho/do/arquivo
 git rebase --continue
 ```
 
-Para cancelar o rebase:
+Cancelar o rebase:
 
 ```bash
 git rebase --abort
 ```
 
-Se sua branch já havia sido enviada ao GitHub antes do rebase, será necessário
-atualizar o remoto:
+Se a branch já havia sido enviada antes do rebase:
 
 ```bash
 git push --force-with-lease
 ```
 
-Use `--force-with-lease`, nunca `--force`, em branches pessoais de trabalho.
+Use `--force-with-lease` apenas em branches pessoais de trabalho.
+Nunca faça force push em `main` ou `develop`.
 
-Nunca force push em `main` ou `develop`.
+## 10. Resolução de conflitos
 
-## 10. Resolvendo conflitos
-
-Um conflito normalmente contém marcadores como:
+Marcadores típicos de conflito:
 
 ```text
 <<<<<<< HEAD
@@ -348,27 +294,23 @@ código B
 >>>>>>> outra-branch
 ```
 
-Não faça commit com esses marcadores.
-
-Procedimento recomendado:
+Procedimento:
 
 1. Entenda as duas versões.
-2. Defina qual comportamento deve permanecer.
-3. Remova todos os marcadores.
-4. Abra o projeto e valide o resultado.
-5. Execute os testes.
-6. Adicione o arquivo resolvido ao stage.
+2. Defina o comportamento correto.
+3. Remova os marcadores.
+4. Valide a Scene, Prefab ou script afetado.
+5. Execute os testes relacionados.
+6. Adicione o arquivo corrigido ao stage.
 7. Continue o rebase ou finalize o commit.
 
-O CI possui uma validação específica contra marcadores de conflito.
+O CI bloqueia arquivos que contenham marcadores de conflito.
 
-## 11. Criando Pull Requests
+## 11. Pull Requests
 
 Um Pull Request deve ser pequeno, objetivo e testável.
 
-Pelo site do GitHub, selecione sua branch e crie o PR para `develop`.
-
-Usando GitHub CLI:
+Criar pelo GitHub CLI:
 
 ```bash
 gh pr create \
@@ -383,7 +325,7 @@ Abrir o PR atual no navegador:
 gh pr view --web
 ```
 
-Ver informações do PR:
+Ver informações:
 
 ```bash
 gh pr view
@@ -395,24 +337,24 @@ Ver checks:
 gh pr checks
 ```
 
-Fazer checkout de um PR para revisão:
+Baixar um PR para revisão:
 
 ```bash
 gh pr checkout 123
 ```
 
-O PR deve explicar:
+O PR deve informar:
 
 - problema ou necessidade;
 - solução implementada;
-- como testar;
+- forma de teste;
 - evidências quando aplicável;
 - riscos conhecidos;
-- impacto em outras partes do projeto.
+- impacto em outras áreas.
 
 ## 12. Política de merge
 
-Para features, fixes e documentação, prefira `Squash and merge`.
+Prefira `Squash and merge` para features, fixes, documentação e manutenção.
 
 Exemplo:
 
@@ -420,22 +362,19 @@ Exemplo:
 feature/player-movement
   ├── commit 1
   ├── commit 2
-  ├── commit 3
   └── Squash and merge
         └── feat: implement player movement
 ```
 
-Isso mantém o histórico das branches principais legível.
-
 O merge só deve ocorrer quando:
 
-- os checks obrigatórios estiverem verdes;
+- todos os checks obrigatórios estiverem verdes;
 - o PR possuir as aprovações necessárias;
-- todas as conversas obrigatórias estiverem resolvidas;
+- as conversas obrigatórias estiverem resolvidas;
 - a branch estiver atualizada com a base;
-- não houver arquivos gerados ou credenciais no diff.
+- não houver credenciais ou arquivos gerados no diff.
 
-## 13. Verificando GitHub Actions
+## 13. GitHub Actions
 
 Listar execuções recentes:
 
@@ -443,25 +382,25 @@ Listar execuções recentes:
 gh run list
 ```
 
-Visualizar uma execução:
+Abrir uma execução:
 
 ```bash
 gh run view <run-id>
 ```
 
-Visualizar apenas logs que falharam:
+Ver apenas logs de falha:
 
 ```bash
 gh run view <run-id> --log-failed
 ```
 
-Executar manualmente um workflow que suporte `workflow_dispatch`:
+Executar manualmente o workflow de build:
 
 ```bash
 gh workflow run build.yml
 ```
 
-Acompanhar a execução:
+Acompanhar uma execução:
 
 ```bash
 gh run watch
@@ -471,26 +410,26 @@ gh run watch
 
 Pull Requests para `develop` e `main` passam pelo Quality Gate.
 
-As validações incluem:
+Validações previstas:
 
 - validação estrutural do repositório;
 - Markdown lint;
 - YAML lint;
 - formatação de C#;
-- testes Unity EditMode e PlayMode quando o projeto Unity e a licença do CI
-  estiverem configurados.
+- testes Unity EditMode e PlayMode quando o projeto e a licença estiverem
+  configurados.
 
-Os checks atualmente definidos são:
+Checks atuais:
 
 - `Repository validation`.
 - `Markdown and YAML lint`.
 - `C# format`.
 - `EditMode and PlayMode tests`.
 
-Falha em um check deve ser corrigida na branch do PR. Não se deve desabilitar uma
-regra de CI apenas para conseguir fazer merge sem analisar a causa.
+Não desabilite uma regra do CI apenas para obter um merge. Primeiro identifique
+a causa da falha.
 
-## 15. Validação local do repositório
+## 15. Validação local
 
 O CI executa:
 
@@ -498,22 +437,19 @@ O CI executa:
 bash .github/scripts/validate-repository.sh
 ```
 
-Desenvolvedores em Linux, macOS ou Git Bash podem executar a mesma validação
-antes do push.
-
-Ela verifica principalmente:
+Esse script verifica:
 
 - diretórios gerados pela Unity;
-- marcadores de conflitos Git;
+- marcadores de conflito;
 - possíveis credenciais;
 - arquivos maiores que 50 MB fora do Git LFS.
 
-## 16. Organização das pastas
+Execute essa validação antes de abrir um Pull Request quando estiver em Linux,
+macOS ou Git Bash.
 
-A estrutura de código e conteúdo do jogo deve permanecer dentro de
-`Assets/_Game`.
+## 16. Estrutura de pastas
 
-Estrutura principal:
+Conteúdo próprio do jogo deve permanecer em `Assets/_Game`.
 
 ```text
 Assets/
@@ -554,38 +490,21 @@ Assets/
         └── PlayMode/
 ```
 
-## 17. Onde colocar cada arquivo
+## 17. Onde colocar cada tipo de arquivo
 
-### Scripts de personagem
+Scripts de personagem:
 
 ```text
 Assets/_Game/Scripts/Player/
 ```
 
-Exemplos:
-
-```text
-PlayerController.cs
-PlayerMovement.cs
-PlayerInteraction.cs
-PlayerVisual.cs
-```
-
-### Sistema de Bem-Estar
+Sistema de Bem-Estar:
 
 ```text
 Assets/_Game/Scripts/WellBeing/
 ```
 
-Exemplos:
-
-```text
-PlayerWellBeing.cs
-WellBeingState.cs
-FatigueController.cs
-```
-
-### Coletáveis
+Coletáveis:
 
 ```text
 Assets/_Game/Scripts/Collectibles/
@@ -593,28 +512,28 @@ Assets/_Game/Prefabs/Collectibles/
 Assets/_Game/ScriptableObjects/Food/
 ```
 
-### Obstáculos
+Obstáculos:
 
 ```text
 Assets/_Game/Scripts/Obstacles/
 Assets/_Game/Prefabs/Obstacles/
 ```
 
-### Puzzles
+Puzzles:
 
 ```text
 Assets/_Game/Scripts/Puzzles/
 Assets/_Game/Prefabs/Puzzles/
 ```
 
-### UI
+Interface:
 
 ```text
 Assets/_Game/Scripts/UI/
 Assets/_Game/Art/UI/
 ```
 
-### Áudio
+Áudio:
 
 ```text
 Assets/_Game/Scripts/Audio/
@@ -622,18 +541,16 @@ Assets/_Game/Audio/Music/
 Assets/_Game/Audio/SFX/
 ```
 
-### Testes
+Testes:
 
 ```text
 Assets/_Game/Tests/EditMode/
 Assets/_Game/Tests/PlayMode/
 ```
 
-## 18. Boas práticas para scripts C#
+## 18. Boas práticas para scripts em `C#`
 
-### Um conceito principal por arquivo
-
-Prefira:
+Prefira um conceito principal por arquivo:
 
 ```text
 PlayerMovement.cs
@@ -641,11 +558,9 @@ PlayerWellBeing.cs
 PlayerScore.cs
 ```
 
-Evite um arquivo genérico contendo dezenas de classes sem relação clara.
+O nome do arquivo deve corresponder ao tipo principal.
 
-### Nome do arquivo igual ao tipo principal
-
-Se a classe é:
+Exemplo:
 
 ```csharp
 public class PlayerMovement : MonoBehaviour
@@ -653,15 +568,9 @@ public class PlayerMovement : MonoBehaviour
 }
 ```
 
-O arquivo deve ser:
+O arquivo correspondente deve ser `PlayerMovement.cs`.
 
-```text
-PlayerMovement.cs
-```
-
-### Use namespaces
-
-Exemplo:
+Use namespaces:
 
 ```csharp
 namespace HealthyRace.Player
@@ -686,17 +595,10 @@ HealthyRace.UI
 HealthyRace.Audio
 ```
 
-### Prefira componentes pequenos
+Prefira componentes pequenos e especializados.
 
-Evite criar um `PlayerManager` responsável simultaneamente por:
-
-- movimento;
-- input;
-- Bem-Estar;
-- pontuação;
-- animação;
-- áudio;
-- interação.
+Evite um único `PlayerManager` responsável por movimento, input, Bem-Estar,
+pontuação, animação, áudio e interação.
 
 Prefira composição:
 
@@ -711,34 +613,12 @@ Player
 └── PlayerVisual
 ```
 
-### Evite singletons sem necessidade
+Evite singletons sem necessidade. Um singleton global só deve existir quando
+houver uma justificativa arquitetural clara.
 
-Um singleton global só deve existir quando houver um motivo arquitetural claro.
-Não use singleton como solução padrão para acesso fácil aos objetos.
+## 19. Convenções de nomenclatura em `C#`
 
-### Dados configuráveis devem ficar fora do código quando possível
-
-Valores como:
-
-- pontos de alimentos;
-- modificadores de Bem-Estar;
-- velocidade base;
-- força de pulo;
-- duração de fadiga;
-
-podem ser armazenados em ScriptableObjects quando fizer sentido.
-
-Isso reduz números mágicos e facilita balanceamento.
-
-## 19. Convenções de nomenclatura C#
-
-Classes, métodos públicos, propriedades e enums:
-
-```text
-PascalCase
-```
-
-Exemplos:
+Classes, métodos públicos, propriedades e enums usam `PascalCase`.
 
 ```csharp
 public class PlayerMovement
@@ -746,25 +626,15 @@ public float CurrentSpeed { get; private set; }
 public void ApplyFatigue()
 ```
 
-Variáveis locais e parâmetros:
+Variáveis locais e parâmetros usam `camelCase`.
 
-```text
-camelCase
-```
-
-Campos privados:
-
-```text
-_camelCase
-```
-
-Exemplo:
+Campos privados usam `_camelCase`.
 
 ```csharp
 private float _moveSpeed;
 ```
 
-Booleanos devem expressar uma condição:
+Booleanos devem indicar uma condição:
 
 ```text
 isGrounded
@@ -773,30 +643,19 @@ canMove
 hasFinished
 ```
 
-Evite nomes como:
+Evite nomes genéricos como `flag`, `value`, `data2`, `temp1` ou `thing`.
 
-```text
-flag
-value
-data2
-temp1
-thing
-```
+## 20. Campos configuráveis no Inspector
 
-## 20. Componentes e Inspector
-
-Quando um campo precisa ser configurado no Inspector, prefira campo privado
-serializado:
+Prefira campos privados serializados:
 
 ```csharp
 [SerializeField] private float _moveSpeed = 5f;
 ```
 
-Evite tornar todos os campos públicos apenas para aparecerem no Inspector.
+Evite tornar todos os campos públicos apenas para exibi-los no Inspector.
 
-Use validações quando uma configuração inválida puder causar erro em runtime.
-
-Exemplo:
+Quando uma referência obrigatória puder causar erro em runtime, valide-a:
 
 ```csharp
 private void Awake()
@@ -808,21 +667,20 @@ private void Awake()
 }
 ```
 
-## 21. Arquivos `.meta` da Unity
+## 21. Arquivos `.meta`
 
 Arquivos `.meta` devem ser versionados.
 
-Eles armazenam GUIDs utilizados pela Unity para relacionar assets, prefabs,
-scripts, materiais e cenas.
+Eles armazenam GUIDs utilizados pela Unity para relacionar scripts, prefabs,
+assets, materiais e cenas.
 
 Nunca adicione `*.meta` ao `.gitignore`.
 
-Ao mover ou renomear assets, prefira fazer a operação dentro do Unity Editor.
-Isso reduz o risco de perder referências.
+Ao mover ou renomear assets, prefira fazer a operação pelo Unity Editor.
 
-## 22. Arquivos que não devem ser commitados
+## 22. Arquivos proibidos no Git
 
-O `.gitignore` do projeto exclui diretórios gerados como:
+Diretórios gerados pela Unity não devem ser commitados:
 
 ```text
 Library/
@@ -836,13 +694,10 @@ MemoryCaptures/
 Recordings/
 ```
 
-Também não devem ser commitados arquivos locais de IDE, artefatos de testes ou
+Também não devem ser versionados arquivos locais de IDE, artefatos de testes ou
 segredos.
 
-Se um arquivo ignorado já estiver sendo rastreado pelo Git, adicionar uma regra
-ao `.gitignore` não é suficiente.
-
-Remova-o apenas do índice:
+Se um arquivo ignorado já estiver sendo rastreado:
 
 ```bash
 git rm -r --cached caminho
@@ -852,10 +707,9 @@ Depois faça commit da remoção.
 
 ## 23. Git LFS
 
-Arquivos binários e assets grandes são rastreados pelo Git LFS conforme
-`.gitattributes`.
+O projeto usa Git LFS para arquivos binários e assets grandes.
 
-Exemplos configurados:
+Extensões configuradas incluem:
 
 ```text
 .psd
@@ -875,27 +729,24 @@ Exemplos configurados:
 .otf
 ```
 
-Ver padrões LFS:
+Ver padrões rastreados:
 
 ```bash
 git lfs track
 ```
 
-Ver arquivos atualmente rastreados:
+Ver arquivos LFS atuais:
 
 ```bash
 git lfs ls-files
 ```
 
-Depois de clonar:
+Após clonar:
 
 ```bash
 git lfs install
 git lfs pull
 ```
-
-Não remova manualmente as regras de LFS sem avaliar o impacto no histórico do
-repositório.
 
 ## 24. Scenes e Prefabs
 
@@ -903,16 +754,14 @@ Evite que várias pessoas editem simultaneamente a mesma Scene grande.
 
 Prefira:
 
-- cenas pequenas;
+- cenas menores;
 - prefabs reutilizáveis;
 - Prefab Variants quando apropriado;
-- composição em vez de concentrar tudo em uma única Scene.
+- composição de objetos;
+- comunicação prévia quando uma Scene crítica estiver em edição.
 
-Antes de editar uma Scene crítica, comunique a equipe quando houver risco de
-conflito.
-
-Arquivos `.unity`, `.prefab`, `.asset`, `.mat`, `.anim` e `.controller` já estão
-marcados para uso de `unityyamlmerge` quando essa ferramenta estiver configurada
+Arquivos `.unity`, `.prefab`, `.asset`, `.mat`, `.anim` e `.controller` estão
+preparados para `unityyamlmerge` quando a ferramenta estiver configurada
 localmente.
 
 ## 25. ScriptableObjects
@@ -931,34 +780,35 @@ FoodData
 └── collectSound
 ```
 
-Isso permite alterar balanceamento sem modificar a lógica do sistema.
+Eles são adequados para balanceamento porque permitem alterar dados sem alterar
+a lógica dos sistemas.
 
-Evite colocar estado mutável específico de uma partida em um asset persistente
-sem uma estratégia explícita para clonagem ou reset.
+Evite armazenar estado mutável específico de uma partida diretamente em um
+asset persistente sem uma estratégia explícita de reset ou clonagem.
 
 ## 26. Testes
 
-Use EditMode para lógica que não depende da execução completa de uma Scene.
+Use EditMode para lógica independente da execução completa de uma Scene.
 
 Exemplos:
 
 - cálculo de pontuação;
-- transições de Bem-Estar;
+- regras de Bem-Estar;
 - regras de fadiga;
 - validação de dados.
 
-Use PlayMode para comportamentos que dependem da execução do jogo.
+Use PlayMode para comportamentos dependentes do jogo em execução.
 
 Exemplos:
 
-- movimento do personagem;
+- movimento;
 - colisões;
-- interação com coletáveis;
+- coleta de itens;
 - ativação de puzzles;
-- fluxo de conclusão da fase.
+- conclusão de fases.
 
-Ao corrigir um bug importante, sempre que possível crie primeiro um teste que
-reproduza o problema.
+Ao corrigir um bug relevante, sempre que possível crie um teste que reproduza o
+problema.
 
 ## 27. Segredos e credenciais
 
@@ -968,11 +818,9 @@ Nunca envie para o Git:
 - tokens;
 - API keys;
 - licenças;
-- credenciais de serviços externos.
+- credenciais externas.
 
-Use GitHub Secrets para CI/CD.
-
-No repositório:
+Configure segredos em:
 
 ```text
 Settings
@@ -988,51 +836,44 @@ UNITY_EMAIL
 UNITY_PASSWORD
 ```
 
-Arquivos `.env` são ignorados pelo Git. Caso seja necessário documentar
-variáveis, use `.env.example` sem valores sensíveis.
+Arquivos `.env` são ignorados. Quando for necessário documentar variáveis, use
+`.env.example` sem valores sensíveis.
 
-## 28. Revertendo erros com segurança
+## 28. Revertendo alterações
 
-### Corrigir o último commit sem alterar seu conteúdo
+Editar o último commit local:
 
 ```bash
 git commit --amend
 ```
 
-Se o commit já foi compartilhado, evite reescrever histórico sem necessidade.
-
-### Reverter um commit compartilhado
+Desfazer de forma segura um commit já compartilhado:
 
 ```bash
 git revert <commit-sha>
 ```
 
-`git revert` cria um novo commit que desfaz o anterior e é normalmente a opção
-mais segura para branches compartilhadas.
-
-### Recuperar alterações guardadas temporariamente
-
-Guardar:
+Guardar alterações temporariamente:
 
 ```bash
 git stash push -m "work in progress"
 ```
 
-Listar:
+Listar stashes:
 
 ```bash
 git stash list
 ```
 
-Aplicar e remover do stash:
+Restaurar o último stash:
 
 ```bash
 git stash pop
 ```
 
-Não use stash como armazenamento permanente de trabalho.
+Não use stash como armazenamento permanente.
 
-## 29. Releases
+## 29. Releases e tags
 
 O projeto utiliza Semantic Versioning.
 
@@ -1045,7 +886,7 @@ v0.2.1
 v1.0.0
 ```
 
-Fluxo recomendado:
+Fluxo:
 
 ```text
 develop
@@ -1055,59 +896,55 @@ develop
         └── tag v0.1.0
 ```
 
-Criar uma tag local:
+Criar tag:
 
 ```bash
 git tag -a v0.1.0 -m "Healthy Race v0.1.0"
 ```
 
-Enviar a tag:
+Enviar tag:
 
 ```bash
 git push origin v0.1.0
 ```
 
-Tags `vX.Y.Z` podem acionar o workflow de build configurado no projeto.
+Tags no formato `vX.Y.Z` podem acionar o workflow de build.
 
 ## 30. Checklist antes do push
 
-Antes de executar `git push`, confirme:
+Antes de `git push`, confirme:
 
 - `git status` contém apenas alterações esperadas;
-- não existem arquivos `Library`, `Temp`, `Build` ou similares;
+- não existem diretórios gerados da Unity;
 - nenhum segredo foi adicionado;
-- código compila;
+- o código compila;
 - testes relacionados passam;
-- novos arquivos possuem nomes e pastas corretos;
+- arquivos estão em pastas corretas;
 - arquivos `.meta` necessários estão presentes;
-- assets grandes estão sob Git LFS;
+- assets grandes usam Git LFS;
 - a branch possui nome adequado;
-- commits possuem mensagens compreensíveis.
+- commits possuem mensagens claras.
 
 ## 31. Checklist antes do Pull Request
-
-Antes de abrir o PR:
 
 1. Execute `git fetch origin`.
 2. Faça `git rebase origin/develop` quando a base for `develop`.
 3. Resolva conflitos.
 4. Rode os testes locais aplicáveis.
 5. Execute a validação do repositório.
-6. Revise `git diff origin/develop...HEAD`.
-7. Faça push da versão final da branch.
+6. Revise o diff completo.
+7. Faça push da branch.
 8. Abra o Pull Request.
-9. Aguarde os checks do CI.
-10. Corrija qualquer falha antes de solicitar merge.
+9. Aguarde o CI.
+10. Corrija todas as falhas antes do merge.
 
-Comando útil para revisar tudo que será enviado:
+Revisar o que será enviado:
 
 ```bash
 git diff origin/develop...HEAD
 ```
 
 ## 32. Fluxo completo de exemplo
-
-Nova funcionalidade de movimento:
 
 ```bash
 git switch develop
@@ -1136,18 +973,18 @@ gh pr create \
 gh pr checks
 ```
 
-Depois da aprovação e dos checks verdes, realize `Squash and merge`.
+Depois da aprovação e dos checks verdes, use `Squash and merge`.
 
-## 33. Princípio geral
+## 33. Princípio de organização
 
 Antes de adicionar uma nova pasta, Manager global, dependência, singleton,
 pipeline ou padrão arquitetural, responda:
 
 1. Qual problema concreto isso resolve?
 2. Já existe uma solução no projeto?
-3. Essa decisão torna o código mais fácil ou mais difícil de testar?
+3. Essa decisão facilita ou dificulta os testes?
 4. Outro desenvolvedor saberá onde encontrar essa implementação?
-5. Essa decisão aumenta acoplamento desnecessariamente?
+5. Essa decisão aumenta o acoplamento sem necessidade?
 
-A estrutura do repositório deve continuar simples, previsível e orientada aos
+A estrutura do repositório deve permanecer simples, previsível e orientada aos
 domínios do gameplay.
