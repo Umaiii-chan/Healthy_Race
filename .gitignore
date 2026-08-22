@@ -1,0 +1,51 @@
+# Unity generated
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Asset Store Tools
+/Assets/AssetStoreTools*
+
+# IDE
+.vs/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Rider
+*.sln.iml
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test/build artifacts
+artifacts/
+coverage/
+TestResults/
+
+# Local tooling
+.tools/
+
+# Secrets
+.env
+.env.*
+!.env.example

@@ -1,0 +1,6 @@
+# Default code owner
+* @Umaiii-chan
+
+# CI/CD and repository governance
+/.github/ @Umaiii-chan
+/docs/ @Umaiii-chan
