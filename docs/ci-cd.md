@@ -4,6 +4,11 @@
 
 Impedir que mudanças quebradas ou não revisadas cheguem às branches estáveis.
 
+O CI usa a versão declarada em `ProjectSettings/ProjectVersion.txt`: **Unity
+6000.3.23f1 (Unity 6.3 LTS)**. Os jobs de Unity continuam condicionais à
+presença da licença; em um clone válido, a detecção do projeto é feita pelo
+mesmo arquivo de versão.
+
 ## Pipeline de Pull Request
 
 Todo PR para `develop` ou `main` executa:

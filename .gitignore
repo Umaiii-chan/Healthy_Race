@@ -15,8 +15,10 @@
 # IDE
 .vs/
 .idea/
+*.vsconfig
 *.csproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user

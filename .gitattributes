@@ -1,13 +1,13 @@
 * text=auto eol=lf
 
 # Unity YAML should be merged using UnityYAMLMerge when configured locally
-*.unity merge=unityyamlmerge eol=lf
-*.prefab merge=unityyamlmerge eol=lf
-*.asset merge=unityyamlmerge eol=lf
-*.meta merge=unityyamlmerge eol=lf
-*.mat merge=unityyamlmerge eol=lf
-*.anim merge=unityyamlmerge eol=lf
-*.controller merge=unityyamlmerge eol=lf
+*.unity merge=unityyamlmerge eol=lf whitespace=-trailing-space
+*.prefab merge=unityyamlmerge eol=lf whitespace=-trailing-space
+*.asset merge=unityyamlmerge eol=lf whitespace=-trailing-space
+*.meta merge=unityyamlmerge eol=lf whitespace=-trailing-space
+*.mat merge=unityyamlmerge eol=lf whitespace=-trailing-space
+*.anim merge=unityyamlmerge eol=lf whitespace=-trailing-space
+*.controller merge=unityyamlmerge eol=lf whitespace=-trailing-space
 
 # Git LFS - binary/large assets
 *.psd filter=lfs diff=lfs merge=lfs -text

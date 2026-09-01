@@ -45,6 +45,18 @@ Instale antes de começar:
 - Visual Studio, JetBrains Rider ou VS Code com suporte a C#.
 - GitHub CLI (`gh`), opcional, mas recomendado.
 
+### Versão do Unity e recuperação de packages
+
+Use o **Unity 6000.3.23f1 (Unity 6.3 LTS)** para este projeto. No Unity Hub,
+adicione a raiz do repositório — a pasta que contém `Assets/`, `Packages/` e
+`ProjectSettings/` — e abra-a com essa versão.
+
+Instale o módulo **Windows Build Support (IL2CPP)** para criar builds para PC
+Windows. A restauração das dependências é automática a partir de
+`Packages/manifest.json`. Se houver erro de package ou Safe Mode, feche o
+Editor, apague somente `Library/`, reabra o projeto e consulte o primeiro erro
+do Console. Não apague `Packages/`, `ProjectSettings/` nem arquivos `.meta`.
+
 Validação rápida:
 
 ```bash
