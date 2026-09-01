@@ -1,6 +1,6 @@
+using HealthyRace.Input;
 using HealthyRace.WellBeing;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace HealthyRace.Player
 {
@@ -8,7 +8,7 @@ namespace HealthyRace.Player
     /// Owns only local player movement and input. Match state and wellbeing remain in
     /// their dedicated components.
     /// </summary>
-    [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
+    [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(PlayerInputReader))]
     public sealed class PlayerController : MonoBehaviour
     {
         private const int GroundLayer = 6;
@@ -31,8 +31,7 @@ namespace HealthyRace.Player
         private Collider2D _collider;
         private bool _movementEnabled = true;
         private Rigidbody2D _rigidbody;
-        private InputAction _jumpAction;
-        private InputAction _moveAction;
+        private PlayerInputReader _playerInputReader;
         private bool _jumpRequested;
         private WellbeingComponent _wellbeing;
 
@@ -46,10 +45,9 @@ namespace HealthyRace.Player
         {
             _playerIndex = Mathf.Max(1, playerIndex);
 
-            if (isActiveAndEnabled)
-            {
-                InitializeInput();
-            }
+            _playerInputReader.Configure(
+                _playerIndex == 1 ? PlayerInputId.Player1 : PlayerInputId.Player2
+            );
         }
 
         public void SetMovementEnabled(bool movementEnabled)
@@ -66,28 +64,13 @@ namespace HealthyRace.Player
         {
             _rigidbody = GetComponent<Rigidbody2D>();
             _collider = GetComponent<Collider2D>();
+            _playerInputReader = GetComponent<PlayerInputReader>();
             _wellbeing = GetComponent<WellbeingComponent>();
-        }
-
-        private void OnEnable()
-        {
-            InitializeInput();
-        }
-
-        private void OnDisable()
-        {
-            _moveAction?.Disable();
-            _jumpAction?.Disable();
-        }
-
-        private void OnDestroy()
-        {
-            DisposeInput();
         }
 
         private void Update()
         {
-            if (_jumpAction != null && _jumpAction.WasPressedThisFrame())
+            if (_playerInputReader != null && _playerInputReader.JumpPressed)
             {
                 _jumpRequested = true;
             }
@@ -105,7 +88,7 @@ namespace HealthyRace.Player
 
             var movementMultiplier = _wellbeing?.MovementMultiplier ?? 1f;
             var jumpMultiplier = _wellbeing?.JumpMultiplier ?? 1f;
-            var movement = _moveAction?.ReadValue<float>() ?? 0f;
+            var movement = _playerInputReader?.MoveInput.x ?? 0f;
             _rigidbody.linearVelocity = new Vector2(
                 movement * _moveSpeed * movementMultiplier,
                 _rigidbody.linearVelocity.y
@@ -135,49 +118,6 @@ namespace HealthyRace.Player
                 _groundCheckDistance,
                 _groundMask
             );
-        }
-
-        private void InitializeInput()
-        {
-            DisposeInput();
-
-            _moveAction = new InputAction("Move", InputActionType.Value);
-            _jumpAction = new InputAction("Jump", InputActionType.Button);
-
-            if (_playerIndex == 1)
-            {
-                AddHorizontalBindings(_moveAction, "a", "d");
-                _jumpAction.AddBinding("<Keyboard>/w");
-                _jumpAction.AddBinding("<Keyboard>/space");
-            }
-            else
-            {
-                AddHorizontalBindings(_moveAction, "leftArrow", "rightArrow");
-                _jumpAction.AddBinding("<Keyboard>/upArrow");
-            }
-
-            _moveAction.Enable();
-            _jumpAction.Enable();
-        }
-
-        private void DisposeInput()
-        {
-            _moveAction?.Dispose();
-            _jumpAction?.Dispose();
-            _moveAction = null;
-            _jumpAction = null;
-        }
-
-        private static void AddHorizontalBindings(
-            InputAction action,
-            string negativeKey,
-            string positiveKey
-        )
-        {
-            action
-                .AddCompositeBinding("1DAxis")
-                .With("Negative", $"<Keyboard>/{negativeKey}")
-                .With("Positive", $"<Keyboard>/{positiveKey}");
         }
     }
 }
