@@ -45,6 +45,7 @@ namespace HealthyRace.Input
         public void Configure(InputActionAsset inputActions, PlayerInputId playerInputId)
         {
             var wasEnabled = isActiveAndEnabled;
+            var inputActionsChanged = _inputActions != inputActions;
             if (wasEnabled)
             {
                 DisableActions();
@@ -53,7 +54,7 @@ namespace HealthyRace.Input
             _inputActions = inputActions;
             _playerInputId = playerInputId;
 
-            if (Application.isPlaying)
+            if (Application.isPlaying && (inputActionsChanged || _runtimeInputActions == null))
             {
                 RecreateRuntimeInputActions();
             }
