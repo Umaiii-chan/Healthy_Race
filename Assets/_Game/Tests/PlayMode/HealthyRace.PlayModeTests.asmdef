@@ -1,0 +1,21 @@
+{
+  "name": "HealthyRace.PlayModeTests",
+  "rootNamespace": "HealthyRace.Tests.PlayMode",
+  "references": [
+    "HealthyRace.Game",
+    "Unity.InputSystem",
+    "Unity.InputSystem.TestFramework"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

@@ -2,7 +2,8 @@
   "name": "HealthyRace.EditModeTests",
   "rootNamespace": "HealthyRace.Tests.EditMode",
   "references": [
-    "HealthyRace.Game"
+    "HealthyRace.Game",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [
     "Editor"
