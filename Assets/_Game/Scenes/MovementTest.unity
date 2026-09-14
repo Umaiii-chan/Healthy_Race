@@ -214,6 +214,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1049953852}
   - component: {fileID: 1049953851}
+  - component: {fileID: 1049953853}
   m_Layer: 0
   m_Name: Movement Test Camera
   m_TagString: Untagged
@@ -287,6 +288,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1049953853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1049953850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd94f263568a48c8aa58f68e9001d3b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Core.SharedCameraController
+  _firstTarget: {fileID: 0}
+  _secondTarget: {fileID: 0}
+  _positionSmoothTime: 0.18
+  _zoomSmoothTime: 0.15
+  _minimumOrthographicSize: 5
+  _maximumOrthographicSize: 9
+  _padding: {x: 2, y: 1.5}
+  _usePlayableBounds: 1
+  _playableBounds:
+    m_Center: {x: 0, y: 3, z: 0}
+    m_Extent: {x: 18, y: 8, z: 0}
 --- !u!1 &1357830167
 GameObject:
   m_ObjectHideFlags: 0
