@@ -37,11 +37,80 @@ namespace HealthyRace.WellBeing
 
         public FatigueState State => _stateMachine?.State ?? FatigueState.Normal;
 
+        public float FatigueDurationSeconds
+        {
+            get => _fatigueDurationSeconds;
+            set => _fatigueDurationSeconds = Mathf.Max(0f, value);
+        }
+
+        public int RecoveryWellbeing
+        {
+            get => _recoveryWellbeing;
+            set => _recoveryWellbeing = value;
+        }
+
+        public int TriggerThreshold => _triggerThreshold;
+
+        public int RearmThreshold => _rearmThreshold;
+
+        public FatigueStateMachine StateMachine => _stateMachine;
+
+        public void Configure(
+            float fatigueDurationSeconds,
+            int recoveryWellbeing,
+            int triggerThreshold = 20,
+            int rearmThreshold = 25
+        )
+        {
+            _fatigueDurationSeconds = fatigueDurationSeconds;
+            _recoveryWellbeing = recoveryWellbeing;
+            _triggerThreshold = triggerThreshold;
+            _rearmThreshold = rearmThreshold;
+            _stateMachine = new FatigueStateMachine(_triggerThreshold, _rearmThreshold);
+        }
+
+        public void EnsureInitialized()
+        {
+            _playerController ??= GetComponent<PlayerController>();
+            _wellbeing ??= GetComponent<WellbeingComponent>();
+            _stateMachine ??= new FatigueStateMachine(_triggerThreshold, _rearmThreshold);
+
+            if (_wellbeing != null)
+            {
+                _wellbeing.WellbeingChanged -= HandleWellbeingChanged;
+                _wellbeing.WellbeingChanged += HandleWellbeingChanged;
+            }
+        }
+
+        public void ProcessPendingFatigue(bool isGrounded)
+        {
+            Transition(() => _stateMachine.TryBeginPendingFatigue(isGrounded));
+        }
+
+        public void CompleteFatigueImmediately()
+        {
+            if (State != FatigueState.Fatigued && State != FatigueState.FatiguePending)
+            {
+                return;
+            }
+
+            if (_fatigueRoutine != null)
+            {
+                StopCoroutine(_fatigueRoutine);
+                _fatigueRoutine = null;
+            }
+
+            Transition(_stateMachine.BeginRecovery);
+            _wellbeing?.ApplyDelta(_recoveryWellbeing);
+            _playerController?.SetMovementEnabled(true);
+            Transition(() =>
+                _stateMachine.FinishRecovery(_wellbeing != null ? _wellbeing.CurrentValue : 0)
+            );
+        }
+
         private void Awake()
         {
-            _playerController = GetComponent<PlayerController>();
-            _wellbeing = GetComponent<WellbeingComponent>();
-            _stateMachine = new FatigueStateMachine(_triggerThreshold, _rearmThreshold);
+            EnsureInitialized();
         }
 
         private void OnDestroy()
@@ -64,8 +133,11 @@ namespace HealthyRace.WellBeing
 
         private void OnEnable()
         {
+            EnsureInitialized();
+
             if (_wellbeing != null)
             {
+                _wellbeing.WellbeingChanged -= HandleWellbeingChanged;
                 _wellbeing.WellbeingChanged += HandleWellbeingChanged;
             }
         }
