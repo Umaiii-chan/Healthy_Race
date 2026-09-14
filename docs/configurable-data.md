@@ -1,32 +1,32 @@
-# Guia de Dados Configur·veis (DATA-01)
+# Guia de Dados Configur√°veis (DATA-01)
 
-## DescriÁ„o
+## Descri√ß√£o
 
-A infraestrutura de dados configur·veis desacopla os valores de balanceamento de gameplay (alimentos, pontuaÁıes, modificadores de Bem-Estar e faixas fisiolÛgicas) da lÛgica em cÛdigo C#, permitindo que game designers ajustem e expandam os dados diretamente pelo Inspector da Unity atravÈs de ScriptableObjects.
+A infraestrutura de dados configur√°veis desacopla os valores de balanceamento de gameplay (alimentos, pontua√ß√µes, modificadores de Bem-Estar e faixas fisiol√≥gicas) da l√≥gica em c√≥digo C#, permitindo que game designers ajustem e expandam os dados diretamente pelo Inspector da Unity atrav√©s de ScriptableObjects.
 
 ## ScriptableObjects Implementados
 
 ### 1. FoodData (`HealthyRace.Collectibles.FoodData`)
 
-Define os dados imut·veis de um item colet·vel alimentar:
+Define os dados imut√°veis de um item colet√°vel alimentar:
 
-- **IdentificaÁ„o**:
-  - `Id`: chave de identificaÁ„o do alimento (ex: `apple`, `burger`, `banana`, `soda`);
-  - `DisplayName`: nome legÌvel apresentado na interface (ex: `Apple`, `Banana`);
+- **Identifica√ß√£o**:
+  - `Id`: chave de identifica√ß√£o do alimento (ex: `apple`, `burger`, `banana`, `soda`);
+  - `DisplayName`: nome leg√≠vel apresentado na interface (ex: `Apple`, `Banana`);
 - **Categoria Alimentar** (`FoodCategory`):
-  - `Healthy`: alimentos nutritivos que aumentam o Bem-Estar e conferem pontuaÁ„o;
-  - `UltraProcessed`: alimentos ultraprocessados que diminuem o Bem-Estar e n„o geram pontos positivos;
+  - `Healthy`: alimentos nutritivos que aumentam o Bem-Estar e conferem pontua√ß√£o;
+  - `UltraProcessed`: alimentos ultraprocessados que diminuem o Bem-Estar e n√£o geram pontos positivos;
 - **Gameplay**:
-  - `BasePoints`: pontuaÁ„o concedida ao coletar o alimento;
-  - `WellbeingDelta`: valor de variaÁ„o direta no Bem-Estar (positivo para saud·veis, negativo para ultraprocessados);
-- **ApresentaÁ„o Opcional**:
-  - `Sprite`: Ìcone do alimento;
+  - `BasePoints`: pontua√ß√£o concedida ao coletar o alimento;
+  - `WellbeingDelta`: valor de varia√ß√£o direta no Bem-Estar (positivo para saud√°veis, negativo para ultraprocessados);
+- **Apresenta√ß√£o Opcional**:
+  - `Sprite`: √≠cone do alimento;
   - `CollectSound`: efeito sonoro disparado na coleta.
 
-#### Exemplos de ConfiguraÁ„o Criados:
+#### Exemplos de Configura√ß√£o Criados
 
 | Asset | Id | Categoria | Base Points | Wellbeing Delta |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `SO_Food_Apple.asset` | `apple` | `Healthy` | 100 | +10 |
 | `SO_Food_Burger.asset` | `burger` | `UltraProcessed` | 0 | -18 |
 | `SO_Food_Banana.asset` | `banana` | `Healthy` | 80 | +8 |
@@ -34,38 +34,38 @@ Define os dados imut·veis de um item colet·vel alimentar:
 
 ### 2. WellbeingBandData (`HealthyRace.WellBeing.WellbeingBandData`)
 
-Define uma faixa de Bem-Estar e seus respectivos multiplicadores de gameplay e apresentaÁ„o visual:
+Define uma faixa de Bem-Estar e seus respectivos multiplicadores de gameplay e apresenta√ß√£o visual:
 
 - **Identidade e Limites**:
   - `Id`: identificador textual da faixa;
   - `DisplayName`: nome da faixa exibido no HUD;
   - `MinValue` e `MaxValue`: intervalo inclusivo de Bem-Estar `[MinValue, MaxValue]`;
 - **Multiplicadores de Gameplay**:
-  - `MovementMultiplier`: multiplicador aplicado ‡ velocidade horizontal do jogador;
-  - `JumpMultiplier`: multiplicador aplicado ‡ forÁa de pulo do jogador;
-- **ApresentaÁ„o Visual**:
+  - `MovementMultiplier`: multiplicador aplicado √† velocidade horizontal do jogador;
+  - `JumpMultiplier`: multiplicador aplicado √† for√ßa de pulo do jogador;
+- **Apresenta√ß√£o Visual**:
   - `VisualForm`: forma visual do personagem (`Vita` ou `Salo`);
   - `CharacterColor`: tonalidade principal do personagem;
   - `LeafColor`: tonalidade da folha do personagem;
-  - `GlowColor` e `GlowScale`: configuraÁıes do efeito de brilho;
+  - `GlowColor` e `GlowScale`: configura√ß√µes do efeito de brilho;
   - `ShowTiredEyes`: indicador de fadiga visual (olhos sonolentos/pesados).
 
-#### Faixas Padr„o Configuradas:
+#### Faixas Padr√£o Configuradas
 
 | Faixa Asset | Intervalo | Forma | Mult. Movimento | Mult. Pulo | Feedback Visual |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | `SO_Wellbeing_Healthy` | [76, 100] | `Vita` | 1.0x | 1.0x | Verde vibrante, brilho forte |
 | `SO_Wellbeing_Stable` | [51, 75] | `Vita` | 0.95x | 1.0x | Verde moderado |
 | `SO_Wellbeing_Tired` | [26, 50] | `Vita` | 0.90x | 0.95x | Amarelado, olhos cansados |
 | `SO_Wellbeing_Critical` | [1, 25] | `Vita` | 0.80x | 0.90x | Avermelhado, olhos cansados |
 | `SO_Wellbeing_Salo` | [0, 0] | `Salo` | 0.70x | 0.80x | Alaranjado escuro, forma Salo |
 
-As 5 faixas cobrem continuamente todo o intervalo de 0 a 100 sem lacunas nem sobreposiÁıes.
+As 5 faixas cobrem continuamente todo o intervalo de 0 a 100 sem lacunas nem sobreposi√ß√µes.
 
 ## Como Criar Novos Dados no Unity Editor
 
-1. Na janela **Project**, navegue atÈ a pasta de destino (ex: `Assets/_Game/ScriptableObjects/Food/`).
-2. Clique com o bot„o direito e selecione:
+1. Na janela **Project**, navegue at√© a pasta de destino (ex: `Assets/_Game/ScriptableObjects/Food/`).
+2. Clique com o bot√£o direito e selecione:
    - Para alimentos: **Create > Healthy Race > Food Data**;
    - Para faixas de Bem-Estar: **Create > Healthy Race > Wellbeing Band**.
 3. No **Inspector**, configure os valores de balanceamento desejados.
@@ -75,11 +75,11 @@ As 5 faixas cobrem continuamente todo o intervalo de 0 a 100 sem lacunas nem sob
 
 Os testes EditMode em `ConfigurableDataTests.cs` validam:
 
-1. `FoodData_FactoryCreatesValidInstanceWithExpectedProperties`: criaÁ„o e integridade de propriedades em tempo de execuÁ„o;
+1. `FoodData_FactoryCreatesValidInstanceWithExpectedProperties`: cria√ß√£o e integridade de propriedades em tempo de execu√ß√£o;
 2. `FoodData_ExistingAssets_AppleAndBurger_AreValid`: integridade dos assets existentes `SO_Food_Apple` e `SO_Food_Burger`;
 3. `FoodData_NewAssets_BananaAndSoda_AreValid`: integridade dos novos assets de exemplo `SO_Food_Banana` e `SO_Food_Soda`;
-4. `WellbeingBandData_Contains_ReturnsTrueForValuesInRange`: verificaÁ„o precisa de limites inclusivos;
-5. `WellbeingBandData_Contains_ReturnsFalseForValuesOutOfRange`: rejeiÁ„o de valores externos ao intervalo;
-6. `WellbeingBandData_ExistingBands_CoverZeroToOneHundredContinuouslyWithoutGaps`: garantia matem·tica de que todas as notas de 0 a 100 pertencem a exatamente uma faixa;
-7. `WellbeingBandData_ExistingBands_MultipliersAreValidAndPositive`: garantia de que multiplicadores s„o positivos e coerentes com a curva de progress„o;
-8. `WellbeingBandData_FactoryCreatesValidBandWithProperties`: factory program·tica para testes e customizaÁ„o.
+4. `WellbeingBandData_Contains_ReturnsTrueForValuesInRange`: verifica√ß√£o precisa de limites inclusivos;
+5. `WellbeingBandData_Contains_ReturnsFalseForValuesOutOfRange`: rejei√ß√£o de valores externos ao intervalo;
+6. `WellbeingBandData_ExistingBands_CoverZeroToOneHundredContinuouslyWithoutGaps`: garantia matem√°tica de que todas as notas de 0 a 100 pertencem a exatamente uma faixa;
+7. `WellbeingBandData_ExistingBands_MultipliersAreValidAndPositive`: garantia de que multiplicadores s√£o positivos e coerentes com a curva de progress√£o;
+8. `WellbeingBandData_FactoryCreatesValidBandWithProperties`: factory program√°tica para testes e customiza√ß√£o.
