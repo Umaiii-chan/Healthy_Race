@@ -26,6 +26,10 @@ namespace HealthyRace.Player
 
         public bool IsMovementEnabled => _isMovementEnabled;
 
+        public float JumpMultiplier => _jumpMultiplier;
+
+        public float MovementMultiplier => _movementMultiplier;
+
         public float MoveInput { get; private set; }
 
         public Vector2 Velocity => _rigidbody != null ? _rigidbody.linearVelocity : Vector2.zero;
