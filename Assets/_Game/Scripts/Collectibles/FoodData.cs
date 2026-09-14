@@ -30,6 +30,13 @@ namespace HealthyRace.Collectibles
         [SerializeField]
         private int _wellbeingDelta;
 
+        [Header("Optional Presentation")]
+        [SerializeField]
+        private Sprite _sprite;
+
+        [SerializeField]
+        private AudioClip _collectSound;
+
         public int BasePoints => _basePoints;
 
         public FoodCategory Category => _category;
@@ -39,5 +46,43 @@ namespace HealthyRace.Collectibles
         public string Id => _id;
 
         public int WellbeingDelta => _wellbeingDelta;
+
+        public Sprite Sprite => _sprite;
+
+        public AudioClip CollectSound => _collectSound;
+
+        private void OnValidate()
+        {
+            if (string.IsNullOrWhiteSpace(_id))
+            {
+                _id = name.ToLowerInvariant();
+            }
+
+            if (string.IsNullOrWhiteSpace(_displayName))
+            {
+                _displayName = name;
+            }
+        }
+
+        public static FoodData Create(
+            string id,
+            string displayName,
+            FoodCategory category,
+            int basePoints,
+            int wellbeingDelta,
+            Sprite sprite = null,
+            AudioClip collectSound = null
+        )
+        {
+            var data = CreateInstance<FoodData>();
+            data._id = id;
+            data._displayName = displayName;
+            data._category = category;
+            data._basePoints = basePoints;
+            data._wellbeingDelta = wellbeingDelta;
+            data._sprite = sprite;
+            data._collectSound = collectSound;
+            return data;
+        }
     }
 }
