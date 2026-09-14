@@ -1,3 +1,5 @@
+using HealthyRace.Input;
+using HealthyRace.Player;
 using HealthyRace.WellBeing;
 using NUnit.Framework;
 using UnityEngine;
@@ -104,17 +106,114 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
-        public void SeparateFatigueInstances_DoNotSharePlayerState()
+        public void CrossingThirtyToTen_TriggersOneFatigueEpisode()
+        {
+            var machine = CreateMachine();
+
+            machine.ProcessWellbeingChange(30, 10, true);
+
+            Assert.That(machine.State, Is.EqualTo(FatigueState.Fatigued));
+            Assert.That(machine.EpisodeCount, Is.EqualTo(1));
+            Assert.That(machine.Readiness, Is.EqualTo(FatigueReadiness.Disarmed));
+        }
+
+        [Test]
+        public void WellbeingAtTwentyFive_DoesNotRearm()
+        {
+            var machine = CreateMachine();
+            machine.ProcessWellbeingChange(21, 5, true);
+            machine.BeginRecovery();
+            machine.FinishRecovery(20);
+
+            // Rises to 25 exactly: must NOT rearm because rule is strictly > 25
+            machine.ProcessWellbeingChange(20, 25, true);
+
+            Assert.That(machine.Readiness, Is.EqualTo(FatigueReadiness.Disarmed));
+
+            // Drops again to 20: must NOT trigger because still disarmed
+            machine.ProcessWellbeingChange(25, 20, true);
+
+            Assert.That(machine.EpisodeCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void MultipleDropsBelowThreshold_WithoutRearm_DoNotTriggerEpisodes()
+        {
+            var machine = CreateMachine();
+            machine.ProcessWellbeingChange(21, 20, true);
+            machine.BeginRecovery();
+            machine.FinishRecovery(20);
+
+            // Progressive drops while remaining below rearm threshold
+            machine.ProcessWellbeingChange(20, 18, true);
+            machine.ProcessWellbeingChange(18, 15, true);
+            machine.ProcessWellbeingChange(15, 10, true);
+            machine.ProcessWellbeingChange(10, 0, true);
+
+            Assert.That(machine.EpisodeCount, Is.EqualTo(1));
+            Assert.That(machine.Readiness, Is.EqualTo(FatigueReadiness.Disarmed));
+        }
+
+        [Test]
+        public void PlayerTwo_EnteringFatigue_DoesNotAffectPlayerOne()
         {
             var playerOneFatigue = CreateMachine();
             var playerTwoFatigue = CreateMachine();
 
-            playerOneFatigue.ProcessWellbeingChange(21, 20, true);
+            playerTwoFatigue.ProcessWellbeingChange(25, 18, true);
 
-            Assert.That(playerOneFatigue.State, Is.EqualTo(FatigueState.Fatigued));
-            Assert.That(playerOneFatigue.EpisodeCount, Is.EqualTo(1));
-            Assert.That(playerTwoFatigue.State, Is.EqualTo(FatigueState.Normal));
-            Assert.That(playerTwoFatigue.EpisodeCount, Is.EqualTo(0));
+            Assert.That(playerTwoFatigue.State, Is.EqualTo(FatigueState.Fatigued));
+            Assert.That(playerTwoFatigue.EpisodeCount, Is.EqualTo(1));
+            Assert.That(playerOneFatigue.State, Is.EqualTo(FatigueState.Normal));
+            Assert.That(playerOneFatigue.EpisodeCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void FatigueComponent_Integration_LocksMovementAndAppliesRecovery()
+        {
+            var go = new GameObject("Fatigue Component Integration Test");
+            try
+            {
+                go.AddComponent<Rigidbody2D>();
+                go.AddComponent<BoxCollider2D>();
+                go.AddComponent<PlayerGroundCheck>();
+                go.AddComponent<PlayerInputReader>();
+                var movement = go.AddComponent<PlayerMovement>();
+                var controller = go.AddComponent<PlayerController>();
+                var wellbeing = go.AddComponent<WellbeingComponent>();
+                var fatigue = go.AddComponent<FatigueComponent>();
+
+                wellbeing.Initialize(100);
+                controller.EnsureInitialized();
+                fatigue.EnsureInitialized();
+
+                Assert.That(controller.IsMovementEnabled, Is.True);
+                Assert.That(fatigue.State, Is.EqualTo(FatigueState.Normal));
+
+                // Trigger fatigue by dropping to 20 while in air
+                wellbeing.SetValue(20);
+
+                Assert.That(fatigue.State, Is.EqualTo(FatigueState.FatiguePending));
+                Assert.That(fatigue.FatigueEpisodeCount, Is.EqualTo(1));
+
+                // Touch ground: transitions to Fatigued and locks movement
+                fatigue.ProcessPendingFatigue(true);
+
+                Assert.That(fatigue.State, Is.EqualTo(FatigueState.Fatigued));
+                Assert.That(controller.IsMovementEnabled, Is.False);
+
+                // Complete fatigue recovery immediately
+                fatigue.CompleteFatigueImmediately();
+
+                Assert.That(fatigue.State, Is.EqualTo(FatigueState.Normal));
+                Assert.That(wellbeing.CurrentValue, Is.EqualTo(35)); // 20 + 15
+                Assert.That(controller.IsMovementEnabled, Is.True);
+                Assert.That(fatigue.Readiness, Is.EqualTo(FatigueReadiness.Armed)); // 35 > 25
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
         }
 
         private static FatigueStateMachine CreateMachine()
