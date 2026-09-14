@@ -17,6 +17,8 @@ GameObject:
   - component: {fileID: 6013191735769592660}
   - component: {fileID: 4647923481067277609}
   - component: {fileID: 738309135197177087}
+  - component: {fileID: 4164430480437974417}
+  - component: {fileID: 1767748322971295051}
   m_Layer: 0
   m_Name: PF_Player
   m_TagString: Untagged
@@ -184,12 +186,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerIndex: 1
-  _moveSpeed: 7
-  _jumpVelocity: 12
-  _groundCheckDistance: 0.08
-  _groundMask:
-    serializedVersion: 2
-    m_Bits: 64
 --- !u!114 &6920917802912534064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -251,3 +247,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Input.PlayerInputReader
   _inputActions: {fileID: -944628639613478452, guid: 45e818f4b89d7984c88e2dabb9989360, type: 3}
   _playerInputId: 0
+--- !u!114 &4164430480437974417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075871327594026069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 042c595bf978ab243bb520f048b301c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Player.PlayerGroundCheck
+  _checkDistance: 0.08
+  _checkWidthMultiplier: 0.82
+  _checkHeight: 0.04
+  _groundMask:
+    serializedVersion: 2
+    m_Bits: 64
+--- !u!114 &1767748322971295051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075871327594026069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e2f6f69cde3b2f4aa3a2a682b8e6b37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Player.PlayerMovement
+  _jumpVelocity: 12
+  _moveSpeed: 7
