@@ -102,5 +102,72 @@ namespace HealthyRace.WellBeing
         {
             return wellbeingValue >= _minValue && wellbeingValue <= _maxValue;
         }
+
+        private void OnValidate()
+        {
+            if (_minValue > _maxValue)
+            {
+                _maxValue = _minValue;
+            }
+
+            if (_movementMultiplier < 0f)
+            {
+                _movementMultiplier = 0f;
+            }
+
+            if (_jumpMultiplier < 0f)
+            {
+                _jumpMultiplier = 0f;
+            }
+
+            if (string.IsNullOrWhiteSpace(_id))
+            {
+                _id = name.ToLowerInvariant();
+            }
+
+            if (string.IsNullOrWhiteSpace(_displayName))
+            {
+                _displayName = name;
+            }
+        }
+
+        public static WellbeingBandData Create(
+            string id,
+            string displayName,
+            int minValue,
+            int maxValue,
+            float movementMultiplier = 1f,
+            float jumpMultiplier = 1f,
+            PlayerVisualForm visualForm = PlayerVisualForm.Vita,
+            Color? characterColor = null,
+            Color? leafColor = null,
+            Color? glowColor = null,
+            float glowScale = 1f,
+            float leafScale = 1f,
+            bool showTiredEyes = false,
+            Sprite spriteOverride = null,
+            Material materialOverride = null,
+            GameObject visualEffectPrefab = null
+        )
+        {
+            var band = CreateInstance<WellbeingBandData>();
+            band._id = id;
+            band._displayName = displayName;
+            band._minValue = minValue;
+            band._maxValue = maxValue;
+            band._movementMultiplier = movementMultiplier;
+            band._jumpMultiplier = jumpMultiplier;
+            band._visualForm = visualForm;
+            band._characterColor = characterColor ?? Color.white;
+            band._leafColor = leafColor ?? Color.white;
+            band._glowColor = glowColor ?? Color.clear;
+            band._glowScale = glowScale;
+            band._leafScale = leafScale;
+            band._showTiredEyes = showTiredEyes;
+            band._spriteOverride = spriteOverride;
+            band._materialOverride = materialOverride;
+            band._visualEffectPrefab = visualEffectPrefab;
+            return band;
+        }
     }
 }
