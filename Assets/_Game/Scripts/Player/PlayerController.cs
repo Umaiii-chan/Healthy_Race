@@ -33,7 +33,7 @@ namespace HealthyRace.Player
         {
             _playerIndex = Mathf.Max(1, playerIndex);
 
-            _playerInputReader ??= GetComponent<PlayerInputReader>();
+            EnsureInitialized();
 
             _playerInputReader?.Configure(
                 _playerIndex == 1 ? PlayerInputId.Player1 : PlayerInputId.Player2
@@ -48,11 +48,47 @@ namespace HealthyRace.Player
 
         private void Awake()
         {
-            _playerInputReader = GetComponent<PlayerInputReader>();
-            _playerMovement = GetComponent<PlayerMovement>();
-            _wellbeing = GetComponent<WellbeingComponent>();
-            _stateMachine = new PlayerStateMachine();
-            _playerMovement.SetMovementEnabled(_movementEnabled);
+            EnsureInitialized();
+        }
+
+        public void EnsureInitialized()
+        {
+            _playerInputReader ??= GetComponent<PlayerInputReader>();
+            _playerMovement ??= GetComponent<PlayerMovement>();
+            _wellbeing ??= GetComponent<WellbeingComponent>();
+            _stateMachine ??= new PlayerStateMachine();
+            _playerMovement?.SetMovementEnabled(_movementEnabled);
+
+            if (_wellbeing != null)
+            {
+                _wellbeing.WellbeingBandChanged -= HandleWellbeingBandChanged;
+                _wellbeing.WellbeingBandChanged += HandleWellbeingBandChanged;
+                UpdateLocomotionMultipliers();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_wellbeing != null)
+            {
+                _wellbeing.WellbeingBandChanged -= HandleWellbeingBandChanged;
+            }
+        }
+
+        private void HandleWellbeingBandChanged(WellbeingBandData band)
+        {
+            UpdateLocomotionMultipliers();
+        }
+
+        public void UpdateLocomotionMultipliers()
+        {
+            if (_playerMovement != null)
+            {
+                _playerMovement.SetMovementMultipliers(
+                    _wellbeing?.MovementMultiplier ?? 1f,
+                    _wellbeing?.JumpMultiplier ?? 1f
+                );
+            }
         }
 
         private void Update()
@@ -78,10 +114,6 @@ namespace HealthyRace.Player
             }
 
             _playerMovement.SetMovementEnabled(_movementEnabled);
-            _playerMovement.SetMovementMultipliers(
-                _wellbeing?.MovementMultiplier ?? 1f,
-                _wellbeing?.JumpMultiplier ?? 1f
-            );
         }
 
         private void LateUpdate()
