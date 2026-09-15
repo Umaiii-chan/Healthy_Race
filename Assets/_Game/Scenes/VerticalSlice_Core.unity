@@ -31,7 +31,7 @@ RenderSettings:
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
-  m_SpotCookie: {fileID: 10001, guid: 0000000000000000d000000000000000, type: 0}
+  m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
   m_DefaultReflectionMode: 0
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
@@ -45,7 +45,7 @@ LightmapSettings:
   serializedVersion: 13
   m_BakeOnSceneLoad: 0
   m_GISettings:
-    serializedVersion: 3
+    serializedVersion: 2
     m_BounceScale: 1
     m_IndirectOutputScale: 1
     m_AlbedoBoost: 1
@@ -73,8 +73,8 @@ LightmapSettings:
     m_PVRDirectSampleCount: 32
     m_PVRSampleCount: 512
     m_PVRBounces: 2
-    m_PVRMinBounces: 2
-    m_PVRMaxBounces: 2
+    m_PVREnvironmentSampleCount: 256
+    m_PVREnvironmentReferencePointCount: 2048
     m_PVRFilteringMode: 1
     m_PVRDenoiserTypeDirect: 1
     m_PVRDenoiserTypeIndirect: 1
@@ -82,8 +82,8 @@ LightmapSettings:
     m_PVRFilterTypeDirect: 0
     m_PVRFilterTypeIndirect: 0
     m_PVRFilterTypeAO: 0
-    m_PVREnvironmentSampleCount: 256
-    m_PVREnvironmentReferencePointCount: 2048
+    m_PVREnvironmentMIS: 1
+    m_PVRCulling: 1
     m_PVRFilteringGaussRadiusDirect: 1
     m_PVRFilteringGaussRadiusIndirect: 5
     m_PVRFilteringGaussRadiusAO: 2
@@ -113,7 +113,7 @@ NavMeshSettings:
     cellSize: 0.16666667
     manualTileSize: 0
     tileSize: 256
-    accuratePlacement: 0
+    buildHeightMesh: 0
     maxJobWorkers: 0
     preserveTilesOutsideBounds: 0
     debug:
@@ -132,6 +132,9 @@ GameObject:
   m_Layer: 0
   m_Name: VerticalSlice_Core
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &1001
 Transform:
@@ -158,10 +161,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95ab2e79e4b14880b4e2bd73c491e5a1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  _collectiblePrefab: {fileID: 100100000, guid: 55abfa73e6af4f249723f74f5b02652d, type: 3}
-  _playerPrefab: {fileID: 100100000, guid: 09b77ea42fc64e1ca2496f22cbe46442, type: 3}
-  _pushableBoxPrefab: {fileID: 100100000, guid: 4f0077b149624dcab7f58985ea593afc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _collectiblePrefab: {fileID: 8377260873298132593, guid: 55abfa73e6af4f249723f74f5b02652d, type: 3}
+  _playerPrefab: {fileID: 9075871327594026069, guid: 09b77ea42fc64e1ca2496f22cbe46442, type: 3}
+  _pushableBoxPrefab: {fileID: 4478747261445660467, guid: 4f0077b149624dcab7f58985ea593afc, type: 3}
   _appleData: {fileID: 11400000, guid: 47ce98f6118e49cfb017066a4157c0c9, type: 2}
   _burgerData: {fileID: 11400000, guid: e06057ea045c42f6b6649600bd3d124e, type: 2}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 1001}
