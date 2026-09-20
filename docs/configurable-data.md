@@ -23,16 +23,43 @@ Define os dados imutáveis de um item coletável alimentar:
   - `Sprite`: ícone do alimento;
   - `CollectSound`: efeito sonoro disparado na coleta.
 
-#### Exemplos de Configuração Criados
+#### Catálogo dos 18 Alimentos do MVP
 
-| Asset | Id | Categoria | Base Points | Wellbeing Delta |
-| --- | --- | --- | --- | --- |
-| `SO_Food_Apple.asset` | `apple` | `Healthy` | 100 | +10 |
-| `SO_Food_Burger.asset` | `burger` | `UltraProcessed` | 0 | -18 |
-| `SO_Food_Banana.asset` | `banana` | `Healthy` | 80 | +8 |
-| `SO_Food_Soda.asset` | `soda` | `UltraProcessed` | 0 | -12 |
+O catálogo é composto por 18 alimentos (10 saudáveis e 8 ultraprocessados), cada um com seu respectivo ScriptableObject em `Assets/_Game/ScriptableObjects/Food/` e sprite dedicado em `Assets/_Game/Art/Collectibles/`:
 
-### 2. WellbeingBandData (`HealthyRace.WellBeing.WellbeingBandData`)
+| Asset | Id | Nome Legível | Categoria | Base Points | Wellbeing Delta | Sprite |
+| --- | --- | --- | --- | --- | --- | --- |
+| `SO_Food_Apple.asset` | `apple` | Apple | `Healthy` | 100 | +10 | `spr_food_apple.png` |
+| `SO_Food_Banana.asset` | `banana` | Banana | `Healthy` | 80 | +8 | `spr_food_banana.png` |
+| `SO_Food_Orange.asset` | `orange` | Orange | `Healthy` | 100 | +10 | `spr_food_orange.png` |
+| `SO_Food_Carrot.asset` | `carrot` | Carrot | `Healthy` | 120 | +12 | `spr_food_carrot.png` |
+| `SO_Food_Broccoli.asset` | `broccoli` | Broccoli | `Healthy` | 150 | +15 | `spr_food_broccoli.png` |
+| `SO_Food_Strawberry.asset` | `strawberry` | Strawberry | `Healthy` | 80 | +8 | `spr_food_strawberry.png` |
+| `SO_Food_Watermelon.asset` | `watermelon` | Watermelon | `Healthy` | 100 | +10 | `spr_food_watermelon.png` |
+| `SO_Food_Avocado.asset` | `avocado` | Avocado | `Healthy` | 140 | +14 | `spr_food_avocado.png` |
+| `SO_Food_Fish.asset` | `fish` | Fish | `Healthy` | 160 | +16 | `spr_food_fish.png` |
+| `SO_Food_Water.asset` | `water` | Water | `Healthy` | 150 | +15 | `spr_food_water.png` |
+| `SO_Food_Burger.asset` | `burger` | Burger | `UltraProcessed` | 0 | -18 | `spr_food_burger.png` |
+| `SO_Food_Soda.asset` | `soda` | Soda | `UltraProcessed` | 0 | -12 | `spr_food_soda.png` |
+| `SO_Food_Fries.asset` | `fries` | Fries | `UltraProcessed` | 0 | -15 | `spr_food_fries.png` |
+| `SO_Food_Donut.asset` | `donut` | Donut | `UltraProcessed` | 0 | -14 | `spr_food_donut.png` |
+| `SO_Food_HotDog.asset` | `hotdog` | Hot Dog | `UltraProcessed` | 0 | -16 | `spr_food_hotdog.png` |
+| `SO_Food_Pizza.asset` | `pizza` | Pizza | `UltraProcessed` | 0 | -18 | `spr_food_pizza.png` |
+| `SO_Food_Candy.asset` | `candy` | Candy | `UltraProcessed` | 0 | -10 | `spr_food_candy.png` |
+| `SO_Food_Chips.asset` | `chips` | Chips | `UltraProcessed` | 0 | -12 | `spr_food_chips.png` |
+
+### 2. FoodCollectible (`HealthyRace.Collectibles.FoodCollectible`)
+
+Componente MonoBehaviour associado aos prefabs de alimentos no cenário para mediar a interação de coleta:
+
+- **Detecção Segura**: Requer `Collider2D` em modo trigger e detecta exclusivamente entidades com `WellbeingComponent` (jogadores);
+- **Isolamento entre Jogadores**: Ao colidir com Player 1, altera estritamente o Bem-Estar de Player 1, mantendo Player 2 intocado;
+- **Prevenção de Dupla Coleta**: Flag atômica `_isCollected` protege contra chamadas simultâneas ou subsequentes no mesmo quadro de física;
+- **Desativação**: Desativa o GameObject imediatamente após a aplicação do efeito;
+- **Apresentação Visual e Sonora**: Configura o sprite do `SpriteRenderer` a partir do `FoodData` atribuído e emite áudio caso `CollectSound` esteja configurado;
+- **Eventos Desacoplados**: Dispara `event Action<FoodCollectible, WellbeingComponent> Collected` para escuta externa por sistemas de pontuação ou HUD.
+
+### 3. WellbeingBandData (`HealthyRace.WellBeing.WellbeingBandData`)
 
 Define uma faixa de Bem-Estar e seus respectivos multiplicadores de gameplay e apresentação visual:
 
@@ -73,13 +100,26 @@ As 5 faixas cobrem continuamente todo o intervalo de 0 a 100 sem lacunas nem sob
 
 ## Testes Automatizados
 
-Os testes EditMode em `ConfigurableDataTests.cs` validam:
+### EditMode (`ConfigurableDataTests.cs`)
 
 1. `FoodData_FactoryCreatesValidInstanceWithExpectedProperties`: criação e integridade de propriedades em tempo de execução;
 2. `FoodData_ExistingAssets_AppleAndBurger_AreValid`: integridade dos assets existentes `SO_Food_Apple` e `SO_Food_Burger`;
 3. `FoodData_NewAssets_BananaAndSoda_AreValid`: integridade dos novos assets de exemplo `SO_Food_Banana` e `SO_Food_Soda`;
-4. `WellbeingBandData_Contains_ReturnsTrueForValuesInRange`: verificação precisa de limites inclusivos;
-5. `WellbeingBandData_Contains_ReturnsFalseForValuesOutOfRange`: rejeição de valores externos ao intervalo;
-6. `WellbeingBandData_ExistingBands_CoverZeroToOneHundredContinuouslyWithoutGaps`: garantia matemática de que todas as notas de 0 a 100 pertencem a exatamente uma faixa;
-7. `WellbeingBandData_ExistingBands_MultipliersAreValidAndPositive`: garantia de que multiplicadores são positivos e coerentes com a curva de progressão;
-8. `WellbeingBandData_FactoryCreatesValidBandWithProperties`: factory programática para testes e customização.
+4. `FoodCatalog_ContainsAll18MvpFoods_WithValidCategoriesAndCounts`: validação dos 18 assets no catálogo, contendo 10 saudáveis e 8 ultraprocessados;
+5. `FoodCatalog_All18Foods_HaveUniqueIdsAndValidFields`: verificação de unicidade de IDs, nomes válidos, pontuação correta e sprites atribuídos;
+6. `FoodCollectible_Configure_UpdatesVisualWithFoodSprite`: atualização visual de sprite ao configurar alimento;
+7. `FoodCollectible_ResetState_ReactivatesAndClearsCollectedFlag`: reativação e limpeza de estado para reutilização;
+8. `WellbeingBandData_Contains_ReturnsTrueForValuesInRange`: verificação precisa de limites inclusivos;
+9. `WellbeingBandData_Contains_ReturnsFalseForValuesOutOfRange`: rejeição de valores externos ao intervalo;
+10. `WellbeingBandData_ExistingBands_CoverZeroToOneHundredContinuouslyWithoutGaps`: garantia matemática de cobertura contínua sem lacunas;
+11. `WellbeingBandData_ExistingBands_MultipliersAreValidAndPositive`: multiplicadores positivos e coerentes;
+12. `WellbeingBandData_FactoryCreatesValidBandWithProperties`: factory programática de faixas.
+
+### PlayMode (`FoodCollectiblePlayModeTests.cs`)
+
+1. `HealthyFood_WhenCollected_IncreasesCollectorWellbeingAndDeactivates`: coleta de alimento saudável eleva o Bem-Estar e desativa o objeto;
+2. `UltraProcessedFood_WhenCollected_DecreasesCollectorWellbeingAndDeactivates`: coleta de alimento ultraprocessado reduz o Bem-Estar e desativa o objeto;
+3. `FoodCollection_IsolatesPlayerOneFromPlayerTwo`: garantia de isolamento total entre P1 e P2 durante a coleta;
+4. `FoodCollectible_PreventsDoubleCollection`: prevenção contra disparos múltiplos no mesmo ciclo de física;
+5. `NonPlayerCollider_DoesNotTriggerFoodCollection`: colisão com caixas/obstáculos não consome o alimento;
+6. `FoodCollectible_FiresCollectedEventOnPickup`: disparo do evento desacoplado `Collected`.

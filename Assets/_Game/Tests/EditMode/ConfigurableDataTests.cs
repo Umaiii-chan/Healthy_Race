@@ -235,5 +235,167 @@ namespace HealthyRace.Tests.EditMode
                 Object.DestroyImmediate(band);
             }
         }
+
+        [Test]
+        public void FoodCatalog_ContainsAll18MvpFoods_WithValidCategoriesAndCounts()
+        {
+            var guids = AssetDatabase.FindAssets(
+                "t:FoodData",
+                new[] { "Assets/_Game/ScriptableObjects/Food" }
+            );
+            Assert.That(
+                guids.Length,
+                Is.EqualTo(18),
+                "Catalog should contain exactly 18 food assets."
+            );
+
+            var allFoods = guids
+                .Select(guid => AssetDatabase.GUIDToAssetPath(guid))
+                .Select(path => AssetDatabase.LoadAssetAtPath<FoodData>(path))
+                .ToList();
+
+            Assert.That(allFoods, Has.None.Null);
+
+            var healthyFoods = allFoods.Where(f => f.Category == FoodCategory.Healthy).ToList();
+            var ultraFoods = allFoods
+                .Where(f => f.Category == FoodCategory.UltraProcessed)
+                .ToList();
+
+            Assert.That(
+                healthyFoods.Count,
+                Is.EqualTo(10),
+                "Catalog should contain exactly 10 healthy foods."
+            );
+            Assert.That(
+                ultraFoods.Count,
+                Is.EqualTo(8),
+                "Catalog should contain exactly 8 ultra-processed foods."
+            );
+        }
+
+        [Test]
+        public void FoodCatalog_All18Foods_HaveUniqueIdsAndValidFields()
+        {
+            var guids = AssetDatabase.FindAssets(
+                "t:FoodData",
+                new[] { "Assets/_Game/ScriptableObjects/Food" }
+            );
+            var allFoods = guids
+                .Select(guid => AssetDatabase.GUIDToAssetPath(guid))
+                .Select(path => AssetDatabase.LoadAssetAtPath<FoodData>(path))
+                .ToList();
+
+            var ids = new System.Collections.Generic.HashSet<string>();
+
+            foreach (var food in allFoods)
+            {
+                Assert.That(
+                    food.Id,
+                    Is.Not.Null.And.Not.Empty,
+                    $"Food at {food.name} must have a valid ID"
+                );
+                Assert.That(
+                    food.Id,
+                    Is.EqualTo(food.Id.ToLowerInvariant()),
+                    $"Food ID {food.Id} must be lowercase"
+                );
+                Assert.That(ids.Add(food.Id), Is.True, $"Duplicate food ID found: {food.Id}");
+
+                Assert.That(
+                    food.DisplayName,
+                    Is.Not.Null.And.Not.Empty,
+                    $"Food {food.Id} must have a non-empty DisplayName"
+                );
+
+                Assert.That(
+                    food.Sprite,
+                    Is.Not.Null,
+                    $"Food {food.Id} must have a configured sprite"
+                );
+
+                if (food.Category == FoodCategory.Healthy)
+                {
+                    Assert.That(
+                        food.BasePoints,
+                        Is.GreaterThan(0),
+                        $"Healthy food {food.Id} must have positive BasePoints"
+                    );
+                    Assert.That(
+                        food.WellbeingDelta,
+                        Is.GreaterThan(0),
+                        $"Healthy food {food.Id} must have positive WellbeingDelta"
+                    );
+                }
+                else
+                {
+                    Assert.That(
+                        food.BasePoints,
+                        Is.EqualTo(0),
+                        $"UltraProcessed food {food.Id} must have 0 BasePoints"
+                    );
+                    Assert.That(
+                        food.WellbeingDelta,
+                        Is.LessThan(0),
+                        $"UltraProcessed food {food.Id} must have negative WellbeingDelta"
+                    );
+                }
+            }
+        }
+
+        [Test]
+        public void FoodCollectible_Configure_UpdatesVisualWithFoodSprite()
+        {
+            var apple = AssetDatabase.LoadAssetAtPath<FoodData>(
+                "Assets/_Game/ScriptableObjects/Food/SO_Food_Apple.asset"
+            );
+            Assert.That(apple, Is.Not.Null);
+            Assert.That(apple.Sprite, Is.Not.Null);
+
+            var go = new GameObject("TestFood");
+            try
+            {
+                var sr = go.AddComponent<SpriteRenderer>();
+                go.AddComponent<CircleCollider2D>();
+                var collectible = go.AddComponent<FoodCollectible>();
+
+                collectible.Configure(apple);
+
+                Assert.That(collectible.FoodData, Is.SameAs(apple));
+                Assert.That(sr.sprite, Is.SameAs(apple.Sprite));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void FoodCollectible_ResetState_ReactivatesAndClearsCollectedFlag()
+        {
+            var apple = AssetDatabase.LoadAssetAtPath<FoodData>(
+                "Assets/_Game/ScriptableObjects/Food/SO_Food_Apple.asset"
+            );
+
+            var go = new GameObject("TestFood");
+            try
+            {
+                go.AddComponent<CircleCollider2D>();
+                var collectible = go.AddComponent<FoodCollectible>();
+                collectible.Configure(apple);
+
+                Assert.That(collectible.IsCollected, Is.False);
+                Assert.That(go.activeSelf, Is.True);
+
+                go.SetActive(false);
+                collectible.ResetState();
+
+                Assert.That(collectible.IsCollected, Is.False);
+                Assert.That(go.activeSelf, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
     }
 }

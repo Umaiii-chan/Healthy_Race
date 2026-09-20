@@ -11,11 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8aefe2b6809a4dea89bc190a6dd2fe2b, type: 3}
   m_Name: SO_Food_Soda
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _id: soda
   _displayName: Soda
   _category: 1
   _basePoints: 0
   _wellbeingDelta: -12
-  _sprite: {fileID: 0}
+  _sprite: {fileID: 21300000, guid: 6857814e83111cf4ba4b8dc09e0d6cd6, type: 3}
   _collectSound: {fileID: 0}
