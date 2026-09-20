@@ -185,6 +185,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9e36c88bccf58b64494259e0feff7380, type: 2}
   - {fileID: 11400000, guid: 26be8e16b5485004ea620fecff957e9c, type: 2}
   - {fileID: 11400000, guid: beb2e2442cef92b44a22208f54be37fb, type: 2}
+  _visualCatalog: {fileID: 11400000, guid: a5731bf23b531a74c9515c5433614d51, type: 2}
+  _playerOneVisualPrefab: {fileID: 5770368573529694904, guid: aaa27583a59d9954ba68c2011bcc2f5a, type: 3}
+  _playerTwoVisualPrefab: {fileID: 3600848854465078626, guid: 15f7f19656bc9dc4e82b5bee25a73807, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
