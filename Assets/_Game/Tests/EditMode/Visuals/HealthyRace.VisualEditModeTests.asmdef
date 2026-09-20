@@ -1,0 +1,7 @@
+{
+  "name": "HealthyRace.VisualEditModeTests",
+  "rootNamespace": "HealthyRace.Tests.Visuals",
+  "references": ["HealthyRace.Game", "Unity.ugui"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}
