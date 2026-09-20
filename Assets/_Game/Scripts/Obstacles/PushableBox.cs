@@ -1,10 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace HealthyRace.Obstacles
 {
     /// <summary>
-    /// Represents a dynamic, pushable puzzle crate with continuous collision detection
-    /// and frozen rotation for predictable 2D puzzle mechanics.
+    /// Represents a dynamic, pushable puzzle crate with continuous collision detection,
+    /// frozen rotation, spawn caching, and anti-deadlock recovery methods.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
     [DisallowMultipleComponent]
@@ -20,8 +21,17 @@ namespace HealthyRace.Obstacles
         [SerializeField, Min(0.1f)]
         private float _gravityScale = 2.4f;
 
+        [Header("Anti-Deadlock & Recovery")]
+        [SerializeField]
+        private bool _autoResetOnFall = true;
+
+        [SerializeField]
+        private float _fallResetYThreshold = -10f;
+
         private Rigidbody2D _rigidbody;
         private Collider2D _collider;
+        private Vector2 _initialSpawnPosition;
+        private bool _hasSpawnPosition;
 
         public Rigidbody2D RigidbodyComponent
         {
@@ -50,15 +60,34 @@ namespace HealthyRace.Obstacles
         public float Mass => _mass;
         public float LinearDamping => _linearDamping;
         public float GravityScale => _gravityScale;
+        public Vector2 InitialSpawnPosition => _initialSpawnPosition;
+        public bool AutoResetOnFall => _autoResetOnFall;
+        public float FallResetYThreshold => _fallResetYThreshold;
+
+        public event Action OnResetToSpawn;
 
         private void Awake()
         {
+            if (!_hasSpawnPosition)
+            {
+                _initialSpawnPosition = transform.position;
+                _hasSpawnPosition = true;
+            }
+
             InitializePhysics();
         }
 
         private void Reset()
         {
             InitializePhysics();
+        }
+
+        private void FixedUpdate()
+        {
+            if (_autoResetOnFall && transform.position.y < _fallResetYThreshold)
+            {
+                ResetToSpawn();
+            }
         }
 
         public void InitializePhysics()
@@ -76,6 +105,31 @@ namespace HealthyRace.Obstacles
             rb.constraints = RigidbodyConstraints2D.FreezeRotation;
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        }
+
+        public void SetSpawnPosition(Vector2 spawnPosition)
+        {
+            _initialSpawnPosition = spawnPosition;
+            _hasSpawnPosition = true;
+        }
+
+        public void ResetToSpawn()
+        {
+            Respawn(_initialSpawnPosition);
+            OnResetToSpawn?.Invoke();
+        }
+
+        public void Respawn(Vector2 position)
+        {
+            transform.position = position;
+
+            var rb = RigidbodyComponent;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+                rb.position = position;
+            }
         }
 
         public void SetMass(float mass)

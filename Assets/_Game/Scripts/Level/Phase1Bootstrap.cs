@@ -48,6 +48,7 @@ namespace HealthyRace.Level
         private PlayerHUD _playerTwoHud;
         private MatchHUD _matchHud;
         private SharedCameraController _cameraController;
+        private CooperativePuzzleController _finalPuzzle;
 
         public IReadOnlyList<Checkpoint> Checkpoints => _checkpoints;
         public FinishLine FinishLine => _finishLine;
@@ -56,6 +57,7 @@ namespace HealthyRace.Level
         public PlayerHUD PlayerOneHud => _playerOneHud;
         public PlayerHUD PlayerTwoHud => _playerTwoHud;
         public MatchHUD MatchHud => _matchHud;
+        public CooperativePuzzleController FinalPuzzle => _finalPuzzle;
 
         private void Awake()
         {
@@ -458,7 +460,7 @@ namespace HealthyRace.Level
             var zone = new GameObject("Z5_PuzzleFinal").transform;
             zone.SetParent(parent, false);
 
-            // Platform ground leading up to barrier
+            // Ground before gate
             CreateStaticBlock(
                 "Z5_Ground1",
                 zone,
@@ -467,13 +469,12 @@ namespace HealthyRace.Level
                 new Color(0.12f, 0.48f, 0.36f)
             );
 
-            // Barrier wall at X = 175, Y = -0.3, size (1.2, 2.2)
-            CreateStaticBlock(
-                "Z5_BarrierWall",
+            // Interactive puzzle door at X = 175
+            var door = CreatePuzzleDoorObject(
+                "Z5_Door",
                 zone,
                 new Vector2(175f, -0.3f),
-                new Vector2(1.2f, 2.2f),
-                new Color(0.09f, 0.34f, 0.31f)
+                new Vector2(1.2f, 2.2f)
             );
 
             // Ground past the barrier
@@ -492,11 +493,36 @@ namespace HealthyRace.Level
                 new Color(0.85f, 0.95f, 1f)
             );
 
-            // Pressure Button and Pushable Box for cooperative solving
-            CreatePressureButtonObject("Z5_PressureButton", zone, new Vector2(169f, -1.32f));
-            CreatePushableBox("Z5_PushableBox", zone, new Vector2(164f, -1.0f));
+            // Interactive puzzle elements
+            var button = CreatePressureButtonObject(
+                "Z5_PressureButton",
+                zone,
+                new Vector2(169f, -1.32f)
+            );
+            var box = CreatePushableBox("Z5_PushableBox", zone, new Vector2(164f, -1.0f));
+            var lever = CreateLeverObject("Z5_Lever", zone, new Vector2(166f, -1.0f), "ALAVANCA");
+            var resetSwitch = CreateLeverObject(
+                "Z5_ResetSwitch",
+                zone,
+                new Vector2(161f, -1.0f),
+                "RESET",
+                false
+            );
+            var platform = CreateActivatedPlatformObject(
+                "Z5_MovingPlatform",
+                zone,
+                new Vector2(180f, -0.8f),
+                new Vector2(3.5f, 0.4f),
+                new Vector2(0f, 2.5f)
+            );
 
-            // Anti-deadlock bypass stepping stones (allows jump-clearing the wall even if box is ignored)
+            // Cooperative puzzle controller orchestrates door and moving platform
+            var puzzleControllerObj = new GameObject("CooperativePuzzleController");
+            puzzleControllerObj.transform.SetParent(zone, false);
+            _finalPuzzle = puzzleControllerObj.AddComponent<CooperativePuzzleController>();
+            _finalPuzzle.Bind(button, lever, box, door, platform, resetSwitch, requireAll: false);
+
+            // Anti-deadlock bypass stepping stones (allows jump-clearing even if puzzle is skipped)
             CreateStaticBlock(
                 "Z5_Step1",
                 zone,
@@ -724,11 +750,11 @@ namespace HealthyRace.Level
             }
         }
 
-        private void CreatePushableBox(string name, Transform parent, Vector2 position)
+        private PushableBox CreatePushableBox(string name, Transform parent, Vector2 position)
         {
             if (_pushableBoxPrefab == null)
             {
-                return;
+                return null;
             }
 
             var box = Instantiate(_pushableBoxPrefab, position, Quaternion.identity, parent);
@@ -753,9 +779,14 @@ namespace HealthyRace.Level
             }
 
             CreateWorldLabel("CAIXA", box.transform, new Vector2(0f, 0.72f), Color.white);
+            return box.GetComponent<PushableBox>();
         }
 
-        private void CreatePressureButtonObject(string name, Transform parent, Vector2 position)
+        private PressureButton CreatePressureButtonObject(
+            string name,
+            Transform parent,
+            Vector2 position
+        )
         {
             var btn = new GameObject(name);
             btn.transform.SetParent(parent, false);
@@ -771,8 +802,108 @@ namespace HealthyRace.Level
             sr.sortingOrder = 1;
             btn.transform.localScale = new Vector3(1.6f, 0.25f, 1f);
 
-            btn.AddComponent<PressureButton>();
+            var button = btn.AddComponent<PressureButton>();
             CreateWorldLabel("BOTÃO", btn.transform, new Vector2(0f, 0.5f), Color.white);
+            return button;
+        }
+
+        private Lever CreateLeverObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            string label = "ALAVANCA",
+            bool isToggleable = true
+        )
+        {
+            var leverObj = new GameObject(name);
+            leverObj.transform.SetParent(parent, false);
+            leverObj.transform.position = position;
+
+            var col = leverObj.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.2f, 1.5f);
+            col.isTrigger = true;
+
+            var handle = new GameObject("Handle");
+            handle.transform.SetParent(leverObj.transform, false);
+            handle.transform.localPosition = new Vector2(0f, 0.4f);
+            handle.transform.localScale = new Vector3(0.25f, 0.9f, 1f);
+
+            var handleRenderer = handle.AddComponent<SpriteRenderer>();
+            handleRenderer.sprite = PlaceholderSpriteFactory.Square;
+            handleRenderer.color = Color.white;
+            handleRenderer.sortingOrder = 3;
+
+            var baseObj = new GameObject("Base");
+            baseObj.transform.SetParent(leverObj.transform, false);
+            baseObj.transform.localPosition = new Vector2(0f, -0.2f);
+            baseObj.transform.localScale = new Vector3(0.8f, 0.4f, 1f);
+
+            var baseRenderer = baseObj.AddComponent<SpriteRenderer>();
+            baseRenderer.sprite = PlaceholderSpriteFactory.Square;
+            baseRenderer.color = new Color(0.3f, 0.3f, 0.35f);
+            baseRenderer.sortingOrder = 2;
+
+            var lever = leverObj.AddComponent<Lever>();
+            lever.Configure(handle.transform, baseRenderer, isToggleable);
+
+            CreateWorldLabel(label, leverObj.transform, new Vector2(0f, 1.2f), Color.white);
+            return lever;
+        }
+
+        private PuzzleDoor CreatePuzzleDoorObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size
+        )
+        {
+            var doorObj = new GameObject(name);
+            doorObj.transform.SetParent(parent, false);
+            doorObj.transform.position = position;
+            doorObj.transform.localScale = new Vector3(size.x, size.y, 1f);
+            doorObj.layer = GroundLayer;
+
+            var col = doorObj.AddComponent<BoxCollider2D>();
+            col.size = Vector2.one;
+
+            var sr = doorObj.AddComponent<SpriteRenderer>();
+            sr.sprite = PlaceholderSpriteFactory.Square;
+            sr.color = new Color(0.2f, 0.45f, 0.6f);
+            sr.sortingOrder = 1;
+
+            var door = doorObj.AddComponent<PuzzleDoor>();
+            door.Configure(new Vector2(0f, size.y + 0.5f), 4f);
+
+            CreateWorldLabel("PORTÃO", doorObj.transform, new Vector2(0f, 0f), Color.cyan);
+            return door;
+        }
+
+        private ActivatedPlatform CreateActivatedPlatformObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size,
+            Vector2 targetOffset
+        )
+        {
+            var platObj = new GameObject(name);
+            platObj.transform.SetParent(parent, false);
+            platObj.transform.position = position;
+            platObj.transform.localScale = new Vector3(size.x, size.y, 1f);
+            platObj.layer = GroundLayer;
+
+            var col = platObj.AddComponent<BoxCollider2D>();
+            col.size = Vector2.one;
+
+            var sr = platObj.AddComponent<SpriteRenderer>();
+            sr.sprite = PlaceholderSpriteFactory.Square;
+            sr.color = new Color(0.18f, 0.72f, 0.52f);
+            sr.sortingOrder = 1;
+
+            var platform = platObj.AddComponent<ActivatedPlatform>();
+            platform.Configure(targetOffset, 3f);
+
+            return platform;
         }
 
         private Checkpoint CreateCheckpointObject(
