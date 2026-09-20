@@ -89,6 +89,48 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
+        public void Scene_HasVisualIntegrationConfigured()
+        {
+            var scene = EditorSceneManager.OpenPreviewScene(ScenePath);
+            try
+            {
+                var rootObjects = scene.GetRootGameObjects();
+                var bootstrapObject = rootObjects.FirstOrDefault(go =>
+                    go.name == "Phase1_CorridaDoEquilibrio"
+                );
+                Assert.That(bootstrapObject, Is.Not.Null);
+
+                var bootstrap = bootstrapObject.GetComponent<Phase1Bootstrap>();
+                Assert.That(bootstrap, Is.Not.Null);
+
+                var serialized = new SerializedObject(bootstrap);
+                var visualCatalogProp = serialized.FindProperty("_visualCatalog");
+                var p1VisualProp = serialized.FindProperty("_playerOneVisualPrefab");
+                var p2VisualProp = serialized.FindProperty("_playerTwoVisualPrefab");
+
+                Assert.That(
+                    visualCatalogProp.objectReferenceValue,
+                    Is.Not.Null,
+                    "_visualCatalog must be assigned in scene."
+                );
+                Assert.That(
+                    p1VisualProp.objectReferenceValue,
+                    Is.Not.Null,
+                    "_playerOneVisualPrefab must be assigned in scene."
+                );
+                Assert.That(
+                    p2VisualProp.objectReferenceValue,
+                    Is.Not.Null,
+                    "_playerTwoVisualPrefab must be assigned in scene."
+                );
+            }
+            finally
+            {
+                EditorSceneManager.ClosePreviewScene(scene);
+            }
+        }
+
+        [Test]
         public void Checkpoint_Component_TracksActivationAndPreservesPlayerIsolation()
         {
             var go = new GameObject("TestCheckpoint", typeof(BoxCollider2D));
@@ -222,6 +264,21 @@ namespace HealthyRace.Tests.EditMode
                 Assert.That(bootstrap.PlayerOneHud, Is.Not.Null, "Player One HUD must exist.");
                 Assert.That(bootstrap.PlayerTwoHud, Is.Not.Null, "Player Two HUD must exist.");
                 Assert.That(bootstrap.MatchHud, Is.Not.Null, "Match HUD must exist.");
+                Assert.That(
+                    bootstrap.VisualCatalog,
+                    Is.Not.Null,
+                    "VisualCatalog must be auto-resolved."
+                );
+                Assert.That(
+                    bootstrap.PlayerOne.transform.Find("VisualPresentation"),
+                    Is.Not.Null,
+                    "P1 must have VisualPresentation child."
+                );
+                Assert.That(
+                    bootstrap.PlayerTwo.transform.Find("VisualPresentation"),
+                    Is.Not.Null,
+                    "P2 must have VisualPresentation child."
+                );
 
                 // Validate 6 zones
                 var levelGeometry = go.transform.Find("LevelGeometry");

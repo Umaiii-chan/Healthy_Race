@@ -5,6 +5,7 @@ using HealthyRace.Obstacles;
 using HealthyRace.Player;
 using HealthyRace.Puzzles;
 using HealthyRace.UI;
+using HealthyRace.Visuals;
 using HealthyRace.WellBeing;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,6 +38,16 @@ namespace HealthyRace.Level
         [SerializeField]
         private FoodData[] _foodCatalog;
 
+        [Header("Visual Integration")]
+        [SerializeField]
+        private VisualCatalog _visualCatalog;
+
+        [SerializeField]
+        private GameObject _playerOneVisualPrefab;
+
+        [SerializeField]
+        private GameObject _playerTwoVisualPrefab;
+
         private readonly Dictionary<string, FoodData> _foodLookup = new();
         private readonly List<Checkpoint> _checkpoints = new();
         private readonly List<SpikeHazard> _spikes = new();
@@ -68,6 +79,9 @@ namespace HealthyRace.Level
         public CooperativePuzzleController FinalPuzzle => _finalPuzzle;
         public MatchCompletionController MatchController => _matchController;
         public MatchResultsPanel ResultsPanel => _resultsPanel;
+        public VisualCatalog VisualCatalog => _visualCatalog;
+        public GameObject PlayerOneVisualPrefab => _playerOneVisualPrefab;
+        public GameObject PlayerTwoVisualPrefab => _playerTwoVisualPrefab;
 
         private void Awake()
         {
@@ -75,6 +89,29 @@ namespace HealthyRace.Level
             {
                 return;
             }
+
+#if UNITY_EDITOR
+            if (_visualCatalog == null)
+            {
+                _visualCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualCatalog>(
+                    "Assets/_Game/Art/VisualAtlas/SO_VisualCatalog.asset"
+                );
+            }
+
+            if (_playerOneVisualPrefab == null)
+            {
+                _playerOneVisualPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/_Game/Prefabs/Visual/PF_VIS_Player_P1.prefab"
+                );
+            }
+
+            if (_playerTwoVisualPrefab == null)
+            {
+                _playerTwoVisualPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/_Game/Prefabs/Visual/PF_VIS_Player_P2.prefab"
+                );
+            }
+#endif
 
             BuildFoodLookup();
 
@@ -194,14 +231,16 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(13.5f, -3.4f),
                 new Vector2(37f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f)
+                new Color(0.12f, 0.48f, 0.36f),
+                StaticBlockKind.Ground
             );
             CreateStaticBlock(
                 "Z1_LeftBoundary",
                 zone,
                 new Vector2(-5.5f, 0f),
                 new Vector2(1f, 8f),
-                new Color(0.08f, 0.32f, 0.25f)
+                new Color(0.08f, 0.32f, 0.25f),
+                StaticBlockKind.Wall
             );
 
             // Starting line marker
@@ -210,7 +249,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(0f, -2.6f),
                 new Vector2(0.3f, 0.8f),
-                Color.white
+                Color.white,
+                StaticBlockKind.Wall
             );
             CreateWorldLabel("LARGADA", zone, new Vector2(0f, -1.8f), Color.white);
             CreateWorldLabel(
@@ -220,27 +260,67 @@ namespace HealthyRace.Level
                 new Color(0.85f, 0.95f, 1f)
             );
 
+            // Scenery props
+            CreateSceneryProp(
+                "Z1_Tree1",
+                zone,
+                new Vector2(-2f, -1.2f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z1_Tree2",
+                zone,
+                new Vector2(6f, -1.2f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z1_Tree3",
+                zone,
+                new Vector2(22f, -1.2f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z1_Shrub1",
+                zone,
+                new Vector2(2f, -2.4f),
+                new Vector2(1.2f, 1f),
+                GetScenerySprite(SceneryKind.Shrub)
+            );
+            CreateSceneryProp(
+                "Z1_Shrub2",
+                zone,
+                new Vector2(14f, -2.4f),
+                new Vector2(1.2f, 1f),
+                GetScenerySprite(SceneryKind.Shrub)
+            );
+
             // Introductory low step platforms (jump training: heights 1.2m, gaps 3-4m)
             CreateStaticBlock(
                 "Z1_Platform1",
                 zone,
                 new Vector2(10f, -2.2f),
                 new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
             CreateStaticBlock(
                 "Z1_Platform2",
                 zone,
                 new Vector2(18f, -1.4f),
                 new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
             CreateStaticBlock(
                 "Z1_Platform3",
                 zone,
                 new Vector2(25f, -2.2f),
                 new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
 
             // Introductory healthy collectibles
@@ -263,7 +343,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(41f, -3.4f),
                 new Vector2(18f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f)
+                new Color(0.12f, 0.48f, 0.36f),
+                StaticBlockKind.Ground
             );
 
             // Elevated cliff ledge: height -0.6 (2.8m above lower ground, impassable by single jump)
@@ -272,14 +353,16 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(57.5f, -0.6f),
                 new Vector2(15f, 0.6f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
             CreateStaticBlock(
                 "Z2_CliffWall",
                 zone,
                 new Vector2(50f, -2.0f),
                 new Vector2(1f, 2.2f),
-                new Color(0.09f, 0.34f, 0.31f)
+                new Color(0.09f, 0.34f, 0.31f),
+                StaticBlockKind.Wall
             );
 
             CreateWorldLabel(
@@ -295,6 +378,29 @@ namespace HealthyRace.Level
                 new Color(0.95f, 0.95f, 0.7f)
             );
 
+            // Scenery props
+            CreateSceneryProp(
+                "Z2_Tree1",
+                zone,
+                new Vector2(36f, -1.2f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z2_Tree2",
+                zone,
+                new Vector2(62f, 1.6f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z2_Shrub1",
+                zone,
+                new Vector2(40f, -2.4f),
+                new Vector2(1.2f, 1f),
+                GetScenerySprite(SceneryKind.Shrub)
+            );
+
             // Pushable crate
             CreatePushableBox("Z2_PushableBox", zone, new Vector2(42f, -2.25f));
 
@@ -304,7 +410,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(58f, 1.2f),
                 new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
             SpawnFood("Carrot", new Vector2(58f, 1.9f), zone);
             SpawnFood("Orange", new Vector2(54f, 0.1f), zone);
@@ -331,6 +438,43 @@ namespace HealthyRace.Level
                 new Color(0.95f, 0.95f, 0.7f)
             );
 
+            // Scenery props
+            CreateSceneryProp(
+                "Z3_Tree1",
+                zone,
+                new Vector2(68f, 2.0f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z3_Tree2",
+                zone,
+                new Vector2(90f, -1.2f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z3_Tree3",
+                zone,
+                new Vector2(112f, -1.2f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z3_Shrub1",
+                zone,
+                new Vector2(78f, -2.4f),
+                new Vector2(1.2f, 1f),
+                GetScenerySprite(SceneryKind.Shrub)
+            );
+            CreateSceneryProp(
+                "Z3_Shrub2",
+                zone,
+                new Vector2(100f, -2.4f),
+                new Vector2(1.2f, 1f),
+                GetScenerySprite(SceneryKind.Shrub)
+            );
+
             // Checkpoint 1 at entrance of Zone 3
             var cp1 = CreateCheckpointObject("Checkpoint_1", zone, 1, new Vector2(66f, 0.1f));
             _checkpoints.Add(cp1);
@@ -346,7 +490,8 @@ namespace HealthyRace.Level
                 upper,
                 new Vector2(74f, 1.6f),
                 new Vector2(5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f)
+                new Color(0.2f, 0.7f, 0.5f),
+                StaticBlockKind.Platform
             );
             SpawnFood("Broccoli", new Vector2(74f, 2.3f), upper);
 
@@ -355,7 +500,8 @@ namespace HealthyRace.Level
                 upper,
                 new Vector2(83f, 2.4f),
                 new Vector2(4.5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f)
+                new Color(0.2f, 0.7f, 0.5f),
+                StaticBlockKind.Platform
             );
             SpawnFood("Strawberry", new Vector2(83f, 3.1f), upper);
 
@@ -374,7 +520,8 @@ namespace HealthyRace.Level
                 upper,
                 new Vector2(91f, 3.0f),
                 new Vector2(4.5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f)
+                new Color(0.2f, 0.7f, 0.5f),
+                StaticBlockKind.Platform
             );
             SpawnFood("Watermelon", new Vector2(91f, 3.7f), upper);
 
@@ -383,7 +530,8 @@ namespace HealthyRace.Level
                 upper,
                 new Vector2(99f, 2.4f),
                 new Vector2(4.5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f)
+                new Color(0.2f, 0.7f, 0.5f),
+                StaticBlockKind.Platform
             );
             SpawnFood("Avocado", new Vector2(99f, 3.1f), upper);
 
@@ -392,7 +540,8 @@ namespace HealthyRace.Level
                 upper,
                 new Vector2(107f, 1.6f),
                 new Vector2(5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f)
+                new Color(0.2f, 0.7f, 0.5f),
+                StaticBlockKind.Platform
             );
             SpawnFood("Fish", new Vector2(107f, 2.3f), upper);
 
@@ -401,7 +550,8 @@ namespace HealthyRace.Level
                 upper,
                 new Vector2(116f, 0.6f),
                 new Vector2(5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f)
+                new Color(0.2f, 0.7f, 0.5f),
+                StaticBlockKind.Platform
             );
             SpawnFood("Banana", new Vector2(116f, 1.3f), upper);
 
@@ -416,7 +566,8 @@ namespace HealthyRace.Level
                 lower,
                 new Vector2(95f, -3.4f),
                 new Vector2(60f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f)
+                new Color(0.12f, 0.48f, 0.36f),
+                StaticBlockKind.Ground
             );
 
             var mud1 = CreateMudHazardObject(
@@ -461,7 +612,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(123.5f, -2.6f),
                 new Vector2(5f, 0.8f),
-                new Color(0.14f, 0.55f, 0.42f)
+                new Color(0.14f, 0.55f, 0.42f),
+                StaticBlockKind.Platform
             );
 
             // Main reunion ground plateau at Y = -1.8
@@ -470,7 +622,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(142.5f, -1.8f),
                 new Vector2(35f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f)
+                new Color(0.12f, 0.48f, 0.36f),
+                StaticBlockKind.Ground
             );
 
             CreateWorldLabel(
@@ -478,6 +631,29 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(142.5f, -0.2f),
                 new Color(0.85f, 0.95f, 1f)
+            );
+
+            // Scenery props
+            CreateSceneryProp(
+                "Z4_Tree1",
+                zone,
+                new Vector2(128f, 0.4f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z4_Tree2",
+                zone,
+                new Vector2(144f, 0.4f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z4_Shrub1",
+                zone,
+                new Vector2(136f, -0.8f),
+                new Vector2(1.2f, 1f),
+                GetScenerySprite(SceneryKind.Shrub)
             );
 
             // Checkpoint 2 at start of reunion area
@@ -515,7 +691,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(167f, -1.8f),
                 new Vector2(14f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f)
+                new Color(0.12f, 0.48f, 0.36f),
+                StaticBlockKind.Ground
             );
 
             // Interactive puzzle door at X = 175
@@ -532,7 +709,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(185f, -1.8f),
                 new Vector2(20f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f)
+                new Color(0.12f, 0.48f, 0.36f),
+                StaticBlockKind.Ground
             );
 
             CreateWorldLabel(
@@ -540,6 +718,29 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(175f, 2.8f),
                 new Color(0.85f, 0.95f, 1f)
+            );
+
+            // Scenery props
+            CreateSceneryProp(
+                "Z5_Tree1",
+                zone,
+                new Vector2(163f, 0.4f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z5_Tree2",
+                zone,
+                new Vector2(188f, 0.4f),
+                new Vector2(2f, 3.2f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z5_Shrub1",
+                zone,
+                new Vector2(171f, -0.8f),
+                new Vector2(1.2f, 1f),
+                GetScenerySprite(SceneryKind.Shrub)
             );
 
             // Interactive puzzle elements
@@ -577,21 +778,24 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(167f, 0.2f),
                 new Vector2(3f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
             CreateStaticBlock(
                 "Z5_Step2",
                 zone,
                 new Vector2(175f, 1.2f),
                 new Vector2(3f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
             CreateStaticBlock(
                 "Z5_Step3",
                 zone,
                 new Vector2(182f, 0.2f),
                 new Vector2(3f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f)
+                new Color(0.16f, 0.63f, 0.47f),
+                StaticBlockKind.Platform
             );
 
             SpawnFood("Carrot", new Vector2(175f, 1.9f), zone);
@@ -612,14 +816,16 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(212.5f, -1.8f),
                 new Vector2(35f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f)
+                new Color(0.12f, 0.48f, 0.36f),
+                StaticBlockKind.Ground
             );
             CreateStaticBlock(
                 "Z6_RightBoundary",
                 zone,
                 new Vector2(228f, 0f),
                 new Vector2(1f, 8f),
-                new Color(0.08f, 0.32f, 0.25f)
+                new Color(0.08f, 0.32f, 0.25f),
+                StaticBlockKind.Wall
             );
 
             CreateWorldLabel(
@@ -630,6 +836,36 @@ namespace HealthyRace.Level
             );
             CreateWorldLabel("LINHA DE CHEGADA", zone, new Vector2(215f, -0.6f), Color.white);
 
+            // Scenery props
+            CreateSceneryProp(
+                "Z6_Tree1",
+                zone,
+                new Vector2(200f, 0.4f),
+                new Vector2(2.2f, 3.5f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z6_Tree2",
+                zone,
+                new Vector2(210f, 0.4f),
+                new Vector2(2.2f, 3.5f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z6_Tree3",
+                zone,
+                new Vector2(225f, 0.4f),
+                new Vector2(2.2f, 3.5f),
+                GetScenerySprite(SceneryKind.Tree)
+            );
+            CreateSceneryProp(
+                "Z6_Shrub1",
+                zone,
+                new Vector2(205f, -0.8f),
+                new Vector2(1.4f, 1.1f),
+                GetScenerySprite(SceneryKind.Shrub)
+            );
+
             // Finish Line trigger
             _finishLine = CreateFinishLineObject("FinishLine", zone, new Vector2(FinishX, -0.5f));
 
@@ -639,7 +875,8 @@ namespace HealthyRace.Level
                 zone,
                 new Vector2(221f, -1.2f),
                 new Vector2(4f, 0.4f),
-                new Color(0.85f, 0.7f, 0.2f)
+                new Color(0.85f, 0.7f, 0.2f),
+                StaticBlockKind.Platform
             );
             CreateWorldLabel("PÓDIO", zone, new Vector2(221f, -0.6f), new Color(1f, 0.9f, 0.3f));
         }
@@ -674,7 +911,32 @@ namespace HealthyRace.Level
                 controller.Configure(playerIndex);
             }
 
-            CreateWorldLabel(playerName, player.transform, new Vector2(0f, 0.86f), Color.white);
+            var visualPrefab = playerIndex == 1 ? _playerOneVisualPrefab : _playerTwoVisualPrefab;
+            if (visualPrefab != null)
+            {
+                var visualObj = Instantiate(visualPrefab, player.transform, false);
+                visualObj.name = "VisualPresentation";
+                visualObj.transform.localPosition = Vector3.zero;
+                visualObj.transform.localScale = new Vector3(1f / 0.85f, 1f / 1.25f, 1f);
+
+                var presentation = visualObj.GetComponent<PlayerPresentation>();
+                if (presentation != null)
+                {
+                    var wellbeing = player.GetComponent<WellbeingComponent>();
+                    var fatigue = player.GetComponent<FatigueComponent>();
+                    presentation.Bind(wellbeing, fatigue, controller);
+                }
+
+                if (sr != null)
+                {
+                    sr.enabled = false;
+                }
+            }
+            else
+            {
+                CreateWorldLabel(playerName, player.transform, new Vector2(0f, 0.86f), Color.white);
+            }
+
             return player;
         }
 
@@ -814,6 +1076,15 @@ namespace HealthyRace.Level
                 _playerTwoHud.RegisterFoodCollected(collectible.FoodData);
                 _playerTwoHud.AddScore(collectible.FoodData.BasePoints);
             }
+
+            if (_visualCatalog != null)
+            {
+                var kind =
+                    collectible.FoodData.Category == FoodCategory.Healthy
+                        ? FeedbackKind.HealthyPickup
+                        : FeedbackKind.UltraProcessedPickup;
+                VisualFeedback.Emit(_visualCatalog, kind, collectible.transform.position);
+            }
         }
 
         private PushableBox CreatePushableBox(string name, Transform parent, Vector2 position)
@@ -839,8 +1110,21 @@ namespace HealthyRace.Level
             var sr = box.GetComponent<SpriteRenderer>();
             if (sr != null)
             {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(0.72f, 0.39f, 0.13f);
+                if (
+                    _visualCatalog != null
+                    && _visualCatalog.Environment != null
+                    && _visualCatalog.Environment.Length > 7
+                    && _visualCatalog.Environment[7] != null
+                )
+                {
+                    sr.sprite = _visualCatalog.Environment[7];
+                    sr.color = Color.white;
+                }
+                else
+                {
+                    sr.sprite = PlaceholderSpriteFactory.Square;
+                    sr.color = new Color(0.72f, 0.39f, 0.13f);
+                }
                 sr.sortingOrder = 1;
             }
 
@@ -863,8 +1147,21 @@ namespace HealthyRace.Level
             col.isTrigger = true;
 
             var sr = btn.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = new Color(0.9f, 0.25f, 0.25f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 8
+                && _visualCatalog.Environment[8] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[8];
+                sr.color = Color.white;
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = new Color(0.9f, 0.25f, 0.25f);
+            }
             sr.sortingOrder = 1;
             btn.transform.localScale = new Vector3(1.6f, 0.25f, 1f);
 
@@ -905,8 +1202,21 @@ namespace HealthyRace.Level
             baseObj.transform.localScale = new Vector3(0.8f, 0.4f, 1f);
 
             var baseRenderer = baseObj.AddComponent<SpriteRenderer>();
-            baseRenderer.sprite = PlaceholderSpriteFactory.Square;
-            baseRenderer.color = new Color(0.3f, 0.3f, 0.35f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 9
+                && _visualCatalog.Environment[9] != null
+            )
+            {
+                baseRenderer.sprite = _visualCatalog.Environment[9];
+                baseRenderer.color = Color.white;
+            }
+            else
+            {
+                baseRenderer.sprite = PlaceholderSpriteFactory.Square;
+                baseRenderer.color = new Color(0.3f, 0.3f, 0.35f);
+            }
             baseRenderer.sortingOrder = 2;
 
             var lever = leverObj.AddComponent<Lever>();
@@ -933,8 +1243,21 @@ namespace HealthyRace.Level
             col.size = Vector2.one;
 
             var sr = doorObj.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = new Color(0.2f, 0.45f, 0.6f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 10
+                && _visualCatalog.Environment[10] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[10];
+                sr.color = Color.white;
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = new Color(0.2f, 0.45f, 0.6f);
+            }
             sr.sortingOrder = 1;
 
             var door = doorObj.AddComponent<PuzzleDoor>();
@@ -962,8 +1285,21 @@ namespace HealthyRace.Level
             col.size = Vector2.one;
 
             var sr = platObj.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = new Color(0.18f, 0.72f, 0.52f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 1
+                && _visualCatalog.Environment[1] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[1];
+                sr.color = Color.white;
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = new Color(0.18f, 0.72f, 0.52f);
+            }
             sr.sortingOrder = 1;
 
             var platform = platObj.AddComponent<ActivatedPlatform>();
@@ -991,8 +1327,21 @@ namespace HealthyRace.Level
             col.isTrigger = true;
 
             var sr = spikeObj.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = new Color(0.85f, 0.2f, 0.2f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 11
+                && _visualCatalog.Environment[11] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[11];
+                sr.color = Color.white;
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = new Color(0.85f, 0.2f, 0.2f);
+            }
             sr.sortingOrder = 2;
 
             var spike = spikeObj.AddComponent<SpikeHazard>();
@@ -1025,8 +1374,21 @@ namespace HealthyRace.Level
             col.isTrigger = true;
 
             var sr = mudObj.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = new Color(0.42f, 0.28f, 0.15f, 0.75f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 12
+                && _visualCatalog.Environment[12] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[12];
+                sr.color = new Color(1f, 1f, 1f, 0.9f);
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = new Color(0.42f, 0.28f, 0.15f, 0.75f);
+            }
             sr.sortingOrder = 2;
 
             var mud = mudObj.AddComponent<MudHazard>();
@@ -1060,8 +1422,21 @@ namespace HealthyRace.Level
             col.size = Vector2.one;
 
             var sr = platObj.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = new Color(0.75f, 0.55f, 0.35f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 1
+                && _visualCatalog.Environment[1] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[1];
+                sr.color = Color.white;
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = new Color(0.75f, 0.55f, 0.35f);
+            }
             sr.sortingOrder = 1;
 
             var platform = platObj.AddComponent<FallingPlatform>();
@@ -1088,10 +1463,22 @@ namespace HealthyRace.Level
             var flag = new GameObject("Flag");
             flag.transform.SetParent(cp.transform, false);
             flag.transform.localPosition = new Vector2(0f, 0.8f);
-            flag.transform.localScale = new Vector3(0.4f, 1.8f, 1f);
+            flag.transform.localScale = new Vector3(0.8f, 1.8f, 1f);
 
             var sr = flag.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 5
+                && _visualCatalog.Environment[5] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[5];
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+            }
             sr.color = new Color(0.55f, 0.55f, 0.6f);
             sr.sortingOrder = 2;
 
@@ -1102,6 +1489,18 @@ namespace HealthyRace.Level
                 new Color(0.55f, 0.55f, 0.6f),
                 new Color(0.25f, 0.85f, 0.35f)
             );
+
+            checkpoint.CheckpointReached += (playerIndex) =>
+            {
+                if (_visualCatalog != null)
+                {
+                    VisualFeedback.Emit(
+                        _visualCatalog,
+                        FeedbackKind.Checkpoint,
+                        cp.transform.position
+                    );
+                }
+            };
 
             CreateWorldLabel($"CP {index}", cp.transform, new Vector2(0f, 2.0f), Color.yellow);
             return checkpoint;
@@ -1121,14 +1520,36 @@ namespace HealthyRace.Level
             var banner = new GameObject("ArchBanner");
             banner.transform.SetParent(fl.transform, false);
             banner.transform.localPosition = new Vector2(0f, 2.2f);
-            banner.transform.localScale = new Vector3(0.6f, 4.5f, 1f);
+            banner.transform.localScale = new Vector3(1.2f, 4.5f, 1f);
 
             var sr = banner.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = new Color(1f, 0.84f, 0f);
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > 6
+                && _visualCatalog.Environment[6] != null
+            )
+            {
+                sr.sprite = _visualCatalog.Environment[6];
+                sr.color = Color.white;
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = new Color(1f, 0.84f, 0f);
+            }
             sr.sortingOrder = 2;
 
-            return fl.AddComponent<FinishLine>();
+            var finishLine = fl.AddComponent<FinishLine>();
+            finishLine.PlayerCrossedFinish += (playerIndex, finishTime) =>
+            {
+                if (_visualCatalog != null)
+                {
+                    VisualFeedback.Emit(_visualCatalog, FeedbackKind.Finish, fl.transform.position);
+                }
+            };
+
+            return finishLine;
         }
 
         private void SpawnFood(string foodId, Vector2 position, Transform parent)
@@ -1154,12 +1575,26 @@ namespace HealthyRace.Level
             }
         }
 
-        private static void CreateStaticBlock(
+        public enum StaticBlockKind
+        {
+            Ground,
+            Platform,
+            Wall,
+        }
+
+        public enum SceneryKind
+        {
+            Tree,
+            Shrub,
+        }
+
+        private void CreateStaticBlock(
             string blockName,
             Transform parent,
             Vector2 position,
             Vector2 size,
-            Color color
+            Color color,
+            StaticBlockKind kind = StaticBlockKind.Ground
         )
         {
             var block = new GameObject(blockName);
@@ -1169,11 +1604,92 @@ namespace HealthyRace.Level
             block.layer = GroundLayer;
 
             var sr = block.AddComponent<SpriteRenderer>();
-            sr.sprite = PlaceholderSpriteFactory.Square;
-            sr.color = color;
-            sr.sortingOrder = 0;
+            var sprite = GetEnvironmentSprite(kind);
+            if (sprite != null)
+            {
+                sr.sprite = sprite;
+                sr.color = Color.white;
+                if (_visualCatalog != null && _visualCatalog.SpriteMaterial != null)
+                {
+                    sr.sharedMaterial = _visualCatalog.SpriteMaterial;
+                }
+            }
+            else
+            {
+                sr.sprite = PlaceholderSpriteFactory.Square;
+                sr.color = color;
+            }
 
+            sr.sortingOrder = 0;
             block.AddComponent<BoxCollider2D>();
+        }
+
+        private Sprite GetEnvironmentSprite(StaticBlockKind kind)
+        {
+            if (_visualCatalog == null || _visualCatalog.Environment == null)
+            {
+                return null;
+            }
+
+            var index = kind switch
+            {
+                StaticBlockKind.Ground => 0,
+                StaticBlockKind.Platform => 1,
+                StaticBlockKind.Wall => 2,
+                _ => 0,
+            };
+
+            return index < _visualCatalog.Environment.Length
+                ? _visualCatalog.Environment[index]
+                : null;
+        }
+
+        private Sprite GetScenerySprite(SceneryKind kind)
+        {
+            if (_visualCatalog == null || _visualCatalog.Environment == null)
+            {
+                return null;
+            }
+
+            var index = kind switch
+            {
+                SceneryKind.Tree => 3,
+                SceneryKind.Shrub => 4,
+                _ => 3,
+            };
+
+            return index < _visualCatalog.Environment.Length
+                ? _visualCatalog.Environment[index]
+                : null;
+        }
+
+        private void CreateSceneryProp(
+            string propName,
+            Transform parent,
+            Vector2 position,
+            Vector2 scale,
+            Sprite sprite,
+            int sortingOrder = -2
+        )
+        {
+            if (sprite == null)
+            {
+                return;
+            }
+
+            var prop = new GameObject(propName);
+            prop.transform.SetParent(parent, false);
+            prop.transform.position = position;
+            prop.transform.localScale = new Vector3(scale.x, scale.y, 1f);
+
+            var sr = prop.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = sortingOrder;
+            sr.color = Color.white;
+            if (_visualCatalog != null && _visualCatalog.SpriteMaterial != null)
+            {
+                sr.sharedMaterial = _visualCatalog.SpriteMaterial;
+            }
         }
 
         private static Text CreateCanvasText(
