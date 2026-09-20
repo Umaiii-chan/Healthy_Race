@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8aefe2b6809a4dea89bc190a6dd2fe2b, type: 3}
+  m_Name: SO_Food_Carrot
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Collectibles.FoodData
+  _id: carrot
+  _displayName: Carrot
+  _category: 0
+  _basePoints: 120
+  _wellbeingDelta: 12
+  _sprite: {fileID: 21300000, guid: 91f7f6969f5a7ef4bb3e2cf7097a3e04, type: 3}
+  _collectSound: {fileID: 0}
