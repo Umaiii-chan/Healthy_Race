@@ -52,6 +52,8 @@ namespace HealthyRace.Level
         private MatchHUD _matchHud;
         private SharedCameraController _cameraController;
         private CooperativePuzzleController _finalPuzzle;
+        private MatchCompletionController _matchController;
+        private MatchResultsPanel _resultsPanel;
 
         public IReadOnlyList<Checkpoint> Checkpoints => _checkpoints;
         public IReadOnlyList<SpikeHazard> Spikes => _spikes;
@@ -64,6 +66,8 @@ namespace HealthyRace.Level
         public PlayerHUD PlayerTwoHud => _playerTwoHud;
         public MatchHUD MatchHud => _matchHud;
         public CooperativePuzzleController FinalPuzzle => _finalPuzzle;
+        public MatchCompletionController MatchController => _matchController;
+        public MatchResultsPanel ResultsPanel => _resultsPanel;
 
         private void Awake()
         {
@@ -768,6 +772,23 @@ namespace HealthyRace.Level
                 new Vector2(1f, 1f),
                 new Vector2(1f, 1f),
                 new Vector2(-22f, -20f)
+            );
+
+            var resultsPanelObj = new GameObject("Match Results Panel", typeof(RectTransform));
+            _resultsPanel = resultsPanelObj.AddComponent<MatchResultsPanel>();
+            _resultsPanel.Initialize(canvasObject.transform);
+
+            var matchControllerObj = new GameObject("MatchCompletionController");
+            matchControllerObj.transform.SetParent(transform, false);
+            _matchController = matchControllerObj.AddComponent<MatchCompletionController>();
+            _matchController.Configure(
+                _finishLine,
+                _matchHud,
+                _playerOne,
+                _playerTwo,
+                p1Wb,
+                p2Wb,
+                _resultsPanel
             );
         }
 

@@ -40,7 +40,7 @@ namespace HealthyRace.UI
         {
             transform.SetParent(parent, false);
 
-            var rect = (RectTransform)transform;
+            var rect = transform as RectTransform ?? gameObject.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 1f);
             rect.anchorMax = new Vector2(0.5f, 1f);
             rect.pivot = new Vector2(0.5f, 1f);

@@ -60,12 +60,14 @@ namespace HealthyRace.Level
         private void OnTriggerEnter2D(Collider2D other)
         {
             var controller = other.GetComponentInParent<PlayerController>();
-            if (controller == null)
+            var movement = other.GetComponentInParent<PlayerMovement>();
+            if (controller == null && movement == null)
             {
                 return;
             }
 
-            RecordFinish(controller.PlayerIndex);
+            var playerIndex = controller != null ? controller.PlayerIndex : 1;
+            RecordFinish(playerIndex);
         }
 
         public bool RecordFinish(int playerIndex)
