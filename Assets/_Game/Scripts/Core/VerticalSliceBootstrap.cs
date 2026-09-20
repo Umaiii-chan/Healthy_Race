@@ -34,6 +34,11 @@ namespace HealthyRace.Core
         private FoodData _burgerData;
 
         private Font _worldFont;
+        private WellbeingComponent _playerOneWellbeing;
+        private WellbeingComponent _playerTwoWellbeing;
+        private PlayerHUD _playerOneHud;
+        private PlayerHUD _playerTwoHud;
+        private MatchHUD _matchHud;
 
         private void Awake()
         {
@@ -51,6 +56,17 @@ namespace HealthyRace.Core
             var playerOne = CreatePlayer("P1", new Vector2(-6.5f, -1.4f), 1);
             var playerTwo = CreatePlayer("P2", new Vector2(-4.4f, -1.4f), 2);
 
+            _playerOneWellbeing = playerOne.GetComponent<WellbeingComponent>();
+            _playerTwoWellbeing = playerTwo.GetComponent<WellbeingComponent>();
+
+            CreateSharedCamera(playerOne.transform, playerTwo.transform);
+            CreateHud(
+                _playerOneWellbeing,
+                playerOne.GetComponent<FatigueComponent>(),
+                _playerTwoWellbeing,
+                playerTwo.GetComponent<FatigueComponent>()
+            );
+
             CreatePushableBox(new Vector2(3.3f, -2.25f));
             CreateApple(new Vector2(-0.8f, 0.35f));
             CreateBurger(new Vector2(-2.8f, -2.25f));
@@ -60,14 +76,14 @@ namespace HealthyRace.Core
             CreateBurger(new Vector2(4.8f, -2.25f));
             CreateBurger(new Vector2(7f, -2.25f));
             CreateBurger(new Vector2(9.2f, -2.25f));
+        }
 
-            CreateSharedCamera(playerOne.transform, playerTwo.transform);
-            CreateHud(
-                playerOne.GetComponent<WellbeingComponent>(),
-                playerOne.GetComponent<FatigueComponent>(),
-                playerTwo.GetComponent<WellbeingComponent>(),
-                playerTwo.GetComponent<FatigueComponent>()
-            );
+        private void Update()
+        {
+            if (_matchHud != null)
+            {
+                _matchHud.UpdateTimer(Time.timeSinceLevelLoad);
+            }
         }
 
         private void CreateApple(Vector2 position)
@@ -165,8 +181,24 @@ namespace HealthyRace.Core
         {
             var food = Instantiate(_collectiblePrefab, position, Quaternion.identity, transform);
             food.name = objectName;
-            food.GetComponent<FoodCollectible>().Configure(foodData);
+            var collectible = food.GetComponent<FoodCollectible>();
+            collectible.Configure(foodData);
+            collectible.Collected += HandleFoodCollected;
             return food;
+        }
+
+        private void HandleFoodCollected(FoodCollectible collectible, WellbeingComponent collector)
+        {
+            if (collector == _playerOneWellbeing && _playerOneHud != null)
+            {
+                _playerOneHud.RegisterFoodCollected(collectible.FoodData);
+                _playerOneHud.AddScore(collectible.FoodData.BasePoints);
+            }
+            else if (collector == _playerTwoWellbeing && _playerTwoHud != null)
+            {
+                _playerTwoHud.RegisterFoodCollected(collectible.FoodData);
+                _playerTwoHud.AddScore(collectible.FoodData.BasePoints);
+            }
         }
 
         private void CreateHud(
@@ -207,6 +239,9 @@ namespace HealthyRace.Core
                 TextAnchor.UpperCenter
             );
 
+            _matchHud = new GameObject("Match HUD", typeof(RectTransform)).AddComponent<MatchHUD>();
+            _matchHud.Initialize(canvasObject.transform, new Vector2(0f, -60f));
+
             CreateCanvasText(
                 "Controls",
                 canvasObject.transform,
@@ -221,11 +256,11 @@ namespace HealthyRace.Core
                 TextAnchor.LowerCenter
             );
 
-            var playerOneHud = new GameObject(
+            _playerOneHud = new GameObject(
                 "P1 Wellbeing HUD",
                 typeof(RectTransform)
             ).AddComponent<PlayerHUD>();
-            playerOneHud.Initialize(
+            _playerOneHud.Initialize(
                 canvasObject.transform,
                 "P1",
                 new Color(0.15f, 0.67f, 1f),
@@ -236,11 +271,11 @@ namespace HealthyRace.Core
                 new Vector2(22f, -72f)
             );
 
-            var playerTwoHud = new GameObject(
+            _playerTwoHud = new GameObject(
                 "P2 Wellbeing HUD",
                 typeof(RectTransform)
             ).AddComponent<PlayerHUD>();
-            playerTwoHud.Initialize(
+            _playerTwoHud.Initialize(
                 canvasObject.transform,
                 "P2",
                 new Color(1f, 0.35f, 0.55f),
