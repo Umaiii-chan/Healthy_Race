@@ -39,6 +39,9 @@ namespace HealthyRace.Level
 
         private readonly Dictionary<string, FoodData> _foodLookup = new();
         private readonly List<Checkpoint> _checkpoints = new();
+        private readonly List<SpikeHazard> _spikes = new();
+        private readonly List<MudHazard> _mudHazards = new();
+        private readonly List<FallingPlatform> _fallingPlatforms = new();
         private FinishLine _finishLine;
         private GameObject _playerOne;
         private GameObject _playerTwo;
@@ -51,6 +54,9 @@ namespace HealthyRace.Level
         private CooperativePuzzleController _finalPuzzle;
 
         public IReadOnlyList<Checkpoint> Checkpoints => _checkpoints;
+        public IReadOnlyList<SpikeHazard> Spikes => _spikes;
+        public IReadOnlyList<MudHazard> MudHazards => _mudHazards;
+        public IReadOnlyList<FallingPlatform> FallingPlatforms => _fallingPlatforms;
         public FinishLine FinishLine => _finishLine;
         public GameObject PlayerOne => _playerOne;
         public GameObject PlayerTwo => _playerTwo;
@@ -349,6 +355,16 @@ namespace HealthyRace.Level
             );
             SpawnFood("Strawberry", new Vector2(83f, 3.1f), upper);
 
+            var falling1 = CreateFallingPlatformObject(
+                "Upper_FallingPlatform",
+                upper,
+                new Vector2(87f, 2.7f),
+                new Vector2(3.5f, 0.4f),
+                0.5f,
+                3.0f
+            );
+            _fallingPlatforms.Add(falling1);
+
             CreateStaticBlock(
                 "Upper_P3",
                 upper,
@@ -399,6 +415,24 @@ namespace HealthyRace.Level
                 new Color(0.12f, 0.48f, 0.36f)
             );
 
+            var mud1 = CreateMudHazardObject(
+                "Lower_Mud1",
+                lower,
+                new Vector2(84.5f, -2.85f),
+                new Vector2(6f, 0.4f),
+                0.7f
+            );
+            _mudHazards.Add(mud1);
+
+            var mud2 = CreateMudHazardObject(
+                "Lower_Mud2",
+                lower,
+                new Vector2(105.5f, -2.85f),
+                new Vector2(6f, 0.4f),
+                0.7f
+            );
+            _mudHazards.Add(mud2);
+
             SpawnFood("Burger", new Vector2(74f, -2.4f), lower);
             SpawnFood("Soda", new Vector2(81f, -2.4f), lower);
             SpawnFood("Fries", new Vector2(88f, -2.4f), lower);
@@ -445,6 +479,17 @@ namespace HealthyRace.Level
             // Checkpoint 2 at start of reunion area
             var cp2 = CreateCheckpointObject("Checkpoint_2", zone, 2, new Vector2(130f, -0.8f));
             _checkpoints.Add(cp2);
+
+            // Spike obstacle on plateau
+            var spike = CreateSpikeHazardObject(
+                "Z4_Spikes",
+                zone,
+                new Vector2(150f, -1.25f),
+                new Vector2(3f, 0.4f),
+                5,
+                new Vector2(130f, -0.3f)
+            );
+            _spikes.Add(spike);
 
             // Hydrating and restorative fruit
             SpawnFood("Water", new Vector2(138f, -1.0f), zone);
@@ -902,6 +947,104 @@ namespace HealthyRace.Level
 
             var platform = platObj.AddComponent<ActivatedPlatform>();
             platform.Configure(targetOffset, 3f);
+
+            return platform;
+        }
+
+        private SpikeHazard CreateSpikeHazardObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size,
+            int penalty = 5,
+            Vector2 defaultRespawn = default
+        )
+        {
+            var spikeObj = new GameObject(name);
+            spikeObj.transform.SetParent(parent, false);
+            spikeObj.transform.position = position;
+            spikeObj.transform.localScale = new Vector3(size.x, size.y, 1f);
+
+            var col = spikeObj.AddComponent<BoxCollider2D>();
+            col.size = Vector2.one;
+            col.isTrigger = true;
+
+            var sr = spikeObj.AddComponent<SpriteRenderer>();
+            sr.sprite = PlaceholderSpriteFactory.Square;
+            sr.color = new Color(0.85f, 0.2f, 0.2f);
+            sr.sortingOrder = 2;
+
+            var spike = spikeObj.AddComponent<SpikeHazard>();
+            spike.Configure(penalty, 1.0f, defaultRespawn);
+            CreateWorldLabel(
+                "ESPINHOS",
+                spikeObj.transform,
+                new Vector2(0f, 0.6f / Mathf.Max(0.1f, size.y)),
+                new Color(1f, 0.4f, 0.4f)
+            );
+
+            return spike;
+        }
+
+        private MudHazard CreateMudHazardObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size,
+            float speedMultiplier = 0.7f
+        )
+        {
+            var mudObj = new GameObject(name);
+            mudObj.transform.SetParent(parent, false);
+            mudObj.transform.position = position;
+            mudObj.transform.localScale = new Vector3(size.x, size.y, 1f);
+
+            var col = mudObj.AddComponent<BoxCollider2D>();
+            col.size = Vector2.one;
+            col.isTrigger = true;
+
+            var sr = mudObj.AddComponent<SpriteRenderer>();
+            sr.sprite = PlaceholderSpriteFactory.Square;
+            sr.color = new Color(0.42f, 0.28f, 0.15f, 0.75f);
+            sr.sortingOrder = 2;
+
+            var mud = mudObj.AddComponent<MudHazard>();
+            mud.Configure(speedMultiplier);
+            CreateWorldLabel(
+                "LAMA (-30%)",
+                mudObj.transform,
+                new Vector2(0f, 0.6f / Mathf.Max(0.1f, size.y)),
+                new Color(0.85f, 0.7f, 0.5f)
+            );
+
+            return mud;
+        }
+
+        private FallingPlatform CreateFallingPlatformObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size,
+            float anticipation = 0.5f,
+            float respawnDelay = 3.0f
+        )
+        {
+            var platObj = new GameObject(name);
+            platObj.transform.SetParent(parent, false);
+            platObj.transform.position = position;
+            platObj.transform.localScale = new Vector3(size.x, size.y, 1f);
+            platObj.layer = GroundLayer;
+
+            var col = platObj.AddComponent<BoxCollider2D>();
+            col.size = Vector2.one;
+
+            var sr = platObj.AddComponent<SpriteRenderer>();
+            sr.sprite = PlaceholderSpriteFactory.Square;
+            sr.color = new Color(0.75f, 0.55f, 0.35f);
+            sr.sortingOrder = 1;
+
+            var platform = platObj.AddComponent<FallingPlatform>();
+            platform.Configure(anticipation, respawnDelay);
 
             return platform;
         }
