@@ -1,0 +1,1050 @@
+fileFormatVersion: 2
+guid: 1e69f1a360da1954cb95a915a278d97c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1219346716742481782
+    second: SP_VisualAtlas_0
+  - first:
+      213: 2969922754708330576
+    second: SP_VisualAtlas_1
+  - first:
+      213: -3631336881767983528
+    second: SP_VisualAtlas_2
+  - first:
+      213: -3342769448464378005
+    second: SP_VisualAtlas_3
+  - first:
+      213: 7478420850077104678
+    second: SP_VisualAtlas_4
+  - first:
+      213: 4390067736188425700
+    second: SP_VisualAtlas_5
+  - first:
+      213: -7517345332575265016
+    second: SP_VisualAtlas_6
+  - first:
+      213: -7750003019544190482
+    second: SP_VisualAtlas_7
+  - first:
+      213: 1910434689137888449
+    second: SP_VisualAtlas_8
+  - first:
+      213: -2917209708792852352
+    second: SP_VisualAtlas_9
+  - first:
+      213: 4017807789811090340
+    second: SP_VisualAtlas_10
+  - first:
+      213: 5114074921234564742
+    second: SP_VisualAtlas_11
+  - first:
+      213: 5050020520659691583
+    second: SP_VisualAtlas_12
+  - first:
+      213: 9022036311497406580
+    second: SP_VisualAtlas_13
+  - first:
+      213: 5711582071566147717
+    second: SP_VisualAtlas_14
+  - first:
+      213: 6307092770759041879
+    second: SP_VisualAtlas_15
+  - first:
+      213: -6498135791367213023
+    second: SP_VisualAtlas_16
+  - first:
+      213: -1707442899598667799
+    second: SP_VisualAtlas_17
+  - first:
+      213: 7527714553736292771
+    second: SP_VisualAtlas_18
+  - first:
+      213: -2741724719372187986
+    second: SP_VisualAtlas_19
+  - first:
+      213: -22887522542185645
+    second: SP_VisualAtlas_20
+  - first:
+      213: -7569746284498396687
+    second: SP_VisualAtlas_21
+  - first:
+      213: 3368220808217002122
+    second: SP_VisualAtlas_22
+  - first:
+      213: 3090911894410338932
+    second: SP_VisualAtlas_23
+  - first:
+      213: -7077910909362034023
+    second: SP_VisualAtlas_24
+  - first:
+      213: 4276720213909310305
+    second: SP_VisualAtlas_25
+  - first:
+      213: -1837715207545006231
+    second: SP_VisualAtlas_26
+  - first:
+      213: 5151104569430387659
+    second: SP_VisualAtlas_27
+  - first:
+      213: 5217887511985174992
+    second: SP_VisualAtlas_28
+  - first:
+      213: -1455554121501692802
+    second: SP_VisualAtlas_29
+  - first:
+      213: -9124012566659123736
+    second: SP_VisualAtlas_30
+  - first:
+      213: 7655669914648001897
+    second: SP_VisualAtlas_31
+  - first:
+      213: -1838891385248356956
+    second: SP_VisualAtlas_32
+  - first:
+      213: -7199911638542456747
+    second: SP_VisualAtlas_33
+  - first:
+      213: -6003192458536454573
+    second: SP_VisualAtlas_34
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 128
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: VitaHealthy
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 976
+        width: 211
+        height: 278
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35e87fa2ee107134a8b7720fb84f45cf
+      internalID: 1164166984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: VitaStable
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 976
+        width: 209
+        height: 278
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 600f0921f3ec5e84996b8b6eeb7b45e3
+      internalID: 423833066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: VitaTired
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 976
+        width: 207
+        height: 278
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3a02d1c549364044a5d2b64f2ba3b6a
+      internalID: -470792436
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: VitaCritical
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 976
+        width: 210
+        height: 278
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 95debd529c2972f48a45be109385659c
+      internalID: -1653200035
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Salo
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 976
+        width: 208
+        height: 278
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ec380fae7085fb40ae607f501a5c7e1
+      internalID: -850898946
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tree
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 976
+        width: 209
+        height: 278
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a87177af78ee2264aa23e9d618c78e9e
+      internalID: -2078887954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Apple
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 779
+        width: 211
+        height: 197
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 72c3418a3b0997f4ebf923a9f19a7236
+      internalID: 1721945217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Banana
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 779
+        width: 209
+        height: 197
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a67ef3d9e99df9441a0648a0dda70a21
+      internalID: 711178196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 779
+        width: 207
+        height: 197
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2a58862c3051db349b06ef3be3547776
+      internalID: 1117371154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Grapes
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 779
+        width: 210
+        height: 197
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cc129bb3750fe7247960e8e846d53f58
+      internalID: 278505180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Strawberry
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 779
+        width: 208
+        height: 197
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61d1bf542dbefb84bac3f249b7eb2c73
+      internalID: -630836880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Carrot
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 779
+        width: 209
+        height: 197
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 025129a09abd9bd4ab271f7f212074e5
+      internalID: -367814511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Broccoli
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 577
+        width: 211
+        height: 202
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4508592504187074eb143ebf527f0e71
+      internalID: -1100896985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tomato
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 577
+        width: 209
+        height: 202
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2901a26091732f746b495385749487df
+      internalID: 262626986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 577
+        width: 207
+        height: 202
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4221969c0731c2e458ed4b65f9d5fc06
+      internalID: -1194131582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nuts
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 577
+        width: 210
+        height: 202
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f150b18fb8b2d7f44a41aab58707ddd7
+      internalID: 177598484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Burger
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 577
+        width: 208
+        height: 202
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b82bd2ded136e1e40b5273d4852dc476
+      internalID: 563447114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pizza
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 577
+        width: 209
+        height: 202
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 81435376f46df19409524c40eb5585ef
+      internalID: 2145610337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soda
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 371
+        width: 211
+        height: 206
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9ec021bf2a23c904b9d54e703691e89f
+      internalID: 1484854067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Fries
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 371
+        width: 209
+        height: 206
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1fddcf192b47eae41bb9965cf088db91
+      internalID: -1201764027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Donut
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 371
+        width: 207
+        height: 206
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af05f8e8a1529054393cc1087a4b4781
+      internalID: 567313016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hotdog
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 371
+        width: 210
+        height: 206
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe69ea41b6e4a694288a1e1a179e058c
+      internalID: -796613933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Icecream
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 371
+        width: 208
+        height: 206
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5df794dff48f0fc4da9e5ed34b5d4332
+      internalID: -1703344869
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Chocolate
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 371
+        width: 209
+        height: 206
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c8e2f25e8626220458209b323613de56
+      internalID: -635556594
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ground
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 200
+        width: 211
+        height: 171
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ec82533e0212ae49ac35389bfc8ca1d
+      internalID: -1569562552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Platform
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 200
+        width: 209
+        height: 171
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 53b0864b6b3edf1449aaa3822eaf5d4d
+      internalID: 1289057505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wall
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 200
+        width: 207
+        height: 171
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b879d2ecb12d4414b96a0a7e1a2bda0d
+      internalID: 231986610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shrub
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 200
+        width: 210
+        height: 171
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df0eb6d92d7b2544b9c466ba8cd86e47
+      internalID: -961036084
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Checkpoint
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 200
+        width: 208
+        height: 171
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0a6c82bda95ee8d4b92942f8213e3b31
+      internalID: -1322321593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Finish
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 200
+        width: 209
+        height: 171
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb165bdb232a84f439d04623f71c2484
+      internalID: -215794951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Box
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 211
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9c3c619cbf232ab4abf01a3610369052
+      internalID: 697800669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PressureButton
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 0
+        width: 209
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d30156b83b5d22b42a8bb33727d36c58
+      internalID: 711173106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Lever
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 0
+        width: 207
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a52b128cbdcae89429113658770c0e41
+      internalID: 1475173772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Door
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 0
+        width: 210
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f91d6fd929ec94a49a42a9cdfd77622d
+      internalID: -1142339061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Spikes
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 0
+        width: 208
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 73fa99b9127e3e143ad8705aa3b51ae8
+      internalID: 224527991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mud
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 0
+        width: 209
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 44ee96afed2412b4f966bc371f369fd5
+      internalID: 2057899880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: c3b6fa8a75453814e9cdd3e5d5f7c2d9
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Apple: 1721945217
+      Banana: 711178196
+      Box: 697800669
+      Broccoli: -1100896985
+      Burger: 563447114
+      Carrot: -367814511
+      Checkpoint: -1322321593
+      Chocolate: -635556594
+      Donut: 567313016
+      Door: -1142339061
+      Finish: -215794951
+      Fries: -1201764027
+      Grapes: 278505180
+      Ground: -1569562552
+      Hotdog: -796613933
+      Icecream: -1703344869
+      Lever: 1475173772
+      Mud: 2057899880
+      Nuts: 177598484
+      Orange: 1117371154
+      Pizza: 2145610337
+      Platform: 1289057505
+      PressureButton: 711173106
+      Salo: -850898946
+      Shrub: -961036084
+      Soda: 1484854067
+      Spikes: 224527991
+      Strawberry: -630836880
+      Tomato: 262626986
+      Tree: -2078887954
+      VitaCritical: -1653200035
+      VitaHealthy: 1164166984
+      VitaStable: 423833066
+      VitaTired: -470792436
+      Wall: 231986610
+      Water: -1194131582
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

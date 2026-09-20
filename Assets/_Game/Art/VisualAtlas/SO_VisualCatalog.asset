@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2f7b18259346d041a813fc367f56772, type: 3}
+  m_Name: SO_VisualCatalog
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Visuals.VisualCatalog
+  Characters:
+  - {fileID: 1164166984, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 423833066, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -470792436, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -1653200035, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -850898946, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  Foods:
+  - {fileID: 1721945217, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 711178196, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 1117371154, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 278505180, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -630836880, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -367814511, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -1100896985, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 262626986, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -1194131582, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 177598484, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 563447114, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 2145610337, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 1484854067, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -1201764027, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 567313016, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -796613933, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -1703344869, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -635556594, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  Environment:
+  - {fileID: -1569562552, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 1289057505, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 231986610, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -2078887954, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -961036084, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -1322321593, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -215794951, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 697800669, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 711173106, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 1475173772, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: -1142339061, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 224527991, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 2057899880, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  PlayerAnimator: {fileID: 9100000, guid: fe6517c1337f1ef44be0adf64de060ea, type: 2}
+  Particle: {fileID: 21300000, guid: b410977cd9255614e8d0e08aff44dc8e, type: 2}
+  Heart: {fileID: 21300000, guid: 589c3f7026b8a5e46a9511a1fda87289, type: 2}
+  Droplet: {fileID: 21300000, guid: a7cf5139fca1fb24999bb0cd782050f3, type: 2}
+  Ring: {fileID: 21300000, guid: a0ac34d1ca597d54eaea9b4a4fdff852, type: 2}
+  SpriteMaterial: {fileID: 2100000, guid: 357ab54b5c245b94f900ffe5a741d6f1, type: 2}
+  PlayerOne: {r: 0.19215687, g: 0.5568628, b: 0.9411765, a: 1}
+  PlayerTwo: {r: 0.7529412, g: 0.41568628, b: 0.92156863, a: 1}
