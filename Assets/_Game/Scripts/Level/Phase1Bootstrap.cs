@@ -73,12 +73,21 @@ namespace HealthyRace.Level
         public static readonly Vector3 CameraPosition = new(16f, 9f, -10f);
 
         // ---------------------------------------------------------------------
-        // Orçamento de pulo (PlayerMovement: v0 = 12, g = 18 * 2 = 36 m/s²)
+        // Física da arena e intenção de projeto.
+        //
+        // A arena declara o ápice que quer (2.0 m) e deriva o gravityScale do
+        // jogador a partir dele e da gravidade em vigor. Nenhum valor de
+        // orçamento é literal: geometria, HUD e testes leem JumpBudget, que por
+        // sua vez lê a física viva. Ver Assets/_Game/Scripts/Player/JumpBudget.cs.
         // ---------------------------------------------------------------------
-        public const float MaxJumpHeight = 2.0f;
-        public const float MaxJumpReach = 4.67f;
-        public const float SafeStepHeight = 1.8f;
-        public const float SafeGapWidth = 4.0f;
+        public const float ArenaGravityY = -18f;
+        public const float TargetJumpApex = 2.0f;
+
+        /// <summary>
+        /// Passo de física assumido pelo orçamento em EditMode, onde
+        /// <see cref="Time.fixedDeltaTime"/> pode não refletir o runtime.
+        /// </summary>
+        public const float FixedDeltaTime = 0.02f;
         public const float BoxHeight = 1.22f;
 
         // ---------------------------------------------------------------------
@@ -234,7 +243,7 @@ namespace HealthyRace.Level
             BuildFoodLookup();
 
             Application.targetFrameRate = 60;
-            Physics2D.gravity = new Vector2(0f, -18f);
+            Physics2D.gravity = new Vector2(0f, ArenaGravityY);
 
             CreateBackground();
             CreateZones();
@@ -291,8 +300,10 @@ namespace HealthyRace.Level
             {
                 reached = ProgressMilestones;
             }
-            else if (movement == null || movement.IsGrounded)
+            else if (IsStandingOnGround(player, movement))
             {
+                // O marco só conta com o jogador apoiado: pular no lugar não avança
+                // o progresso, por mais alto que seja o ápice.
                 var feetY = player.transform.position.y - PlayerHalfHeight;
                 reached = Mathf.Max(reached, GetTierIndex(feetY));
             }
@@ -301,13 +312,28 @@ namespace HealthyRace.Level
             hud.UpdateProgress(GetProgress(playerIndex));
         }
 
+        /// <summary>
+        /// Verdadeiro apenas quando o jogador está efetivamente apoiado, conforme o
+        /// <see cref="PlayerGroundCheck"/>. Sem componente de apoio não há marco.
+        /// </summary>
+        private static bool IsStandingOnGround(GameObject player, PlayerMovement movement)
+        {
+            var groundCheck = player.GetComponent<PlayerGroundCheck>();
+            if (groundCheck != null)
+            {
+                return groundCheck.IsGrounded;
+            }
+
+            return movement != null && movement.IsGrounded;
+        }
+
         /// <summary>Índice do patamar (0..4) cujo topo é o mais alto abaixo dos pés do jogador.</summary>
         public static int GetTierIndex(float feetY)
         {
             var tier = 0;
             for (var i = 0; i < TierTops.Length; i++)
             {
-                if (feetY >= TierTops[i] - 0.25f)
+                if (feetY >= TierTops[i] - 0.1f)
                 {
                     tier = i;
                 }
@@ -330,6 +356,34 @@ namespace HealthyRace.Level
         public int GetMilestone(int playerIndex)
         {
             return playerIndex >= 1 && playerIndex <= 2 ? _milestoneReached[playerIndex] : 0;
+        }
+
+        /// <summary>Orçamento de pulo medido no jogador vivo.</summary>
+        public JumpBudget BudgetFor(int playerIndex)
+        {
+            var movement = playerIndex == 1 ? _playerOneMovement : _playerTwoMovement;
+            return JumpBudget.For(movement);
+        }
+
+        /// <summary>
+        /// Orçamento de projeto da arena, disponível sem jogador instanciado
+        /// (usado pelos testes de geometria em EditMode).
+        /// </summary>
+        public static JumpBudget DesignBudget(float jumpVelocity = 12f, float moveSpeed = 7f)
+        {
+            var gravityScale = JumpBudget.GravityScaleForApex(
+                ArenaGravityY,
+                jumpVelocity,
+                TargetJumpApex,
+                FixedDeltaTime
+            );
+            return JumpBudget.FromPhysics(
+                ArenaGravityY,
+                gravityScale,
+                jumpVelocity,
+                moveSpeed,
+                FixedDeltaTime
+            );
         }
 
         private void MonitorGateThreeBox()
@@ -1198,10 +1252,19 @@ namespace HealthyRace.Level
             var player = Instantiate(_playerPrefab, position, Quaternion.identity, transform);
             player.name = playerName;
 
+            var movement = player.GetComponent<PlayerMovement>();
             var rb = player.GetComponent<Rigidbody2D>();
             if (rb != null)
             {
-                rb.gravityScale = 2f;
+                // Deriva a gravidade do jogador do ápice de projeto em vez de fixar
+                // um número: se a gravidade global ou a velocidade de pulo mudar, o
+                // ápice continua sendo o declarado.
+                var jumpVelocity = movement != null ? movement.JumpVelocity : 12f;
+                rb.gravityScale = JumpBudget.GravityScaleForApex(
+                    Physics2D.gravity.y,
+                    jumpVelocity,
+                    TargetJumpApex
+                );
                 rb.constraints = RigidbodyConstraints2D.FreezeRotation;
                 rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             }
@@ -1246,7 +1309,6 @@ namespace HealthyRace.Level
                 CreateWorldLabel(playerName, player.transform, new Vector2(0f, 0.86f), Color.white);
             }
 
-            var movement = player.GetComponent<PlayerMovement>();
             if (movement != null)
             {
                 movement.Jumped += () => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Jump);

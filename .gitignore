@@ -40,6 +40,8 @@ Thumbs.db
 Desktop.ini
 
 # Test/build artifacts
+Assets/InitTestScene*.unity
+Assets/InitTestScene*.unity.meta
 artifacts/
 coverage/
 TestResults/

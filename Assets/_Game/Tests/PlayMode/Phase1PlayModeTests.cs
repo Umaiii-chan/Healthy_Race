@@ -154,6 +154,42 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Phase1_JumpingInPlace_DoesNotAdvanceProgress()
+        {
+            yield return LoadArena();
+
+            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var p1 = bootstrap.PlayerOne;
+            var movement = p1.GetComponent<PlayerMovement>();
+
+            for (var i = 0; i < 10; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.That(movement.IsGrounded, Is.True);
+            var startProgress = bootstrap.PlayerOneHud.Progress;
+
+            // Pular no lugar não pode valer marco: o progresso exige apoio no patamar.
+            for (var jump = 0; jump < 3; jump++)
+            {
+                movement.RequestJump();
+                for (var frame = 0; frame < 40; frame++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    yield return null;
+                    Assert.That(
+                        bootstrap.PlayerOneHud.Progress,
+                        Is.EqualTo(startProgress).Within(0.001f),
+                        "Jumping in place must not advance the milestone."
+                    );
+                }
+            }
+
+            Assert.That(bootstrap.GetMilestone(1), Is.EqualTo(0));
+        }
+
+        [UnityTest]
         public IEnumerator Phase1_MatchConcludesOnlyWhenBothPlayersOccupyTheirOwnDoors()
         {
             yield return LoadArena();

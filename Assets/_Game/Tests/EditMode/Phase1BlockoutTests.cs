@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using HealthyRace.Core;
 using HealthyRace.Level;
+using HealthyRace.Player;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -575,7 +576,7 @@ namespace HealthyRace.Tests.EditMode
                 Assert.That(
                     unreachable,
                     Is.Empty,
-                    "Every surface must be reachable by jumps <= 1.8 m / gaps <= 4.0 m or a cooperative link: "
+                    "Every surface must be reachable within the derived jump budget or a cooperative link: "
                         + string.Join(", ", unreachable)
                 );
 
@@ -601,31 +602,61 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
-        public void PlatformingMetrics_MatchJumpBudget()
+        public void JumpBudget_IsDerivedFromArenaPhysics_NotFromLiterals()
         {
-            const float jumpVelocity = 12f;
-            const float effectiveGravity = 36f;
-            const float moveSpeed = 7f;
+            var budget = Phase1Bootstrap.DesignBudget();
 
-            var maxJumpHeight = (jumpVelocity * jumpVelocity) / (2f * effectiveGravity);
-            var maxHorizontalReach = moveSpeed * (2f * jumpVelocity / effectiveGravity);
+            // g = |gravity| * gravityScale derivado do ápice de projeto
+            var expectedGravityScale = JumpBudget.GravityScaleForApex(
+                Phase1Bootstrap.ArenaGravityY,
+                12f,
+                Phase1Bootstrap.TargetJumpApex,
+                Phase1Bootstrap.FixedDeltaTime
+            );
+            Assert.That(
+                budget.Gravity,
+                Is.EqualTo(Mathf.Abs(Phase1Bootstrap.ArenaGravityY) * expectedGravityScale)
+                    .Within(0.001f)
+            );
+            Assert.That(budget.Apex, Is.EqualTo(Phase1Bootstrap.TargetJumpApex).Within(0.01f));
 
-            Assert.That(maxJumpHeight, Is.EqualTo(Phase1Bootstrap.MaxJumpHeight).Within(0.01f));
-            Assert.That(maxHorizontalReach, Is.EqualTo(Phase1Bootstrap.MaxJumpReach).Within(0.01f));
-            Assert.That(Phase1Bootstrap.SafeStepHeight, Is.LessThan(maxJumpHeight));
-            Assert.That(Phase1Bootstrap.SafeGapWidth, Is.LessThan(maxHorizontalReach));
+            // A fórmula contínua superestima o ápice em ~v0*dt/2; o orçamento usa o
+            // valor do integrador discreto, que é o que o jogador realmente alcança.
+            Assert.That(budget.IdealApex, Is.GreaterThan(budget.Apex));
+            Assert.That(
+                budget.IdealApex - budget.Apex,
+                Is.EqualTo(budget.JumpVelocity * Phase1Bootstrap.FixedDeltaTime * 0.5f)
+                    .Within(0.02f)
+            );
+            // O alcance é consequência do ápice e do passo de física, nunca um número
+            // escolhido: com gravidade menor o tempo no ar cresce e o alcance junto.
+            Assert.That(budget.Reach, Is.EqualTo(budget.MoveSpeed * budget.AirTime).Within(0.001f));
+            Assert.That(budget.Reach, Is.GreaterThan(budget.Apex * 2f));
+            Assert.That(budget.SafeStep, Is.LessThan(budget.Apex));
+            Assert.That(budget.SafeGap, Is.LessThan(budget.Reach));
 
-            // O vão entre patamares (3.4 m) excede o pulo de propósito.
+            // O orçamento acompanha a física: dobrar a gravidade reduz o ápice à metade.
+            var heavier = JumpBudget.FromPhysics(
+                Phase1Bootstrap.ArenaGravityY,
+                budget.Gravity / Mathf.Abs(Phase1Bootstrap.ArenaGravityY) * 2f,
+                12f,
+                7f,
+                Phase1Bootstrap.FixedDeltaTime
+            );
+            Assert.That(heavier.Apex, Is.LessThan(budget.Apex * 0.55f));
+            Assert.That(heavier.Apex, Is.GreaterThan(budget.Apex * 0.45f));
+
+            // O vão entre patamares (3.4 m) excede o ápice de propósito.
             Assert.That(
                 Phase1Bootstrap.Tier1Top - Phase1Bootstrap.Tier0Top,
-                Is.GreaterThan(Phase1Bootstrap.MaxJumpHeight)
+                Is.GreaterThan(budget.Apex)
             );
 
-            // Caixa como degrau: topo em 9.02 e AP3 erguida em 10.8 (1.78 m)
+            // Caixa como degrau: topo em 9.02 e AP3 erguida em 10.8.
             var boxTop = Phase1Bootstrap.Tier2Top + Phase1Bootstrap.BoxHeight;
             Assert.That(
                 Phase1Bootstrap.Tier2Top + 3f - boxTop,
-                Is.LessThanOrEqualTo(Phase1Bootstrap.SafeStepHeight)
+                Is.LessThanOrEqualTo(budget.SafeStep)
             );
         }
 
@@ -668,9 +699,7 @@ namespace HealthyRace.Tests.EditMode
         {
             var gap = Mathf.Max(0f, to.MinX - from.MaxX, from.MinX - to.MaxX);
             var rise = to.TopY - from.TopY;
-            const float epsilon = 0.001f;
-            return gap <= Phase1Bootstrap.SafeGapWidth + epsilon
-                && rise <= Phase1Bootstrap.SafeStepHeight + epsilon;
+            return Phase1Bootstrap.DesignBudget().CanClear(rise, gap);
         }
 
         private static FinishLine CreateDoor(int playerIndex, List<GameObject> created)

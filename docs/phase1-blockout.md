@@ -23,24 +23,69 @@ pulo, a distribuição pedagógica dos coletáveis e os critérios anti-deadlock
 
 ---
 
-## 2. Orçamento de pulo
+## 2. Orçamento de pulo (derivado, não fixado)
 
-Toda a geometria é calibrada contra `PlayerMovement` (`_jumpVelocity = 12`,
-`_moveSpeed = 7`) com gravidade efetiva $g = 18 \times 2 = 36\ \text{m/s}^2$:
+O orçamento **não é declarado em constantes**. `JumpBudget`
+(`Assets/_Game/Scripts/Player/JumpBudget.cs`) o calcula a partir da física viva:
+
+| Termo | De onde vem |
+| :-- | :-- |
+| gravidade | módulo de `Physics2D.gravity.y` vezes o `gravityScale` do Rigidbody2D do jogador |
+| velocidade de pulo | `PlayerMovement._jumpVelocity` vezes `JumpMultiplier` |
+| velocidade horizontal | `PlayerMovement._moveSpeed` vezes `MovementMultiplier` |
+| passo de física | `Time.fixedDeltaTime` |
+
+### Integração discreta, não contínua
+
+A fórmula de livro `h = v0^2 / (2g)` **superestima** o ápice, porque a Unity
+integra em passos (Euler semi-implícito):
+
+```text
+v -= g * dt;
+y += v * dt;
+```
+
+A perda é de aproximadamente `v0 * dt / 2`. Com `v0 = 12` e `dt = 0.02` isso são
+0.12 m, ou 6% do salto. Era essa a divergência entre a documentação e o jogo: a
+documentação prometia 2.00 m e a física entregava 1.88 m.
+
+`JumpBudget` simula o integrador, então `Apex` é o valor que o jogador realmente
+alcança. `IdealApex` fica disponível apenas para comparação.
+
+### Intenção de projeto
+
+A arena declara o ápice que quer e **deriva** a gravidade do jogador:
+
+```text
+ArenaGravityY  = -18
+TargetJumpApex = 2.0 m
+gravityScale   = JumpBudget.GravityScaleForApex(...)  ->  ~1.888
+```
+
+Se a gravidade global, o passo de física ou a velocidade de pulo mudarem, o ápice
+continua sendo o declarado. Valores resultantes:
 
 | Grandeza | Valor |
 | :-- | :-- |
-| Altura máxima de pulo | $2.0\ \text{m}$ |
-| Alcance horizontal máximo | $\approx 4.67\ \text{m}$ |
-| Degrau seguro por pulo simples | $\le 1.8\ \text{m}$ |
-| Vão seguro em pulo com velocidade | $\le 4.0\ \text{m}$ |
-| Altura da caixa empurrável | $1.22\ \text{m}$ |
+| Ápice medido | 2.00 m |
+| Tempo no ar | ~0.70 s |
+| Alcance horizontal | ~4.90 m |
+| Degrau seguro (`SafeStep`) | ápice menos 0.2 m |
+| Vão seguro (`SafeGap`) | alcance menos 0.67 m |
+| Altura da caixa empurrável | 1.22 m |
 
-O espaçamento entre patamares é de $3.4\ \text{m}$: **excede** o pulo de propósito.
-Toda subida exige degrau intermediário, caixa ou plataforma acionada.
+O espaçamento entre patamares é de 3.4 m: **excede** o ápice de propósito. Toda
+subida exige degrau intermediário, caixa ou plataforma acionada.
 
-As constantes vivem em `Phase1Bootstrap` (`MaxJumpHeight`, `SafeStepHeight`,
-`SafeGapWidth`, `TierTops`) e são usadas pelo teste de percorribilidade.
+Geometria, HUD e testes consomem `Phase1Bootstrap.DesignBudget()` ou
+`Phase1Bootstrap.BudgetFor(playerIndex)`. Nenhum número de orçamento é literal.
+
+### Guarda-corpo
+
+`JumpBudgetPlayModeTests` mede ápice e alcance em runtime e confronta com o
+orçamento declarado, com tolerância de 5%. Foi esse teste que revelou a perda da
+integração discreta. Um teste que compara constante com constante não detecta
+divergência entre documentação e física.
 
 ---
 
