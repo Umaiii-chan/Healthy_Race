@@ -93,22 +93,31 @@ namespace HealthyRace.Level
         // ---------------------------------------------------------------------
         // Patamares (topo da superfície)
         // ---------------------------------------------------------------------
-        // Piso de cada corredor escavado. O espaçamento de 3.2 m excede o ápice de
+        // Piso de cada corredor escavado. O espaçamento de 3.4 m excede o ápice de
         // 2.0 m de propósito: nenhum corredor alcança o de cima por pulo.
         public const float Tier0Top = 1.0f;
-        public const float Tier1Top = 4.2f;
-        public const float Tier2Top = 7.4f;
-        public const float Tier3Top = 10.6f;
-        public const float Tier4Top = 13.8f;
+        public const float Tier1Top = 4.4f;
+        public const float Tier2Top = 7.8f;
+        public const float Tier3Top = 11.2f;
+        public const float Tier4Top = 14.6f;
 
         /// <summary>Altura livre de cada corredor. O jogador tem 1.25 m.</summary>
         public const float CorridorClearance = 2.6f;
 
-        /// <summary>Espessura das lajes de rocha entre corredores.</summary>
-        public const float SlabThickness = 0.6f;
+        /// <summary>
+        /// Espessura das lajes de rocha entre corredores. Grossa o bastante para
+        /// ler como rocha escavada, e não como plataforma flutuante.
+        /// </summary>
+        public const float SlabThickness = 0.8f;
 
-        /// <summary>Altura dos pilares internos, dentro do degrau seguro.</summary>
-        public const float PillarHeight = 1.6f;
+        /// <summary>
+        /// Altura dos pilares internos. Precisa caber sob o teto com o jogador em
+        /// cima: 1.2 + 1.25 = 2.45 &lt; 2.6.
+        /// </summary>
+        public const float PillarHeight = 1.2f;
+
+        /// <summary>Lado dos ladrilhos de rocha usados no visual.</summary>
+        public const float RockTileSize = 0.8f;
 
         /// <summary>Passagem livre sob os arcos pendurados no teto.</summary>
         public const float ArchOpening = 2.0f;
@@ -159,6 +168,7 @@ namespace HealthyRace.Level
         private static readonly Color GroundColor = new(0.12f, 0.48f, 0.36f);
         private static readonly Color PlatformColor = new(0.16f, 0.63f, 0.47f);
         private static readonly Color WallColor = new(0.08f, 0.32f, 0.25f);
+        private static readonly Color TunnelColor = new(0.05f, 0.08f, 0.12f);
         private static readonly Color LabelColor = new(0.85f, 0.95f, 1f);
         private static readonly Color HintColor = new(0.95f, 0.95f, 0.7f);
 
@@ -474,28 +484,144 @@ namespace HealthyRace.Level
             return data;
         }
 
+        /// <summary>
+        /// O labirinto é espaço negativo: tudo que não é túnel é rocha. Pinta a arena
+        /// inteira com ladrilhos de rocha e, por cima, os túneis escuros de cada
+        /// corredor e de cada poço. Os colisores das lajes ficam onde a rocha
+        /// permanece, então o visual e a física contam a mesma história.
+        /// </summary>
         private void CreateBackground()
         {
             var bgParent = new GameObject("Background").transform;
             bgParent.SetParent(transform, false);
 
-            var bg = new GameObject("Sky");
-            bg.transform.SetParent(bgParent, false);
-            bg.transform.position = new Vector3(
-                (ArenaMinX + ArenaMaxX) * 0.5f,
-                (ArenaMinY + ArenaMaxY) * 0.5f,
-                5f
-            );
-            bg.transform.localScale = new Vector3(
-                ArenaMaxX - ArenaMinX + 2f,
-                ArenaMaxY - ArenaMinY + 2f,
-                1f
+            var rock =
+                GetEnvironmentSprite(StaticBlockKind.Wall) ?? PlaceholderSpriteFactory.Square;
+            var rockTint =
+                rock == PlaceholderSpriteFactory.Square
+                    ? WallColor
+                    : new Color(0.72f, 0.72f, 0.72f);
+            TileSprite(
+                "Rocha_Fundo",
+                bgParent,
+                rock,
+                rockTint,
+                ArenaMinX,
+                ArenaMaxX,
+                ArenaMinY,
+                ArenaMaxY,
+                2f,
+                -10
             );
 
-            var renderer = bg.AddComponent<SpriteRenderer>();
+            // Túneis: cada corredor, do piso ao teto.
+            for (var i = 0; i < TierTops.Length; i++)
+            {
+                CreateTunnel(
+                    $"Tunel_C{i}",
+                    bgParent,
+                    ArenaMinX,
+                    ArenaMaxX,
+                    TierTops[i],
+                    TierTops[i] + CorridorClearance
+                );
+            }
+
+            // Poços: ligam o corredor de baixo ao de cima, atravessando a laje.
+            for (var i = 0; i < Shafts.Length; i++)
+            {
+                var lowerCeiling = TierTops[i] + CorridorClearance;
+                CreateTunnel(
+                    $"Tunel_Poco{i + 1}",
+                    bgParent,
+                    Shafts[i].MinX,
+                    Shafts[i].MaxX,
+                    lowerCeiling,
+                    TierTops[i + 1]
+                );
+            }
+
+            // Vão das plataformas que caem, na laje 3.
+            CreateTunnel(
+                "Tunel_VaoQueda",
+                bgParent,
+                FallGapMinX,
+                FallGapMaxX,
+                Tier2Top + CorridorClearance,
+                Tier3Top
+            );
+        }
+
+        private static void CreateTunnel(
+            string name,
+            Transform parent,
+            float minX,
+            float maxX,
+            float minY,
+            float maxY
+        )
+        {
+            var tunnel = new GameObject(name);
+            tunnel.transform.SetParent(parent, false);
+            tunnel.transform.position = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, 4f);
+            tunnel.transform.localScale = new Vector3(maxX - minX, maxY - minY, 1f);
+
+            var renderer = tunnel.AddComponent<SpriteRenderer>();
             renderer.sprite = PlaceholderSpriteFactory.Square;
-            renderer.color = new Color(0.08f, 0.16f, 0.28f);
-            renderer.sortingOrder = -10;
+            renderer.color = TunnelColor;
+            renderer.sortingOrder = -8;
+        }
+
+        /// <summary>
+        /// Preenche um retângulo com ladrilhos uniformes do sprite, em vez de esticar
+        /// um único sprite. Só o ladrilho da borda é encolhido para caber no resto.
+        /// </summary>
+        private static Transform TileSprite(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            Color color,
+            float minX,
+            float maxX,
+            float minY,
+            float maxY,
+            float tileSize,
+            int sortingOrder
+        )
+        {
+            var holder = new GameObject(name).transform;
+            holder.SetParent(parent, false);
+
+            var natural = sprite.bounds.size;
+            var naturalX = natural.x > 0.0001f ? natural.x : 1f;
+            var naturalY = natural.y > 0.0001f ? natural.y : 1f;
+            var width = maxX - minX;
+            var height = maxY - minY;
+            var cols = Mathf.Max(1, Mathf.CeilToInt(width / tileSize - 0.001f));
+            var rows = Mathf.Max(1, Mathf.CeilToInt(height / tileSize - 0.001f));
+
+            for (var r = 0; r < rows; r++)
+            {
+                var y0 = minY + r * tileSize;
+                var h = Mathf.Min(tileSize, maxY - y0);
+                for (var c = 0; c < cols; c++)
+                {
+                    var x0 = minX + c * tileSize;
+                    var w = Mathf.Min(tileSize, maxX - x0);
+
+                    var tile = new GameObject($"Tile_{r}_{c}");
+                    tile.transform.SetParent(holder, false);
+                    tile.transform.position = new Vector3(x0 + w * 0.5f, y0 + h * 0.5f, 0f);
+                    tile.transform.localScale = new Vector3(w / naturalX, h / naturalY, 1f);
+
+                    var sr = tile.AddComponent<SpriteRenderer>();
+                    sr.sprite = sprite;
+                    sr.color = color;
+                    sr.sortingOrder = sortingOrder;
+                }
+            }
+
+            return holder;
         }
 
         // =====================================================================
@@ -633,7 +759,7 @@ namespace HealthyRace.Level
             CreateSlab(slabs, 4, Tier4Top, ShaftDMinX, ShaftDMaxX);
 
             CreateWorldLabel("C1", slabs, new Vector2(15f, Tier1Top + 1.9f), LabelColor);
-            CreateWorldLabel("C2", slabs, new Vector2(15f, Tier2Top + 1.9f), LabelColor);
+            CreateWorldLabel("C2", slabs, new Vector2(30f, Tier2Top + 2.1f), LabelColor);
             CreateWorldLabel("C3", slabs, new Vector2(26f, Tier3Top + 1.9f), LabelColor);
             CreateWorldLabel("C4", slabs, new Vector2(16f, Tier4Top + 1.9f), LabelColor);
         }
@@ -694,7 +820,7 @@ namespace HealthyRace.Level
         {
             var detail = CreateGroup("Labirinto_Detalhe");
 
-            // Pilares: 1.6 m de altura, dentro do degrau seguro.
+            // Pilares: 1.2 m, vencidos com um pulo mesmo sob o teto baixo.
             CreatePillar(detail, "C0_Pilar1", 8f, Tier0Top);
             CreatePillar(detail, "C0_Pilar2", 17.4f, Tier0Top);
             CreatePillar(detail, "C1_Pilar1", 10.6f, Tier1Top);
@@ -703,11 +829,94 @@ namespace HealthyRace.Level
             CreatePillar(detail, "C3_Pilar1", 5.2f, Tier3Top);
             CreatePillar(detail, "C4_Pilar1", 20.4f, Tier4Top);
 
-            // Arcos: rocha presa ao teto com 2.0 m de passagem livre embaixo.
+            // Arcos: rocha presa ao teto com passagem livre embaixo.
             CreateArch(detail, "C0_Arco", 12.4f, 13.6f, Tier0Top);
             CreateArch(detail, "C1_Arco", 17.8f, 19f, Tier1Top);
             CreateArch(detail, "C2_Arco", 9.2f, 10.4f, Tier2Top);
             CreateArch(detail, "C3_Arco", 24.6f, 25.8f, Tier3Top);
+
+            // Dentes de rocha: saliências curtas no piso e no teto, de larguras
+            // variadas, para o corredor parecer escavado e não cortado a régua.
+            // Nenhum dente fecha a passagem: os do piso têm 0.5 m e os do teto
+            // deixam mais de 2.0 m livres.
+            foreach (var (x, w) in new[] { (1.2f, 0.6f), (22.6f, 1f), (29.4f, 0.7f) })
+            {
+                CreateFloorBump(detail, $"C0_Dente_{x}", x, w, Tier0Top);
+            }
+            foreach (var (x, w) in new[] { (6.4f, 0.9f), (15.2f, 0.6f), (24.2f, 1.1f) })
+            {
+                CreateFloorBump(detail, $"C1_Dente_{x}", x, w, Tier1Top);
+            }
+            foreach (var (x, w) in new[] { (8f, 0.7f), (17.6f, 1f), (28.8f, 0.6f) })
+            {
+                CreateFloorBump(detail, $"C2_Dente_{x}", x, w, Tier2Top);
+            }
+            foreach (var (x, w) in new[] { (3.4f, 1f), (18.2f, 0.6f), (27.6f, 0.8f) })
+            {
+                CreateFloorBump(detail, $"C3_Dente_{x}", x, w, Tier3Top);
+            }
+            foreach (var (x, w) in new[] { (6.2f, 0.8f), (15f, 0.6f), (28.6f, 1f) })
+            {
+                CreateFloorBump(detail, $"C4_Dente_{x}", x, w, Tier4Top);
+            }
+
+            foreach (var (x, w) in new[] { (5.6f, 1.2f), (21.2f, 0.8f), (30.2f, 1.4f) })
+            {
+                CreateCeilingTooth(detail, $"C0_Estalactite_{x}", x, w, Tier0Top);
+            }
+            foreach (var (x, w) in new[] { (1.6f, 1f), (12.8f, 1.4f), (26.6f, 0.9f) })
+            {
+                CreateCeilingTooth(detail, $"C1_Estalactite_{x}", x, w, Tier1Top);
+            }
+            foreach (var (x, w) in new[] { (7.4f, 0.8f), (27.2f, 1.3f), (30.6f, 0.9f) })
+            {
+                CreateCeilingTooth(detail, $"C2_Estalactite_{x}", x, w, Tier2Top);
+            }
+            foreach (var (x, w) in new[] { (13.6f, 1.2f), (20.4f, 0.8f), (29.2f, 1.1f) })
+            {
+                CreateCeilingTooth(detail, $"C3_Estalactite_{x}", x, w, Tier3Top);
+            }
+            foreach (var (x, w) in new[] { (12.6f, 1f), (17.8f, 1.3f), (26.8f, 0.8f) })
+            {
+                CreateCeilingTooth(detail, $"C4_Estalactite_{x}", x, w, Tier4Top);
+            }
+
+            // Tampão de rocha que encerra o corredor C0 antes da parede: a largada
+            // fica num bolsão e o corredor tem começo e fim, como um túnel.
+            CreateRock(
+                "C0_Tampao",
+                detail,
+                30.8f,
+                ArenaMaxX,
+                Tier0Top,
+                Tier0Top + CorridorClearance
+            );
+        }
+
+        private void CreateFloorBump(
+            Transform parent,
+            string name,
+            float minX,
+            float width,
+            float floorY
+        )
+        {
+            const float bumpHeight = 0.5f;
+            CreateRock(name, parent, minX, minX + width, floorY, floorY + bumpHeight);
+            RegisterSurface(name, minX, minX + width, floorY + bumpHeight);
+        }
+
+        private void CreateCeilingTooth(
+            Transform parent,
+            string name,
+            float minX,
+            float width,
+            float floorY
+        )
+        {
+            const float toothDepth = 0.45f;
+            var ceiling = floorY + CorridorClearance;
+            CreateRock(name, parent, minX, minX + width, ceiling - toothDepth, ceiling);
         }
 
         private void CreatePillar(Transform parent, string name, float minX, float floorY)
@@ -961,14 +1170,14 @@ namespace HealthyRace.Level
 
             var stepMinX = ShaftDMinX + 0.6f;
             var stepMaxX = ShaftDMaxX - 0.6f;
-            var stepTop = Tier3Top + 1.6f;
+            var stepTop = Tier3Top + 1.7f;
             CreateRock("PocoD_Degrau", climb, stepMinX, stepMaxX, stepTop - SlabThickness, stepTop);
             RegisterSurface("PocoD_Degrau", stepMinX, stepMaxX, stepTop);
 
             _playerOneDoor = CreateFinishLineObject(
                 "Porta_P1",
                 climb,
-                new Vector2(26.5f, Tier4Top + 1.3f),
+                new Vector2(22f, Tier4Top + 1.3f),
                 1,
                 "PORTA P1",
                 new Color(0.15f, 0.67f, 1f)
@@ -976,7 +1185,7 @@ namespace HealthyRace.Level
             _playerTwoDoor = CreateFinishLineObject(
                 "Porta_P2",
                 climb,
-                new Vector2(30f, Tier4Top + 1.3f),
+                new Vector2(25.5f, Tier4Top + 1.3f),
                 2,
                 "PORTA P2",
                 new Color(0.35f, 1f, 0.55f)
@@ -1152,7 +1361,7 @@ namespace HealthyRace.Level
             SpawnFood("Fish", new Vector2(1.5f, Tier2Top + 0.7f), foods);
             SpawnFood("Strawberry", new Vector2(30.5f, Tier3Top + 0.7f), foods);
             SpawnFood("Watermelon", new Vector2(2f, Tier3Top + 0.7f), foods);
-            SpawnFood("Banana", new Vector2(3f, Tier4Top + 0.7f), foods);
+            SpawnFood("Banana", new Vector2(20.8f, Tier4Top + PillarHeight + 0.6f), foods);
         }
 
         // =========================================================================
@@ -1982,26 +2191,41 @@ namespace HealthyRace.Level
             block.transform.position = position;
             block.layer = GroundLayer;
 
-            var sr = block.AddComponent<SpriteRenderer>();
+            // O colisor tem exatamente o tamanho de projeto.
+            var collider = block.AddComponent<BoxCollider2D>();
+            collider.size = size;
+
+            // O visual é ladrilhado, nunca esticado: um piso de 25 m recebe 30
+            // ladrilhos iguais em vez de um sprite deformado 30 vezes.
             var sprite = GetEnvironmentSprite(kind);
-            if (sprite != null)
+            var tint = Color.white;
+            if (sprite == null)
             {
-                sr.sprite = sprite;
-                sr.color = Color.white;
-                if (_visualCatalog != null && _visualCatalog.SpriteMaterial != null)
+                sprite = PlaceholderSpriteFactory.Square;
+                tint = color;
+            }
+
+            var half = size * 0.5f;
+            var tiles = TileSprite(
+                "Visual",
+                block.transform,
+                sprite,
+                tint,
+                position.x - half.x,
+                position.x + half.x,
+                position.y - half.y,
+                position.y + half.y,
+                RockTileSize,
+                0
+            );
+
+            if (_visualCatalog != null && _visualCatalog.SpriteMaterial != null)
+            {
+                foreach (var sr in tiles.GetComponentsInChildren<SpriteRenderer>())
                 {
                     sr.sharedMaterial = _visualCatalog.SpriteMaterial;
                 }
             }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = color;
-            }
-
-            sr.sortingOrder = 0;
-            var collider = block.AddComponent<BoxCollider2D>();
-            FitSpriteToSize(block.transform, sr, collider, size);
         }
 
         /// <summary>

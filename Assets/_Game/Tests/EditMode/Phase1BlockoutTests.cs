@@ -376,7 +376,7 @@ namespace HealthyRace.Tests.EditMode
                 {
                     Assert.That(
                         Phase1Bootstrap.TierTops[i] - Phase1Bootstrap.TierTops[i - 1],
-                        Is.EqualTo(3.2f).Within(0.001f)
+                        Is.EqualTo(3.4f).Within(0.001f)
                     );
                     Assert.That(
                         bootstrap.Surfaces.Any(s =>

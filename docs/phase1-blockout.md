@@ -97,17 +97,20 @@ escavados, ligados por poços verticais. Não há plataformas soltas no vazio.
 
 ### Corredores
 
-Cada corredor tem 2.6 m de altura livre, contra 1.25 m do jogador.
+Cada corredor tem 2.6 m de altura livre, contra 1.25 m do jogador, e as lajes de
+rocha entre eles têm 0.8 m. Visualmente o labirinto é espaço negativo: a arena
+inteira é pintada com ladrilhos de rocha e os corredores e poços são túneis
+escuros por cima. Os colisores ficam onde a rocha permanece.
 
 | Corredor | Piso | Teto | Trechos de piso (X) |
 | :-- | --: | --: | :-- |
-| C0 | 1.0 | 3.6 | 0 a 32, inteiriço |
-| C1 | 4.2 | 6.8 | 0 a 25.5 e 28.5 a 32 |
-| C2 | 7.4 | 10.0 | 0 a 3 e 6 a 32 |
-| C3 | 10.6 | 13.2 | 0 a 19.5 e 22.5 a 32 |
-| C4 | 13.8 | 16.4 | 0 a 8 e 11 a 32 |
+| C0 | 1.0 | 3.6 | 0 a 30.8, com tampão de rocha até a parede |
+| C1 | 4.4 | 7.0 | 0 a 25.5 e 28.5 a 32 |
+| C2 | 7.8 | 10.4 | 0 a 3 e 6 a 32 |
+| C3 | 11.2 | 13.8 | 0 a 12, 17 a 19.5 e 22.5 a 32 |
+| C4 | 14.6 | 17.2 | 0 a 8 e 11 a 32 |
 
-O espaçamento entre pisos é de 3.2 m e o ápice de pulo é de 2.0 m. Nenhum
+O espaçamento entre pisos é de 3.4 m e o ápice de pulo é de 2.0 m. Nenhum
 corredor alcança o de cima por salto: subir sempre depende de um poço.
 
 ### Poços verticais
@@ -130,10 +133,18 @@ Largada no corredor C0: P1 em (3.5, 1.7) e P2 em (5.0, 1.7).
 Dentro dos corredores, dois elementos quebram a linha reta sem nunca fechar a
 passagem:
 
-- **Pilares** de 1.6 m, abaixo do degrau seguro, vencidos com um pulo. Sete no
-  total, e quatro deles carregam alimento saudável no topo.
+- **Pilares** de 1.2 m, vencidos com um pulo mesmo sob o teto baixo, já que
+  1.2 + 1.25 fica abaixo dos 2.6 m livres. Sete no total, e cinco deles carregam
+  alimento saudável no topo.
 - **Arcos** presos ao teto, deixando 2.0 m de passagem livre embaixo. Quatro no
   total.
+- **Dentes de rocha**: 15 saliências de 0.5 m no piso e 15 estalactites de
+  0.45 m no teto, com larguras variadas, para o corredor parecer escavado e não
+  cortado a régua. Nenhum deles fecha a passagem.
+- **Tampão** que encerra o corredor C0 em X 30.8, para o túnel ter começo e fim.
+
+Todos os blocos são ladrilhados com peças uniformes de 0.8 m em vez de um sprite
+esticado, e só o ladrilho da borda encolhe para fechar a medida.
 
 ---
 
@@ -142,7 +153,7 @@ passagem:
 ### G1 — C0 para C1, poço A
 
 - Botão **B1** no meio do corredor C0, em X 19, longe do poço.
-- Plataforma **AP1** no poço, repouso com topo em 1.6 e curso até 4.2.
+- Plataforma **AP1** no poço, repouso com topo em 1.6 e curso até 4.4.
 - Botão **B2** já em C1, em X 23, para devolver o favor.
 - Enquanto um jogador mantém o botão, a plataforma sobe com o outro. A distância
   entre botão e poço é o que impede a travessia solo.
@@ -152,7 +163,7 @@ passagem:
 ### G2 — C1 para C2, poço B
 
 - Alavanca **L2** na ponta oposta do corredor C1, em X 29, não alternável.
-- Plataforma **AP2** no poço, repouso com topo em 4.8 e curso até 7.4.
+- Plataforma **AP2** no poço, repouso com topo em 5.0 e curso até 7.8.
 - Quem puxa atravessa o corredor inteiro, então os dois avançam em vez de um
   ficar parado esperando.
 - **Saída de emergência**: a alavanca não volta, então a plataforma fica erguida
@@ -160,7 +171,7 @@ passagem:
 
 ### G3 — C2 para C3, poço C
 
-- Botão **B3** em X 15.5 e plataforma **AP3** no poço, de 8.0 até 10.6.
+- Botão **B3** em X 15.5 e plataforma **AP3** no poço, de 8.4 até 11.2.
 - Rota cooperativa: um segura B3 e o outro sobe.
 - Rota anti-deadlock: a caixa empurrada sobre B3 trava a plataforma erguida, e os
   dois sobem sem depender de sincronia.
@@ -169,8 +180,9 @@ passagem:
 
 ### Subida final — C3 para C4, poço D
 
-Degrau de rocha livre, com topo em 12.2. Sem mecanismo: os dois convergem e
-chegam juntos ao corredor das portas.
+Degrau de rocha livre, com topo em 12.9: dois lances de 1.7 m, ambos dentro do
+degrau seguro. Sem mecanismo: os dois convergem e chegam juntos ao corredor das
+portas.
 
 ---
 
@@ -178,8 +190,8 @@ chegam juntos ao corredor das portas.
 
 | Perigo | Posição | Efeito |
 | :-- | :-- | :-- |
-| Lama | C0 em X 13 a 17 e 20 a 24, C1 em X 12 a 16 | Velocidade a 70% e fadiga acelerada |
-| Espinhos | C0 em X 9 a 12, entre os dois pilares | Menos 5 de bem-estar e respawn no checkpoint |
+| Lama | C0 em X 13.2 a 16.8 e 20.2 a 23.8, C1 em X 12.4 a 15.6 | Velocidade a 70% e fadiga acelerada |
+| Espinhos | C0 em X 9.2 a 11.6, entre os dois pilares | Menos 5 de bem-estar e respawn no checkpoint |
 | Plataformas que caem | C3, vão de 5.0 m entre X 12 e 17 | 0.5 s de aviso e 3 s fora |
 
 O vão de C3 excede o alcance de pulo, então as duas plataformas são obrigatórias.
@@ -193,10 +205,10 @@ Um por corredor, sempre na saída do poço, mantendo o isolamento por jogador.
 
 | Checkpoint | Posição | Corredor |
 | :-- | :-- | :-- |
-| CP1 | (30.0, 5.2) | C1 |
-| CP2 | (7.5, 8.4) | C2 |
-| CP3 | (24.0, 11.6) | C3 |
-| CP4 | (12.5, 14.8) | C4 |
+| CP1 | (30.0, 5.4) | C1 |
+| CP2 | (7.5, 8.8) | C2 |
+| CP3 | (24.0, 12.2) | C3 |
+| CP4 | (12.5, 15.6) | C4 |
 
 ---
 
@@ -211,18 +223,18 @@ exigem subir num pilar ou atravessar até uma das pontas.
 `Chips` (18.4, C1) e `Candy` (27, C1).
 
 **Saudáveis sobre pilares**: `Apple` (8.4, C0), `Carrot` (11, C1),
-`Orange` (25.8, C2) e `Broccoli` (5.6, C3).
+`Orange` (25.8, C2), `Broccoli` (5.6, C3) e `Banana` (20.8, C4).
 
 **Saudáveis nas pontas**: `Water` (1.5, C1), `Fish` (1.5, C2),
-`Avocado` (30.5, C2), `Watermelon` (2, C3), `Strawberry` (30.5, C3) e
-`Banana` (3, C4).
+`Avocado` (30.5, C2), `Watermelon` (2, C3) e `Strawberry` (30.5, C3).
 
 ---
 
 ## 8. Chegada
 
 Duas portas no corredor C4, `FinishLine` com `AcceptedPlayerIndex`: a Porta P1 em
-X 26.5 só aceita P1, e a Porta P2 em X 30 só aceita P2. A partida encerra quando
+X 22 só aceita P1, e a Porta P2 em X 25.5 só aceita P2. Ficam fora das faixas
+que os painéis do HUD cobrem nos cantos superiores. A partida encerra quando
 os dois estão em suas portas ao mesmo tempo. O primeiro a chegar não congela e
 pode voltar para ajudar.
 
