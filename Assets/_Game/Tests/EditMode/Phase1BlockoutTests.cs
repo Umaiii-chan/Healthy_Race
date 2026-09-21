@@ -518,10 +518,19 @@ namespace HealthyRace.Tests.EditMode
                 foreach (Transform food in foods)
                 {
                     var collectible = food.GetComponent<Collectibles.FoodCollectible>();
-                    if (collectible == null || collectible.FoodData == null)
-                    {
-                        continue;
-                    }
+                    Assert.That(
+                        collectible,
+                        Is.Not.Null,
+                        $"{food.name} must be a FoodCollectible."
+                    );
+
+                    // Pular os nulos aqui era o furo que escondia o bug de caixa dos
+                    // ids: todos os 18 alimentos resolviam para nulo e o teste passava.
+                    Assert.That(
+                        collectible.FoodData,
+                        Is.Not.Null,
+                        $"{food.name} must resolve to a FoodData in the catalog."
+                    );
 
                     var isHealthy =
                         collectible.FoodData.Category == Collectibles.FoodCategory.Healthy;
@@ -598,6 +607,100 @@ namespace HealthyRace.Tests.EditMode
             {
                 Checkpoint.ResetRegistry();
                 Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void Phase1Bootstrap_SpawnsEveryFood_ResolvedFromTheCatalog()
+        {
+            var go = new GameObject("BootstrapHolder");
+            try
+            {
+                var bootstrap = BuildBootstrap(go);
+
+                Assert.That(
+                    bootstrap.UnresolvedFoodIds,
+                    Is.Empty,
+                    "Every SpawnFood id must exist in the catalog: "
+                        + string.Join(", ", bootstrap.UnresolvedFoodIds)
+                );
+
+                var foods = go.transform.Find("LevelGeometry/Coletaveis");
+                Assert.That(foods, Is.Not.Null);
+                Assert.That(
+                    foods.childCount,
+                    Is.EqualTo(18),
+                    "The arena must spawn all 18 MVP foods."
+                );
+
+                var healthy = 0;
+                var ultraProcessed = 0;
+                foreach (Transform food in foods)
+                {
+                    var data = food.GetComponent<Collectibles.FoodCollectible>().FoodData;
+                    Assert.That(data, Is.Not.Null, $"{food.name} must have FoodData.");
+
+                    if (data.Category == Collectibles.FoodCategory.Healthy)
+                    {
+                        healthy++;
+                    }
+                    else
+                    {
+                        ultraProcessed++;
+                    }
+                }
+
+                Assert.That(healthy, Is.EqualTo(10));
+                Assert.That(ultraProcessed, Is.EqualTo(8));
+            }
+            finally
+            {
+                Checkpoint.ResetRegistry();
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void SharedCamera_Letterbox_MatchesTheArenaAspect()
+        {
+            var camObj = new GameObject("Cam", typeof(Camera));
+            try
+            {
+                var controller = camObj.AddComponent<SharedCameraController>();
+                controller.SetLetterboxedFraming(
+                    Phase1Bootstrap.CameraPosition,
+                    Phase1Bootstrap.ArenaMaxX - Phase1Bootstrap.ArenaMinX,
+                    Phase1Bootstrap.ArenaMaxY - Phase1Bootstrap.ArenaMinY
+                );
+
+                Assert.That(controller.UsesLetterbox, Is.True);
+
+                // A altura da arena define o tamanho; a proporção é garantida pelo rect.
+                Assert.That(
+                    controller.CalculateFixedOrthographicSize(),
+                    Is.EqualTo((Phase1Bootstrap.ArenaMaxY - Phase1Bootstrap.ArenaMinY) * 0.5f)
+                        .Within(0.001f)
+                );
+
+                var cam = camObj.GetComponent<Camera>();
+                var drawn = cam.rect;
+                var arenaAspect =
+                    (Phase1Bootstrap.ArenaMaxX - Phase1Bootstrap.ArenaMinX)
+                    / (Phase1Bootstrap.ArenaMaxY - Phase1Bootstrap.ArenaMinY);
+                var drawnAspect =
+                    ((float)Screen.width * drawn.width) / (Screen.height * drawn.height);
+
+                Assert.That(
+                    drawnAspect,
+                    Is.EqualTo(arenaAspect).Within(0.01f),
+                    "The drawn viewport must have the arena aspect, so nothing beyond the walls shows."
+                );
+                Assert.That(drawn.width, Is.LessThanOrEqualTo(1f));
+                Assert.That(drawn.height, Is.LessThanOrEqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(camObj);
             }
         }
 

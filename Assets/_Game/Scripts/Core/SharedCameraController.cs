@@ -54,6 +54,12 @@ namespace HealthyRace.Core
         [SerializeField, Min(0f)]
         private float _fixedMinimumHalfWidth;
 
+        [SerializeField, Min(0f)]
+        private float _letterboxWorldWidth;
+
+        [SerializeField, Min(0f)]
+        private float _letterboxWorldHeight;
+
         private Camera _camera;
         private Vector3 _positionVelocity;
         private float _zoomVelocity;
@@ -78,6 +84,7 @@ namespace HealthyRace.Core
         public bool UsePlayableBounds => _usePlayableBounds;
         public Bounds PlayableBounds => _playableBounds;
         public bool UseFixedFraming => _useFixedFraming;
+        public bool UsesLetterbox => _letterboxWorldWidth > 0f && _letterboxWorldHeight > 0f;
         public Vector3 FixedPosition => _fixedPosition;
         public float FixedOrthographicSize => _fixedOrthographicSize;
 
@@ -124,8 +131,56 @@ namespace HealthyRace.Core
             _useFixedFraming = false;
         }
 
+        /// <summary>
+        /// Trava o enquadramento em um retângulo exato do mundo e aplica letterbox
+        /// via <see cref="Camera.rect"/>. Sem isso, uma janela mais larga que a
+        /// proporção do retângulo mostra o que existe além das paredes, e uma mais
+        /// estreita corta o topo e a base.
+        /// </summary>
+        public void SetLetterboxedFraming(Vector3 center, float worldWidth, float worldHeight)
+        {
+            _letterboxWorldWidth = Mathf.Max(0.01f, worldWidth);
+            _letterboxWorldHeight = Mathf.Max(0.01f, worldHeight);
+            SetFixedFraming(center, _letterboxWorldHeight * 0.5f);
+        }
+
+        /// <summary>
+        /// Ajusta <see cref="Camera.rect"/> para que a área desenhada tenha exatamente
+        /// a proporção do retângulo do mundo. O excedente vira barra preta.
+        /// </summary>
+        private void ApplyLetterbox()
+        {
+            var cam = CameraComponent;
+            if (cam == null || !UsesLetterbox)
+            {
+                return;
+            }
+
+            var targetAspect = _letterboxWorldWidth / _letterboxWorldHeight;
+            var windowAspect = (float)Screen.width / Mathf.Max(1, Screen.height);
+            var scaleHeight = windowAspect / targetAspect;
+
+            if (scaleHeight < 1f)
+            {
+                // Janela mais estreita: barras em cima e embaixo.
+                cam.rect = new Rect(0f, (1f - scaleHeight) * 0.5f, 1f, scaleHeight);
+            }
+            else
+            {
+                // Janela mais larga: barras nas laterais.
+                var scaleWidth = 1f / scaleHeight;
+                cam.rect = new Rect((1f - scaleWidth) * 0.5f, 0f, scaleWidth, 1f);
+            }
+        }
+
         public float CalculateFixedOrthographicSize()
         {
+            if (UsesLetterbox)
+            {
+                // O letterbox garante a proporção, então a altura define o tamanho.
+                return _letterboxWorldHeight * 0.5f;
+            }
+
             var cam = CameraComponent;
             var aspect = cam != null && cam.aspect > 0.01f ? cam.aspect : (16f / 9f);
             var sizeForWidth = _fixedMinimumHalfWidth > 0f ? _fixedMinimumHalfWidth / aspect : 0f;
@@ -140,6 +195,8 @@ namespace HealthyRace.Core
             {
                 cam.orthographicSize = CalculateFixedOrthographicSize();
             }
+
+            ApplyLetterbox();
         }
 
         public void SetPadding(Vector2 padding)

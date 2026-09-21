@@ -146,7 +146,13 @@ namespace HealthyRace.Level
         [SerializeField]
         private GameObject _playerTwoVisualPrefab;
 
-        private readonly Dictionary<string, FoodData> _foodLookup = new();
+        // Os ScriptableObject guardam o id em minúsculas ("apple", "hotdog") enquanto
+        // o nível pede "Apple" e "HotDog". Sem o comparador que ignora caixa, todos os
+        // 18 alimentos resolviam para nulo e nasciam sem sprite e sem efeito.
+        private readonly Dictionary<string, FoodData> _foodLookup = new(
+            StringComparer.OrdinalIgnoreCase
+        );
+        private readonly List<string> _unresolvedFoodIds = new();
         private readonly List<Checkpoint> _checkpoints = new();
         private readonly List<SpikeHazard> _spikes = new();
         private readonly List<MudHazard> _mudHazards = new();
@@ -182,6 +188,9 @@ namespace HealthyRace.Level
         public IReadOnlyList<SpikeHazard> Spikes => _spikes;
         public IReadOnlyList<MudHazard> MudHazards => _mudHazards;
         public IReadOnlyList<FallingPlatform> FallingPlatforms => _fallingPlatforms;
+
+        /// <summary>Ids pedidos por <c>SpawnFood</c> que não existem no catálogo.</summary>
+        public IReadOnlyList<string> UnresolvedFoodIds => _unresolvedFoodIds;
         public IReadOnlyList<ArenaSurface> Surfaces => _surfaces;
         public IReadOnlyList<ArenaLink> CooperativeLinks => _cooperativeLinks;
         public IReadOnlyList<CooperativePuzzleController> Gates => _gates;
@@ -404,6 +413,7 @@ namespace HealthyRace.Level
         private void BuildFoodLookup()
         {
             _foodLookup.Clear();
+            _unresolvedFoodIds.Clear();
             if (_foodCatalog == null)
             {
                 return;
@@ -552,12 +562,7 @@ namespace HealthyRace.Level
                 StaticBlockKind.Wall
             );
 
-            CreateWorldLabel(
-                "CORRIDA DO EQUILÍBRIO — ARENA",
-                shell,
-                new Vector2(16f, 17.2f),
-                LabelColor
-            );
+            // O título já aparece no HUD; um rótulo de mundo no topo colidia com ele.
         }
 
         // ---------------------------------------------------------------------
@@ -832,10 +837,11 @@ namespace HealthyRace.Level
                 new Color(0.35f, 1f, 0.55f)
             );
 
+            // Abaixo do cronômetro do HUD, que ocupa o topo central da tela.
             CreateWorldLabel(
                 "CHEGADA — os dois nas portas",
                 tier,
-                new Vector2(14f, Tier4Top + 2.2f),
+                new Vector2(14f, Tier4Top + 0.9f),
                 Color.white
             );
             CreateSceneryProp(
@@ -1372,11 +1378,25 @@ namespace HealthyRace.Level
                 ),
                 true
             );
-            _cameraController.SetFixedFraming(
+            _cameraController.SetLetterboxedFraming(
                 CameraPosition,
-                CameraOrthographicSize,
-                (ArenaMaxX - ArenaMinX) * 0.5f
+                ArenaMaxX - ArenaMinX,
+                ArenaMaxY - ArenaMinY
             );
+
+            // A câmera com rect reduzido não limpa a tela inteira, então uma câmera de
+            // fundo pinta as barras de preto e evita lixo gráfico nas bordas.
+            var letterboxObject = new GameObject("Letterbox Camera", typeof(Camera));
+            letterboxObject.transform.SetParent(transform, false);
+            letterboxObject.transform.position = CameraPosition;
+
+            var letterboxCamera = letterboxObject.GetComponent<Camera>();
+            letterboxCamera.orthographic = true;
+            letterboxCamera.orthographicSize = CameraOrthographicSize;
+            letterboxCamera.clearFlags = CameraClearFlags.SolidColor;
+            letterboxCamera.backgroundColor = Color.black;
+            letterboxCamera.cullingMask = 0;
+            letterboxCamera.depth = cam.depth - 1;
         }
 
         private void CreateHud(
@@ -2008,6 +2028,13 @@ namespace HealthyRace.Level
             }
 
             var foodData = GetFood(foodId);
+            if (foodData == null)
+            {
+                // Falhar em silêncio aqui foi o que escondeu o bug de caixa dos ids.
+                _unresolvedFoodIds.Add(foodId);
+                Debug.LogError($"[Phase1Bootstrap] Alimento '{foodId}' não existe no catálogo.");
+            }
+
             var item = Instantiate(_collectiblePrefab, position, Quaternion.identity, parent);
             item.name = $"Food_{foodId}";
 
