@@ -147,6 +147,13 @@ dicionário sensível a maiúsculas/minúsculas com os IDs dos assets (`apple`,
 fica sem configuração e `OnTriggerEnter2D` retorna sem coletar. A correção
 necessária pertence ao bootstrap, sem reimplementar o sistema de Food.
 
+Correção aplicada nesta branch: `StringComparer.OrdinalIgnoreCase` na busca de
+IDs. O teste `Phase1Scene_AllPlacedFoodsResolveTheirCatalogData` abre a cena
+original, instancia sua composição e verifica dados, identidade e sprite de
+todos os alimentos, incluindo ambas as categorias. Antes da correção falhou
+com `Food_Apple has no collectible data`; depois, a suíte EditMode passou
+130/130. Nenhum FoodData, balanceamento ou regra de coleta foi alterado.
+
 O catálogo funcional contém alimentos como abacate, peixe, melancia, chips e
 doce; o atlas visual e o PDF usam uma seleção parcialmente diferente. Preservar
 os FoodData funcionais e seus sprites associados durante o redesign; não ligar
@@ -191,9 +198,15 @@ Estas são restrições preliminares, não o mapa definitivo da referência ause
 ## Evidências desta etapa
 
 - `git lfs fsck`: aprovado no worktree de redesign.
-- Auditoria estática descrita acima; nenhuma alteração em gameplay ou cena.
+- Auditoria descrita acima; cena e geometria preservadas. Única correção de
+  integração até esta etapa: resolução dos IDs de alimentos no bootstrap.
 - Suíte EditMode da base: 129/129 aprovados, 0 falhas, 0 ignorados. XML e log
   locais em `Logs/baseline-editmode.*`. Isso não comprova travessia física.
 - Auditoria de IDs: 24 posições de alimento, nenhuma correspondência exata;
   todas as 24 correspondem ao catálogo ao ignorar maiúsculas/minúsculas.
+- Após a correção: 130/130 EditMode e 49/49 PlayMode aprovados. XML e logs
+  locais em `Logs/redesign-editmode.*` e `Logs/redesign-playmode.*`.
+- CSharpier aprovado nos dois arquivos C# alterados; Markdown sem problemas
+  reportados. A alteração de gravidade em ProjectSettings gerada pelos testes
+  foi inspecionada e restaurada, não incluída na entrega.
 - Playtest integral, captura da fase, build e redesign ainda não realizados.

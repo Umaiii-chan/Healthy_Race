@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Reflection;
+using HealthyRace.Collectibles;
 using HealthyRace.Level;
 using NUnit.Framework;
 using UnityEditor;
@@ -322,6 +323,50 @@ namespace HealthyRace.Tests.EditMode
             finally
             {
                 Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void Phase1Scene_AllPlacedFoodsResolveTheirCatalogData()
+        {
+            var scene = EditorSceneManager.OpenPreviewScene(ScenePath);
+            try
+            {
+                var bootstrap = scene
+                    .GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Phase1Bootstrap>())
+                    .Single();
+                typeof(Phase1Bootstrap)
+                    .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(bootstrap, null);
+
+                var foods = bootstrap.GetComponentsInChildren<FoodCollectible>();
+                Assert.That(foods, Is.Not.Empty);
+                foreach (var food in foods)
+                {
+                    Assert.That(
+                        food.FoodData,
+                        Is.Not.Null,
+                        $"{food.name} has no collectible data."
+                    );
+                    Assert.That(
+                        food.name,
+                        Is.EqualTo($"Food_{food.FoodData.Id}").IgnoreCase,
+                        "The placement must resolve its own food, not a fallback."
+                    );
+                    Assert.That(
+                        food.GetComponent<SpriteRenderer>().sprite,
+                        Is.SameAs(food.FoodData.Sprite)
+                    );
+                }
+                Assert.That(foods.Any(food => food.FoodData.Category == FoodCategory.Healthy));
+                Assert.That(
+                    foods.Any(food => food.FoodData.Category == FoodCategory.UltraProcessed)
+                );
+            }
+            finally
+            {
+                EditorSceneManager.ClosePreviewScene(scene);
             }
         }
 

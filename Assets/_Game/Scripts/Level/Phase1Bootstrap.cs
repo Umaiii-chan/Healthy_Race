@@ -49,7 +49,9 @@ namespace HealthyRace.Level
         [SerializeField]
         private GameObject _playerTwoVisualPrefab;
 
-        private readonly Dictionary<string, FoodData> _foodLookup = new();
+        private readonly Dictionary<string, FoodData> _foodLookup = new(
+            System.StringComparer.OrdinalIgnoreCase
+        );
         private readonly List<Checkpoint> _checkpoints = new();
         private readonly List<SpikeHazard> _spikes = new();
         private readonly List<MudHazard> _mudHazards = new();
