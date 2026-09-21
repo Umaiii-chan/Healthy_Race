@@ -50,25 +50,22 @@ O sistema de puzzles e interações cooperativas do Healthy Race provê mecanism
   - Método `ResetPuzzle()` restaura caixa ao spawn original, redefine alavancas e portas;
   - Acionável por botão/alavanca de reset dedicada no cenário ou por gatilho de código.
 
-## Integração na Fase 1 (arena cooperativa)
+## Integração na Fase 1 (labirinto competitivo)
 
-A Fase 1 é uma arena de tela única com três portais cooperativos, todos amarrados
-por `CooperativePuzzleController.Bind(...)` em `Phase1Bootstrap`
-(métodos `CreateGateOne`, `CreateGateTwo` e `CreateGateThree`):
+A Fase 1 é uma corrida em labirinto de metades espelhadas, então nenhum mecanismo
+depende do outro jogador. Cada metade recebe, via `CooperativePuzzleController.Bind(...)`
+em `Phase1Bootstrap.CreateHalfMechanisms`:
 
-1. **G1 (T0 → T1)**: `PressureButton` B1 no piso e B2 na ilha direita de T1 erguem a
-   `ActivatedPlatform` AP1 (topo 1.6 → 4.4). Dois controladores, um por botão; a
-   plataforma obedece ao OU dos dois.
-2. **G2 (T1 → T2)**: `Lever` L2 (não alternável) no nicho de T0 abre a `PuzzleDoor` D2
-   (movimento instantâneo, colisor desligado quando aberta) que bloqueia o trecho
-   direito de T2. Um segundo controlador liga o botão de resgate B2r à plataforma
-   AP2 do nicho, que devolve o acionador a T1.
-3. **G3 (T2 → T3)**: `PressureButton` B3 ergue a AP3 (7.8 → 10.8). A `PushableBox`
-   pode ser empurrada sobre B3 para travar a plataforma e servir de degrau. A
-   alavanca de reset R3 (`_resetSwitch`) devolve a caixa ao spawn, e o bootstrap a
-   devolve automaticamente se ela cair abaixo de T2.
+1. **Dois elevadores de uso individual**: `ActivatedPlatform` com um
+   `PressureButton` montado na própria plataforma. O passageiro pisa no botão, sobe
+   com a plataforma e ela desce sozinha quando ele sai no topo.
+2. **Portão e alavanca**: `PuzzleDoor` de movimento instantâneo, que fica no lugar,
+   translúcido e sem colisor quando aberto, acionado por uma `Lever` não alternável
+   colocada num degrau do corredor anterior.
+3. **Caixa e muro**: `PushableBox` empurrada até um muro de 2 m, que vira degrau.
+   O bootstrap devolve a caixa ao spawn se ela cair do corredor.
 
-Detalhes de coordenadas e as saídas de emergência de cada portal estão em
+Detalhes de coordenadas e o simulador de travessia estão em
 `docs/phase1-blockout.md`.
 
 ## Testes Automatizados

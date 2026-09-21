@@ -14,48 +14,69 @@ using UnityEngine.UI;
 
 namespace HealthyRace.Level
 {
-    /// <summary>
-    /// Superfície horizontal onde um jogador pode ficar em pé. Usada pelo teste de
-    /// percorribilidade para conferir desníveis e vãos contra o orçamento de pulo.
-    /// </summary>
-    public readonly struct ArenaSurface
+    /// <summary>Elevador de uso individual entre dois corredores, em colunas e linhas do mapa.</summary>
+    public readonly struct MazeElevator
     {
-        public readonly string Name;
-        public readonly float MinX;
-        public readonly float MaxX;
-        public readonly float TopY;
+        public readonly int MinColumn;
+        public readonly int MaxColumn;
+        public readonly int BottomRow;
+        public readonly int TopRow;
 
-        public ArenaSurface(string name, float minX, float maxX, float topY)
+        public MazeElevator(int minColumn, int maxColumn, int bottomRow, int topRow)
         {
-            Name = name;
-            MinX = minX;
-            MaxX = maxX;
-            TopY = topY;
+            MinColumn = minColumn;
+            MaxColumn = maxColumn;
+            BottomRow = bottomRow;
+            TopRow = topRow;
         }
     }
 
-    /// <summary>
-    /// Ligação entre duas superfícies que só existe por causa de um mecanismo
-    /// cooperativo (botão, alavanca, caixa, plataforma acionada).
-    /// </summary>
-    public readonly struct ArenaLink
+    /// <summary>Portão que bloqueia uma coluna do mapa entre duas linhas até a alavanca ser acionada.</summary>
+    public readonly struct MazeDoor
     {
-        public readonly string From;
-        public readonly string To;
-        public readonly string Mechanism;
+        public readonly int Column;
+        public readonly int MinRow;
+        public readonly int MaxRow;
 
-        public ArenaLink(string from, string to, string mechanism)
+        public MazeDoor(int column, int minRow, int maxRow)
+        {
+            Column = column;
+            MinRow = minRow;
+            MaxRow = maxRow;
+        }
+    }
+
+    /// <summary>Subida que só existe com a caixa encostada no muro: da célula de origem à do topo.</summary>
+    public readonly struct MazeBoxClimb
+    {
+        public readonly Vector2Int From;
+        public readonly Vector2Int To;
+
+        public MazeBoxClimb(Vector2Int from, Vector2Int to)
         {
             From = from;
             To = to;
-            Mechanism = mechanism;
+        }
+    }
+
+    /// <summary>Alimento colocado numa célula do mapa.</summary>
+    public readonly struct MazeFood
+    {
+        public readonly string Id;
+        public readonly Vector2Int Cell;
+
+        public MazeFood(string id, Vector2Int cell)
+        {
+            Id = id;
+            Cell = cell;
         }
     }
 
     /// <summary>
     /// Bootstrap da Fase 1: Corrida do Equilíbrio.
-    /// Constrói a arena de tela única (32 x 18) com cinco patamares empilhados,
-    /// três portais cooperativos, perigos, coletáveis e duas portas de saída.
+    /// Constrói um labirinto competitivo de tela única (32 x 18 ladrilhos): duas
+    /// metades espelhadas escavadas na rocha, uma largada por jogador nos cantos
+    /// de baixo e uma saída única no centro do topo. Quem chega primeiro vence.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class Phase1Bootstrap : MonoBehaviour
@@ -91,79 +112,71 @@ namespace HealthyRace.Level
         public const float BoxHeight = 1.22f;
 
         // ---------------------------------------------------------------------
-        // Patamares (topo da superfície)
+        // Mapa do labirinto. Ladrilhos de 1 m; '#' é rocha e '.' é túnel. A linha
+        // de cima é o topo da arena. A metade direita é o espelho da esquerda, para
+        // as duas rotas terem a mesma dificuldade.
+        //
+        // Corredores (piso): A y=1, B y=5, C y=9, D y=13. O espaçamento de 4 m
+        // excede o ápice de 2 m: subir depende de escada, elevador ou caixa.
         // ---------------------------------------------------------------------
-        // Piso de cada corredor escavado. O espaçamento de 3.4 m excede o ápice de
-        // 2.0 m de propósito: nenhum corredor alcança o de cima por pulo.
-        public const float Tier0Top = 1.0f;
-        public const float Tier1Top = 4.4f;
-        public const float Tier2Top = 7.8f;
-        public const float Tier3Top = 11.2f;
-        public const float Tier4Top = 14.6f;
+        public const int MazeColumns = 32;
+        public const int MazeRowCount = 18;
+        public const float TileSize = 1f;
 
-        /// <summary>Altura livre de cada corredor. O jogador tem 1.25 m.</summary>
-        public const float CorridorClearance = 2.6f;
+        public static readonly string[] MazeRows =
+        {
+            "################################",
+            "###########.########.###########",
+            "####........................####",
+            "####........................####",
+            "####........................####",
+            "####..#..####.####.####..#..####",
+            "####...........##...........####",
+            "####....#......##......#....####",
+            "####....#......##......#....####",
+            "#############..##..#############",
+            "#########......##......#########",
+            "########.......##.......########",
+            "#######....#...##...#....#######",
+            "##.#.#...##############...#.#.##",
+            "#.......################.......#",
+            "#......##################......#",
+            "##....####################....##",
+            "################################",
+        };
 
-        /// <summary>
-        /// Espessura das lajes de rocha entre corredores. Grossa o bastante para
-        /// ler como rocha escavada, e não como plataforma flutuante.
-        /// </summary>
-        public const float SlabThickness = 0.8f;
+        /// <summary>Piso de cada corredor, de baixo para cima. Também são os marcos de progresso.</summary>
+        public const float Tier0Top = 1f;
+        public const float Tier1Top = 5f;
+        public const float Tier2Top = 9f;
+        public const float Tier3Top = 13f;
+        public static readonly float[] TierTops = { Tier0Top, Tier1Top, Tier2Top, Tier3Top };
 
-        /// <summary>
-        /// Altura dos pilares internos. Precisa caber sob o teto com o jogador em
-        /// cima: 1.2 + 1.25 = 2.45 &lt; 2.6.
-        /// </summary>
-        public const float PillarHeight = 1.2f;
+        /// <summary>Altura livre dos corredores em ladrilhos. O jogador tem 1.25 m.</summary>
+        public const float CorridorClearance = 3f;
 
         /// <summary>Lado dos ladrilhos de rocha usados no visual.</summary>
-        public const float RockTileSize = 0.8f;
+        public const float RockTileSize = 1f;
 
-        /// <summary>Passagem livre sob os arcos pendurados no teto.</summary>
-        public const float ArchOpening = 2.0f;
+        /// <summary>Marcos de progresso: corredores B, C e D alcançados, e saída cruzada.</summary>
+        public const int ProgressMilestones = 4;
 
-        // Poços verticais, escalonados para obrigar a percorrer cada corredor de
-        // ponta a ponta. É o que dá o traçado de labirinto.
-        public const float ShaftAMinX = 25.5f;
-        public const float ShaftAMaxX = 28.5f;
-        public const float ShaftBMinX = 3f;
-        public const float ShaftBMaxX = 6f;
-        public const float ShaftCMinX = 19.5f;
-        public const float ShaftCMaxX = 22.5f;
-        public const float ShaftDMinX = 8f;
-        public const float ShaftDMaxX = 11f;
+        /// <summary>X da saída única, no centro do topo.</summary>
+        public const float ExitX = 16f;
 
-        /// <summary>
-        /// Vão aberto em cada laje, na ordem das lajes 1 a 4. É por aqui, e só por
-        /// aqui, que se passa de um corredor para o de cima: a rocha fecha o resto.
-        /// </summary>
-        public static readonly (float MinX, float MaxX)[] Shafts =
-        {
-            (ShaftAMinX, ShaftAMaxX),
-            (ShaftBMinX, ShaftBMaxX),
-            (ShaftCMinX, ShaftCMaxX),
-            (ShaftDMinX, ShaftDMaxX),
-        };
-
-        /// <summary>Vão da travessia de plataformas que caem, no corredor C3.</summary>
-        public const float FallGapMinX = 12f;
-        public const float FallGapMaxX = 17f;
-        public static readonly float[] TierTops =
-        {
-            Tier0Top,
-            Tier1Top,
-            Tier2Top,
-            Tier3Top,
-            Tier4Top,
-        };
-
-        /// <summary>Marcos de progresso: T1, T2, T3, T4 e porta ocupada.</summary>
-        public const int ProgressMilestones = 5;
+        public static readonly Vector2Int PlayerOneSpawnCell = new(2, 1);
+        public static readonly Vector2Int PlayerTwoSpawnCell = new(29, 1);
+        public static readonly Vector2Int[] ExitCells = { new(15, 13), new(16, 13) };
 
         private const float PlayerHalfHeight = 0.625f;
-        private static readonly Vector2 PlayerOneSpawn = new(3.5f, Tier0Top + 0.7f);
-        private static readonly Vector2 PlayerTwoSpawn = new(5.0f, Tier0Top + 0.7f);
-        private static readonly Vector2 DefaultRespawn = new(4.25f, Tier0Top + 0.7f);
+        private static readonly Vector2 PlayerOneSpawn = new(
+            (PlayerOneSpawnCell.x + 0.5f) * TileSize,
+            PlayerOneSpawnCell.y * TileSize + 0.75f
+        );
+        private static readonly Vector2 PlayerTwoSpawn = new(
+            (PlayerTwoSpawnCell.x + 0.5f) * TileSize,
+            PlayerTwoSpawnCell.y * TileSize + 0.75f
+        );
 
         private static readonly Color GroundColor = new(0.12f, 0.48f, 0.36f);
         private static readonly Color PlatformColor = new(0.16f, 0.63f, 0.47f);
@@ -207,13 +220,18 @@ namespace HealthyRace.Level
         private readonly List<SpikeHazard> _spikes = new();
         private readonly List<MudHazard> _mudHazards = new();
         private readonly List<FallingPlatform> _fallingPlatforms = new();
-        private readonly List<ArenaSurface> _surfaces = new();
-        private readonly List<ArenaLink> _cooperativeLinks = new();
         private readonly List<CooperativePuzzleController> _gates = new();
+        private readonly List<MazeElevator> _elevators = new();
+        private readonly List<MazeDoor> _doors = new();
+        private readonly List<MazeBoxClimb> _boxClimbs = new();
+        private readonly List<MazeFood> _foodPlacements = new();
+        private readonly List<PushableBox> _boxes = new();
         private readonly int[] _milestoneReached = new int[3];
 
-        private FinishLine _playerOneDoor;
-        private FinishLine _playerTwoDoor;
+        private FinishLine _finishLine;
+        private Checkpoint _playerOneSpawnCheckpoint;
+        private Checkpoint _playerTwoSpawnCheckpoint;
+        private CooperativePuzzleController _leftDoorGate;
         private GameObject _playerOne;
         private GameObject _playerTwo;
         private PlayerMovement _playerOneMovement;
@@ -224,12 +242,6 @@ namespace HealthyRace.Level
         private PlayerHUD _playerTwoHud;
         private MatchHUD _matchHud;
         private SharedCameraController _cameraController;
-        private CooperativePuzzleController _gateOne;
-        private CooperativePuzzleController _gateOneReturn;
-        private CooperativePuzzleController _gateTwo;
-        private CooperativePuzzleController _gateThree;
-        private ActivatedPlatform _gateOnePlatform;
-        private PushableBox _gateThreeBox;
         private MatchCompletionController _matchController;
         private MatchResultsPanel _resultsPanel;
         private Transform _levelParent;
@@ -241,28 +253,30 @@ namespace HealthyRace.Level
 
         /// <summary>Ids pedidos por <c>SpawnFood</c> que não existem no catálogo.</summary>
         public IReadOnlyList<string> UnresolvedFoodIds => _unresolvedFoodIds;
-        public IReadOnlyList<ArenaSurface> Surfaces => _surfaces;
-        public IReadOnlyList<ArenaLink> CooperativeLinks => _cooperativeLinks;
         public IReadOnlyList<CooperativePuzzleController> Gates => _gates;
+        public IReadOnlyList<MazeElevator> Elevators => _elevators;
+        public IReadOnlyList<MazeDoor> Doors => _doors;
+        public IReadOnlyList<MazeBoxClimb> BoxClimbs => _boxClimbs;
+        public IReadOnlyList<MazeFood> FoodPlacements => _foodPlacements;
+        public IReadOnlyList<PushableBox> Boxes => _boxes;
 
-        /// <summary>Porta de saída do P1 (mantido por compatibilidade com testes antigos).</summary>
-        public FinishLine FinishLine => _playerOneDoor;
-        public FinishLine PlayerOneDoor => _playerOneDoor;
-        public FinishLine PlayerTwoDoor => _playerTwoDoor;
+        /// <summary>Saída única da corrida, aceita os dois jogadores.</summary>
+        public FinishLine FinishLine => _finishLine;
+
+        /// <summary>Mantidos por compatibilidade: na corrida os dois jogadores usam a mesma saída.</summary>
+        public FinishLine PlayerOneDoor => _finishLine;
+        public FinishLine PlayerTwoDoor => _finishLine;
+        public Checkpoint PlayerOneSpawnCheckpoint => _playerOneSpawnCheckpoint;
+        public Checkpoint PlayerTwoSpawnCheckpoint => _playerTwoSpawnCheckpoint;
         public GameObject PlayerOne => _playerOne;
         public GameObject PlayerTwo => _playerTwo;
         public PlayerHUD PlayerOneHud => _playerOneHud;
         public PlayerHUD PlayerTwoHud => _playerTwoHud;
         public MatchHUD MatchHud => _matchHud;
         public SharedCameraController CameraController => _cameraController;
-        public CooperativePuzzleController GateOne => _gateOne;
-        public CooperativePuzzleController GateOneReturn => _gateOneReturn;
-        public CooperativePuzzleController GateTwo => _gateTwo;
-        public CooperativePuzzleController GateThree => _gateThree;
-        public PushableBox GateThreeBox => _gateThreeBox;
 
-        /// <summary>Portal persistente usado na pontuação (G2 fica resolvido após a alavanca).</summary>
-        public CooperativePuzzleController FinalPuzzle => _gateTwo;
+        /// <summary>Puzzle usado na pontuação: o portão da metade esquerda fica resolvido após a alavanca.</summary>
+        public CooperativePuzzleController FinalPuzzle => _leftDoorGate;
         public MatchCompletionController MatchController => _matchController;
         public MatchResultsPanel ResultsPanel => _resultsPanel;
         public VisualCatalog VisualCatalog => _visualCatalog;
@@ -312,6 +326,11 @@ namespace HealthyRace.Level
             _playerOneMovement = _playerOne.GetComponent<PlayerMovement>();
             _playerTwoMovement = _playerTwo.GetComponent<PlayerMovement>();
 
+            // Cada jogador nasce com o próprio ponto de retorno: morrer nos espinhos
+            // antes de qualquer checkpoint devolve cada um à sua largada.
+            _playerOneSpawnCheckpoint?.ActivateForPlayer(1);
+            _playerTwoSpawnCheckpoint?.ActivateForPlayer(2);
+
             _playerOneWellbeing = _playerOne.GetComponent<WellbeingComponent>();
             _playerTwoWellbeing = _playerTwo.GetComponent<WellbeingComponent>();
             var p1Fatigue = _playerOne.GetComponent<FatigueComponent>();
@@ -333,9 +352,9 @@ namespace HealthyRace.Level
                 _matchHud.UpdateTimer(Time.timeSinceLevelLoad);
             }
 
-            UpdateProgress(1, _playerOne, _playerOneMovement, _playerOneHud, _playerOneDoor);
-            UpdateProgress(2, _playerTwo, _playerTwoMovement, _playerTwoHud, _playerTwoDoor);
-            MonitorGateThreeBox();
+            UpdateProgress(1, _playerOne, _playerOneMovement, _playerOneHud, _finishLine);
+            UpdateProgress(2, _playerTwo, _playerTwoMovement, _playerTwoHud, _finishLine);
+            MonitorBoxes();
         }
 
         // =====================================================================
@@ -401,7 +420,7 @@ namespace HealthyRace.Level
             return tier;
         }
 
-        /// <summary>Progresso em etapas: 0/20/40/60/80/100%.</summary>
+        /// <summary>Progresso em etapas: 0/25/50/75/100%.</summary>
         public float GetProgress(int playerIndex)
         {
             if (playerIndex < 1 || playerIndex > 2)
@@ -445,16 +464,6 @@ namespace HealthyRace.Level
             );
         }
 
-        private void MonitorGateThreeBox()
-        {
-            // Anti-deadlock: a caixa de G3 vive em T2. Se cair em qualquer buraco
-            // (vão da AP3 aberta, borda do patamar), volta sozinha ao spawn.
-            if (_gateThreeBox != null && _gateThreeBox.transform.position.y < Tier2Top - 1f)
-            {
-                _gateThreeBox.ResetToSpawn();
-            }
-        }
-
         private bool HasRequiredReferences()
         {
             return _playerPrefab != null && _collectiblePrefab != null;
@@ -485,91 +494,13 @@ namespace HealthyRace.Level
         }
 
         /// <summary>
-        /// O labirinto é espaço negativo: tudo que não é túnel é rocha. Pinta a arena
-        /// inteira com ladrilhos de rocha e, por cima, os túneis escuros de cada
-        /// corredor e de cada poço. Os colisores das lajes ficam onde a rocha
-        /// permanece, então o visual e a física contam a mesma história.
+        /// Não há céu: o labirinto é rocha escavada. Os túneis são a cor de fundo da
+        /// câmera, e a rocha vem dos blocos do mapa com visual ladrilhado.
         /// </summary>
         private void CreateBackground()
         {
             var bgParent = new GameObject("Background").transform;
             bgParent.SetParent(transform, false);
-
-            var rock =
-                GetEnvironmentSprite(StaticBlockKind.Wall) ?? PlaceholderSpriteFactory.Square;
-            var rockTint =
-                rock == PlaceholderSpriteFactory.Square
-                    ? WallColor
-                    : new Color(0.72f, 0.72f, 0.72f);
-            TileSprite(
-                "Rocha_Fundo",
-                bgParent,
-                rock,
-                rockTint,
-                ArenaMinX,
-                ArenaMaxX,
-                ArenaMinY,
-                ArenaMaxY,
-                2f,
-                -10
-            );
-
-            // Túneis: cada corredor, do piso ao teto.
-            for (var i = 0; i < TierTops.Length; i++)
-            {
-                CreateTunnel(
-                    $"Tunel_C{i}",
-                    bgParent,
-                    ArenaMinX,
-                    ArenaMaxX,
-                    TierTops[i],
-                    TierTops[i] + CorridorClearance
-                );
-            }
-
-            // Poços: ligam o corredor de baixo ao de cima, atravessando a laje.
-            for (var i = 0; i < Shafts.Length; i++)
-            {
-                var lowerCeiling = TierTops[i] + CorridorClearance;
-                CreateTunnel(
-                    $"Tunel_Poco{i + 1}",
-                    bgParent,
-                    Shafts[i].MinX,
-                    Shafts[i].MaxX,
-                    lowerCeiling,
-                    TierTops[i + 1]
-                );
-            }
-
-            // Vão das plataformas que caem, na laje 3.
-            CreateTunnel(
-                "Tunel_VaoQueda",
-                bgParent,
-                FallGapMinX,
-                FallGapMaxX,
-                Tier2Top + CorridorClearance,
-                Tier3Top
-            );
-        }
-
-        private static void CreateTunnel(
-            string name,
-            Transform parent,
-            float minX,
-            float maxX,
-            float minY,
-            float maxY
-        )
-        {
-            var tunnel = new GameObject(name);
-            tunnel.transform.SetParent(parent, false);
-            tunnel.transform.position = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, 4f);
-            tunnel.transform.localScale = new Vector3(maxX - minX, maxY - minY, 1f);
-
-            var renderer = tunnel.AddComponent<SpriteRenderer>();
-            renderer.sprite = PlaceholderSpriteFactory.Square;
-            renderer.color = TunnelColor;
-            renderer.sortingOrder = -8;
         }
 
         /// <summary>
@@ -625,23 +556,28 @@ namespace HealthyRace.Level
         }
 
         // =====================================================================
-        // COMPOSIÇÃO DA ARENA
+        // COMPOSIÇÃO DO LABIRINTO
         // =====================================================================
         private void CreateZones()
         {
-            _surfaces.Clear();
-            _cooperativeLinks.Clear();
             _gates.Clear();
+            _elevators.Clear();
+            _doors.Clear();
+            _boxClimbs.Clear();
+            _foodPlacements.Clear();
+            _boxes.Clear();
 
             _levelParent = new GameObject("LevelGeometry").transform;
             _levelParent.SetParent(transform, false);
 
             CreateArenaShell();
-            CreateCorridorSlabs();
-            CreateMazeDetail();
-            CreateCoopGates();
+            CreateMazeRock();
+            CreateMechanisms();
+            CreateCheckpoints();
+            CreateExit();
             CreateHazards();
             CreateCollectibles();
+            CreateLabels();
         }
 
         private Transform CreateGroup(string name)
@@ -651,9 +587,32 @@ namespace HealthyRace.Level
             return group;
         }
 
+        /// <summary>Coluna espelhada: a metade direita é o reflexo da esquerda.</summary>
+        public static int MirrorColumn(int column)
+        {
+            return MazeColumns - 1 - column;
+        }
+
+        /// <summary>Coordenada X espelhada em unidades de mundo.</summary>
+        public static float MirrorX(float x)
+        {
+            return ArenaMaxX - x;
+        }
+
+        /// <summary>Verdadeiro se o ladrilho (coluna, linha) é rocha. Linha 0 é a base.</summary>
+        public static bool IsRock(int column, int row)
+        {
+            if (column < 0 || column >= MazeColumns || row < 0 || row >= MazeRowCount)
+            {
+                return true;
+            }
+
+            return MazeRows[MazeRowCount - 1 - row][column] == '#';
+        }
+
         /// <summary>
         /// Bloco de rocha maciça definido por extremos, não por centro e tamanho.
-        /// É a peça básica do labirinto: tudo que não é corredor é rocha.
+        /// Colisor exato e visual ladrilhado.
         /// </summary>
         private void CreateRock(
             string name,
@@ -669,59 +628,13 @@ namespace HealthyRace.Level
             CreateStaticBlock(name, parent, center, size, WallColor, StaticBlockKind.Wall);
         }
 
-        /// <summary>Piso de corredor: rocha com a face superior em <paramref name="topY"/>.</summary>
-        private void CreateCorridorFloor(
-            string name,
-            Transform parent,
-            float minX,
-            float maxX,
-            float topY
-        )
-        {
-            var center = new Vector2((minX + maxX) * 0.5f, topY - SlabThickness * 0.5f);
-            var size = new Vector2(maxX - minX, SlabThickness);
-            CreateStaticBlock(name, parent, center, size, GroundColor, StaticBlockKind.Ground);
-            RegisterSurface(name, minX, maxX, topY);
-        }
-
-        private void RegisterSurface(string name, float minX, float maxX, float topY)
-        {
-            _surfaces.Add(new ArenaSurface(name, minX, maxX, topY));
-        }
-
-        private void RegisterLink(string from, string to, string mechanism)
-        {
-            _cooperativeLinks.Add(new ArenaLink(from, to, mechanism));
-        }
-
         // ---------------------------------------------------------------------
-        // Casca: paredes externas, rocha da base e do topo.
+        // Casca: paredes externas além da arena. A rocha da base e do topo já
+        // está no mapa (linhas 0, 16 e 17).
         // ---------------------------------------------------------------------
         private void CreateArenaShell()
         {
             var shell = CreateGroup("Arena_Casca");
-
-            // Rocha da base, cuja face superior é o piso do corredor C0.
-            CreateCorridorFloor("C0_Piso", shell, ArenaMinX, ArenaMaxX, Tier0Top);
-            CreateRock(
-                "Rocha_Base",
-                shell,
-                ArenaMinX,
-                ArenaMaxX,
-                ArenaMinY - 1f,
-                Tier0Top - SlabThickness
-            );
-
-            // Rocha do topo, que fecha o teto do corredor das portas.
-            CreateRock(
-                "Rocha_Topo",
-                shell,
-                ArenaMinX,
-                ArenaMaxX,
-                Tier4Top + CorridorClearance,
-                ArenaMaxY + 1f
-            );
-
             CreateRock(
                 "Arena_ParedeEsquerda",
                 shell,
@@ -738,473 +651,433 @@ namespace HealthyRace.Level
                 ArenaMinY - 1f,
                 ArenaMaxY + 1f
             );
-
-            CreateWorldLabel("LARGADA", shell, new Vector2(4.25f, Tier0Top + 2.1f), Color.white);
-        }
-
-        /// <summary>
-        /// As lajes entre corredores. Cada laje é rocha de ponta a ponta, menos o
-        /// poço vertical que a atravessa. Os poços ficam escalonados, o que obriga a
-        /// percorrer cada corredor de uma ponta à outra e dá o traçado de labirinto.
-        /// </summary>
-        private void CreateCorridorSlabs()
-        {
-            var slabs = CreateGroup("Corredores_Lajes");
-
-            CreateSlab(slabs, 1, Tier1Top, ShaftAMinX, ShaftAMaxX);
-            CreateSlab(slabs, 2, Tier2Top, ShaftBMinX, ShaftBMaxX);
-            // A laje 3 tem um segundo corte: o vão de 5.0 m que só as plataformas
-            // que caem atravessam, já que excede o alcance de pulo.
-            CreateSlab(slabs, 3, Tier3Top, ShaftCMinX, ShaftCMaxX, FallGapMinX, FallGapMaxX);
-            CreateSlab(slabs, 4, Tier4Top, ShaftDMinX, ShaftDMaxX);
-
-            CreateWorldLabel("C1", slabs, new Vector2(15f, Tier1Top + 1.9f), LabelColor);
-            CreateWorldLabel("C2", slabs, new Vector2(30f, Tier2Top + 2.1f), LabelColor);
-            CreateWorldLabel("C3", slabs, new Vector2(26f, Tier3Top + 1.9f), LabelColor);
-            CreateWorldLabel("C4", slabs, new Vector2(16f, Tier4Top + 1.9f), LabelColor);
-        }
-
-        /// <summary>
-        /// Uma laje: rocha dos dois lados do poço. A face superior de cada pedaço é
-        /// piso do corredor de cima; a face inferior é o teto do corredor de baixo.
-        /// </summary>
-        private void CreateSlab(
-            Transform parent,
-            int index,
-            float topY,
-            float shaftMinX,
-            float shaftMaxX,
-            float extraGapMinX = 0f,
-            float extraGapMaxX = 0f
-        )
-        {
-            var bottomY = topY - SlabThickness;
-
-            if (extraGapMaxX > extraGapMinX)
-            {
-                CreateCorridorFloor($"C{index}_PisoEsqA", parent, ArenaMinX, extraGapMinX, topY);
-                CreateCorridorFloor($"C{index}_PisoEsqB", parent, extraGapMaxX, shaftMinX, topY);
-            }
-            else
-            {
-                CreateCorridorFloor($"C{index}_PisoEsq", parent, ArenaMinX, shaftMinX, topY);
-            }
-
-            CreateCorridorFloor($"C{index}_PisoDir", parent, shaftMaxX, ArenaMaxX, topY);
-
-            // Ombreiras do poço, para o vão ficar legível como passagem escavada.
-            CreateRock(
-                $"Poco{index}_OmbreiraEsq",
-                parent,
-                shaftMinX - 0.3f,
-                shaftMinX,
-                bottomY - 0.5f,
-                bottomY
-            );
-            CreateRock(
-                $"Poco{index}_OmbreiraDir",
-                parent,
-                shaftMaxX,
-                shaftMaxX + 0.3f,
-                bottomY - 0.5f,
-                bottomY
-            );
-        }
-
-        /// <summary>
-        /// O que transforma cinco corredores retos em labirinto: pilares baixos que
-        /// se vencem com um pulo e arcos pendurados no teto que obrigam a passar por
-        /// baixo. Nenhum deles fecha um corredor, então a travessia é sempre possível.
-        /// </summary>
-        private void CreateMazeDetail()
-        {
-            var detail = CreateGroup("Labirinto_Detalhe");
-
-            // Pilares: 1.2 m, vencidos com um pulo mesmo sob o teto baixo.
-            CreatePillar(detail, "C0_Pilar1", 8f, Tier0Top);
-            CreatePillar(detail, "C0_Pilar2", 17.4f, Tier0Top);
-            CreatePillar(detail, "C1_Pilar1", 10.6f, Tier1Top);
-            CreatePillar(detail, "C1_Pilar2", 21f, Tier1Top);
-            CreatePillar(detail, "C2_Pilar1", 25.4f, Tier2Top);
-            CreatePillar(detail, "C3_Pilar1", 5.2f, Tier3Top);
-            CreatePillar(detail, "C4_Pilar1", 20.4f, Tier4Top);
-
-            // Arcos: rocha presa ao teto com passagem livre embaixo.
-            CreateArch(detail, "C0_Arco", 12.4f, 13.6f, Tier0Top);
-            CreateArch(detail, "C1_Arco", 17.8f, 19f, Tier1Top);
-            CreateArch(detail, "C2_Arco", 9.2f, 10.4f, Tier2Top);
-            CreateArch(detail, "C3_Arco", 24.6f, 25.8f, Tier3Top);
-
-            // Dentes de rocha: saliências curtas no piso e no teto, de larguras
-            // variadas, para o corredor parecer escavado e não cortado a régua.
-            // Nenhum dente fecha a passagem: os do piso têm 0.5 m e os do teto
-            // deixam mais de 2.0 m livres.
-            foreach (var (x, w) in new[] { (1.2f, 0.6f), (22.6f, 1f), (29.4f, 0.7f) })
-            {
-                CreateFloorBump(detail, $"C0_Dente_{x}", x, w, Tier0Top);
-            }
-            foreach (var (x, w) in new[] { (6.4f, 0.9f), (15.2f, 0.6f), (24.2f, 1.1f) })
-            {
-                CreateFloorBump(detail, $"C1_Dente_{x}", x, w, Tier1Top);
-            }
-            foreach (var (x, w) in new[] { (8f, 0.7f), (17.6f, 1f), (28.8f, 0.6f) })
-            {
-                CreateFloorBump(detail, $"C2_Dente_{x}", x, w, Tier2Top);
-            }
-            foreach (var (x, w) in new[] { (3.4f, 1f), (18.2f, 0.6f), (27.6f, 0.8f) })
-            {
-                CreateFloorBump(detail, $"C3_Dente_{x}", x, w, Tier3Top);
-            }
-            foreach (var (x, w) in new[] { (6.2f, 0.8f), (15f, 0.6f), (28.6f, 1f) })
-            {
-                CreateFloorBump(detail, $"C4_Dente_{x}", x, w, Tier4Top);
-            }
-
-            foreach (var (x, w) in new[] { (5.6f, 1.2f), (21.2f, 0.8f), (30.2f, 1.4f) })
-            {
-                CreateCeilingTooth(detail, $"C0_Estalactite_{x}", x, w, Tier0Top);
-            }
-            foreach (var (x, w) in new[] { (1.6f, 1f), (12.8f, 1.4f), (26.6f, 0.9f) })
-            {
-                CreateCeilingTooth(detail, $"C1_Estalactite_{x}", x, w, Tier1Top);
-            }
-            foreach (var (x, w) in new[] { (7.4f, 0.8f), (27.2f, 1.3f), (30.6f, 0.9f) })
-            {
-                CreateCeilingTooth(detail, $"C2_Estalactite_{x}", x, w, Tier2Top);
-            }
-            foreach (var (x, w) in new[] { (13.6f, 1.2f), (20.4f, 0.8f), (29.2f, 1.1f) })
-            {
-                CreateCeilingTooth(detail, $"C3_Estalactite_{x}", x, w, Tier3Top);
-            }
-            foreach (var (x, w) in new[] { (12.6f, 1f), (17.8f, 1.3f), (26.8f, 0.8f) })
-            {
-                CreateCeilingTooth(detail, $"C4_Estalactite_{x}", x, w, Tier4Top);
-            }
-
-            // Tampão de rocha que encerra o corredor C0 antes da parede: a largada
-            // fica num bolsão e o corredor tem começo e fim, como um túnel.
-            CreateRock(
-                "C0_Tampao",
-                detail,
-                30.8f,
-                ArenaMaxX,
-                Tier0Top,
-                Tier0Top + CorridorClearance
-            );
-        }
-
-        private void CreateFloorBump(
-            Transform parent,
-            string name,
-            float minX,
-            float width,
-            float floorY
-        )
-        {
-            const float bumpHeight = 0.5f;
-            CreateRock(name, parent, minX, minX + width, floorY, floorY + bumpHeight);
-            RegisterSurface(name, minX, minX + width, floorY + bumpHeight);
-        }
-
-        private void CreateCeilingTooth(
-            Transform parent,
-            string name,
-            float minX,
-            float width,
-            float floorY
-        )
-        {
-            const float toothDepth = 0.45f;
-            var ceiling = floorY + CorridorClearance;
-            CreateRock(name, parent, minX, minX + width, ceiling - toothDepth, ceiling);
-        }
-
-        private void CreatePillar(Transform parent, string name, float minX, float floorY)
-        {
-            CreateRock(name, parent, minX, minX + 0.8f, floorY, floorY + PillarHeight);
-            RegisterSurface(name, minX, minX + 0.8f, floorY + PillarHeight);
-        }
-
-        private void CreateArch(Transform parent, string name, float minX, float maxX, float floorY)
-        {
-            CreateRock(name, parent, minX, maxX, floorY + ArchOpening, floorY + CorridorClearance);
         }
 
         // ---------------------------------------------------------------------
-        // Portais cooperativos, um por poço, exceto o último.
+        // A rocha do labirinto vem do mapa de ladrilhos. Cada sequência horizontal
+        // de '#' numa linha vira um bloco com colisor exato e visual ladrilhado.
+        // Tudo que não é rocha é túnel: o labirinto é o espaço negativo.
         // ---------------------------------------------------------------------
-        private void CreateCoopGates()
+        private void CreateMazeRock()
         {
-            CreateGateOne();
-            CreateGateTwo();
-            CreateGateThree();
-            CreateFinalClimb();
-        }
+            var rock = CreateGroup("Labirinto_Rocha");
 
-        /// <summary>
-        /// G1 (C0 -> C1), poço A. O botão B1 fica longe do poço, no meio do corredor
-        /// C0: enquanto um jogador o mantém pressionado, a plataforma AP1 sobe com o
-        /// outro. O botão B2, já em C1, devolve o favor.
-        /// Saída de emergência: os dois botões são momentâneos e o poço fica aberto,
-        /// então qualquer um pode se deixar cair de volta a C0. Nenhum estado trava.
-        /// </summary>
-        private void CreateGateOne()
-        {
-            var gate = CreateGroup("G1_BotoesPlataforma");
-
-            var b1 = CreatePressureButtonObject(
-                "G1_BotaoB1",
-                gate,
-                new Vector2(19f, Tier0Top + 0.15f)
-            );
-            var b2 = CreatePressureButtonObject(
-                "G1_BotaoB2",
-                gate,
-                new Vector2(23f, Tier1Top + 0.15f)
-            );
-
-            _gateOnePlatform = CreateActivatedPlatformObject(
-                "G1_PlataformaAP1",
-                gate,
-                new Vector2((ShaftAMinX + ShaftAMaxX) * 0.5f, Tier0Top + 0.3f),
-                new Vector2(2.4f, 0.4f),
-                new Vector2(0f, Tier1Top - (Tier0Top + 0.6f))
-            );
-            RegisterSurface("G1_AP1_Baixo", ShaftAMinX + 0.3f, ShaftAMaxX - 0.3f, Tier0Top + 0.6f);
-            RegisterSurface("G1_AP1_Alto", ShaftAMinX + 0.3f, ShaftAMaxX - 0.3f, Tier1Top);
-            RegisterLink(
-                "G1_AP1_Baixo",
-                "G1_AP1_Alto",
-                "G1: parceiro segura B1 (C0) ou B2 (C1) e a AP1 sobe"
-            );
-
-            _gateOne = CreateGateController(
-                "G1_Controlador",
-                gate,
-                b1,
-                null,
-                null,
-                null,
-                _gateOnePlatform,
-                null
-            );
-            _gateOneReturn = CreateGateController(
-                "G1_ControladorRetorno",
-                gate,
-                b2,
-                null,
-                null,
-                null,
-                _gateOnePlatform,
-                null
-            );
-
-            void SyncPlatform(bool _)
+            for (var row = 0; row < MazeRowCount; row++)
             {
-                _gateOnePlatform.SetState(_gateOne.IsSolved || _gateOneReturn.IsSolved);
+                var column = 0;
+                while (column < MazeColumns)
+                {
+                    if (!IsRock(column, row))
+                    {
+                        column++;
+                        continue;
+                    }
+
+                    var start = column;
+                    while (column < MazeColumns && IsRock(column, row))
+                    {
+                        column++;
+                    }
+
+                    CreateRock(
+                        $"Rocha_L{row}_C{start}-{column - 1}",
+                        rock,
+                        start * TileSize,
+                        column * TileSize,
+                        row * TileSize,
+                        (row + 1) * TileSize
+                    );
+                }
             }
+        }
 
-            _gateOne.OnPuzzleStateChanged += SyncPlatform;
-            _gateOneReturn.OnPuzzleStateChanged += SyncPlatform;
-
-            var cp1 = CreateCheckpointObject(
-                "Checkpoint_1",
-                gate,
-                1,
-                new Vector2(ShaftAMaxX + 1.5f, Tier1Top + 1f)
-            );
-            _checkpoints.Add(cp1);
-
-            CreateWorldLabel(
-                "G1: um segura, o outro sobe",
-                gate,
-                new Vector2(19f, Tier0Top + 1.6f),
-                HintColor
-            );
+        // ---------------------------------------------------------------------
+        // Mecanismos, um conjunto por metade. Numa corrida nenhum mecanismo pode
+        // depender do outro jogador: elevadores com botão na própria plataforma,
+        // portão aberto por alavanca no caminho e caixa para vencer um muro.
+        // ---------------------------------------------------------------------
+        private void CreateMechanisms()
+        {
+            CreateHalfMechanisms("Esq", mirrored: false);
+            CreateHalfMechanisms("Dir", mirrored: true);
         }
 
         /// <summary>
-        /// G2 (C1 -> C2), poço B. A alavanca L2 fica na ponta oposta do corredor C1 e
-        /// ergue a plataforma AP2 de forma permanente. Quem puxa precisa atravessar o
-        /// corredor inteiro, então os dois avançam juntos em vez de um esperar.
-        /// Saída de emergência: a alavanca não é alternável, então a plataforma nunca
-        /// volta a descer e o caminho fica aberto para sempre.
+        /// Constrói os mecanismos de uma metade. As colunas autoradas são da metade
+        /// esquerda; a direita recebe as mesmas colunas espelhadas.
         /// </summary>
-        private void CreateGateTwo()
+        private void CreateHalfMechanisms(string suffix, bool mirrored)
         {
-            var gate = CreateGroup("G2_AlavancaPlataforma");
+            var group = CreateGroup($"Mecanismos_{suffix}");
 
+            // Elevador 1: do corredor B (y=5) ao corredor C (y=9), colunas 13-14.
+            CreateElevator($"Elevador1_{suffix}", group, 13, 14, 5, 9, mirrored);
+
+            // Elevador 2: do corredor C (y=9) ao corredor D (y=13), colunas 4-5.
+            CreateElevator($"Elevador2_{suffix}", group, 4, 5, 9, 13, mirrored);
+
+            // Portão no corredor C (coluna 12), aberto pela alavanca do degrau de B
+            // (coluna 11). Quem passa reto pela alavanca encontra o portão fechado e
+            // volta: é o custo de navegação do labirinto.
+            var leverX = ColumnCenter(11, mirrored);
             var lever = CreateLeverObject(
-                "G2_AlavancaL2",
-                gate,
-                new Vector2(29f, Tier1Top + 0.8f),
+                $"Alavanca_{suffix}",
+                group,
+                new Vector2(leverX, 6f + 0.75f),
                 "ALAVANCA",
                 false
             );
-
-            var platform = CreateActivatedPlatformObject(
-                "G2_PlataformaAP2",
-                gate,
-                new Vector2((ShaftBMinX + ShaftBMaxX) * 0.5f, Tier1Top + 0.3f),
-                new Vector2(2.4f, 0.4f),
-                new Vector2(0f, Tier2Top - (Tier1Top + 0.6f))
+            var doorColumn = mirrored ? MirrorColumn(12) : 12;
+            var door = CreatePuzzleDoorObject(
+                $"Portao_{suffix}",
+                group,
+                new Vector2(ColumnCenter(12, mirrored), 9f + 1.3f),
+                new Vector2(0.8f, 2.6f),
+                instantMotion: true,
+                openOffset: Vector2.zero
             );
-            RegisterSurface("G2_AP2_Baixo", ShaftBMinX + 0.3f, ShaftBMaxX - 0.3f, Tier1Top + 0.6f);
-            RegisterSurface("G2_AP2_Alto", ShaftBMinX + 0.3f, ShaftBMaxX - 0.3f, Tier2Top);
-            RegisterLink(
-                "G2_AP2_Baixo",
-                "G2_AP2_Alto",
-                "G2: alavanca L2 na outra ponta de C1 ergue a AP2"
-            );
-
-            _gateTwo = CreateGateController(
-                "G2_Controlador",
-                gate,
+            _doors.Add(new MazeDoor(doorColumn, 9, 11));
+            var doorGate = CreateGateController(
+                $"Portao_{suffix}_Controlador",
+                group,
                 null,
                 lever,
+                null,
+                door,
+                null,
+                null
+            );
+            if (!mirrored)
+            {
+                _leftDoorGate = doorGate;
+            }
+
+            // Caixa no corredor C: empurrada até o muro de 2 m da coluna 8, vira degrau
+            // (1.22 m) para alcançar o topo do muro (0.78 m).
+            var boxX = ColumnCenter(11, mirrored);
+            var box = CreatePushableBox(
+                $"Caixa_{suffix}",
+                group,
+                new Vector2(boxX, 9f + BoxHeight * 0.5f)
+            );
+            if (box != null)
+            {
+                box.SetSpawnPosition(new Vector2(boxX, 9f + BoxHeight * 0.5f));
+                _boxes.Add(box);
+            }
+
+            var fromColumn = mirrored ? MirrorColumn(9) : 9;
+            var toColumn = mirrored ? MirrorColumn(8) : 8;
+            _boxClimbs.Add(
+                new MazeBoxClimb(new Vector2Int(fromColumn, 9), new Vector2Int(toColumn, 11))
+            );
+        }
+
+        private static float ColumnCenter(int column, bool mirrored)
+        {
+            var c = mirrored ? MirrorColumn(column) : column;
+            return (c + 0.5f) * TileSize;
+        }
+
+        /// <summary>
+        /// Elevador de uso individual: a plataforma sobe enquanto o próprio passageiro
+        /// pisa no botão montado nela, e desce sozinha quando ele sai no topo. Assim
+        /// cada jogador usa o elevador sem depender do outro, e quem cair de volta
+        /// encontra a plataforma embaixo de novo.
+        /// </summary>
+        private void CreateElevator(
+            string name,
+            Transform parent,
+            int minColumn,
+            int maxColumn,
+            int bottomRow,
+            int topRow,
+            bool mirrored
+        )
+        {
+            var c0 = mirrored ? MirrorColumn(maxColumn) : minColumn;
+            var c1 = mirrored ? MirrorColumn(minColumn) : maxColumn;
+            var minX = c0 * TileSize;
+            var maxX = (c1 + 1) * TileSize;
+            var bottomY = bottomRow * TileSize;
+            var topY = topRow * TileSize;
+            var width = maxX - minX;
+            var centerX = (minX + maxX) * 0.5f;
+
+            // Raiz sem escala: o botão filho não pode herdar deformação.
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = new Vector3(centerX, bottomY - 0.2f, 0f);
+            root.layer = GroundLayer;
+
+            var collider = root.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(width, 0.4f);
+
+            var sprite = GetEnvironmentSprite(StaticBlockKind.Platform);
+            var tint = Color.white;
+            if (sprite == null)
+            {
+                sprite = PlaceholderSpriteFactory.Square;
+                tint = PlatformColor;
+            }
+
+            var visual = TileSprite(
+                "Visual",
+                root.transform,
+                sprite,
+                tint,
+                minX,
+                maxX,
+                bottomY - 0.4f,
+                bottomY,
+                TileSize,
+                1
+            );
+
+            var platform = root.AddComponent<ActivatedPlatform>();
+            platform.Configure(new Vector2(0f, topY - bottomY), 3f);
+
+            var button = CreatePressureButtonObject(
+                $"{name}_Botao",
+                root.transform,
+                new Vector2(centerX, bottomY + 0.15f)
+            );
+            CreateGateController(
+                $"{name}_Controlador",
+                parent,
+                button,
+                null,
                 null,
                 null,
                 platform,
                 null
             );
 
-            var cp2 = CreateCheckpointObject(
-                "Checkpoint_2",
-                gate,
-                2,
-                new Vector2(ShaftBMaxX + 1.5f, Tier2Top + 1f)
-            );
-            _checkpoints.Add(cp2);
-
-            CreateWorldLabel(
-                "G2: alavanca no fim do corredor",
-                gate,
-                new Vector2(29f, Tier1Top + 1.9f),
-                HintColor
-            );
+            _elevators.Add(new MazeElevator(c0, c1, bottomRow, topRow));
+            CreateWorldLabel("ELEVADOR", root.transform, new Vector2(0f, 0.9f), HintColor);
         }
 
-        /// <summary>
-        /// G3 (C2 -> C3), poço C. O botão B3 ergue a AP3 enquanto pressionado.
-        /// Rota cooperativa: um segura B3 e o outro sobe. Rota anti-deadlock: a caixa
-        /// empurrada sobre B3 trava a plataforma erguida e os dois sobem sem depender
-        /// de sincronia. A alavanca R3 devolve a caixa ao spawn, e o bootstrap também
-        /// a devolve se ela cair do corredor.
-        /// </summary>
-        private void CreateGateThree()
+        // ---------------------------------------------------------------------
+        // Checkpoints por metade: largada (ativado de saída para o dono da metade),
+        // topo da escada, corredor C e corredor D.
+        // ---------------------------------------------------------------------
+        private void CreateCheckpoints()
         {
-            var gate = CreateGroup("G3_CaixaPlataforma");
+            var group = CreateGroup("Checkpoints");
 
-            var b3 = CreatePressureButtonObject(
-                "G3_BotaoB3",
-                gate,
-                new Vector2(15.5f, Tier2Top + 0.15f)
-            );
-
-            var platform = CreateActivatedPlatformObject(
-                "G3_PlataformaAP3",
-                gate,
-                new Vector2((ShaftCMinX + ShaftCMaxX) * 0.5f, Tier2Top + 0.3f),
-                new Vector2(2.4f, 0.4f),
-                new Vector2(0f, Tier3Top - (Tier2Top + 0.6f))
-            );
-            RegisterSurface("G3_AP3_Baixo", ShaftCMinX + 0.3f, ShaftCMaxX - 0.3f, Tier2Top + 0.6f);
-            RegisterSurface("G3_AP3_Alto", ShaftCMinX + 0.3f, ShaftCMaxX - 0.3f, Tier3Top);
-            RegisterLink(
-                "G3_AP3_Baixo",
-                "G3_AP3_Alto",
-                "G3: parceiro segura B3 ou a caixa trava B3 e a AP3 sobe"
-            );
-
-            _gateThreeBox = CreatePushableBox(
-                "G3_Caixa",
-                gate,
-                new Vector2(12.5f, Tier2Top + BoxHeight * 0.5f)
-            );
-            if (_gateThreeBox != null)
-            {
-                _gateThreeBox.SetSpawnPosition(new Vector2(12.5f, Tier2Top + BoxHeight * 0.5f));
-            }
-
-            var resetSwitch = CreateLeverObject(
-                "G3_ResetR3",
-                gate,
-                new Vector2(30f, Tier2Top + 0.8f),
-                "RESET",
-                false
-            );
-            _gateThree = CreateGateController(
-                "G3_Controlador",
-                gate,
-                b3,
-                null,
-                _gateThreeBox,
-                null,
-                platform,
-                resetSwitch
-            );
-
-            var cp3 = CreateCheckpointObject(
-                "Checkpoint_3",
-                gate,
-                3,
-                new Vector2(ShaftCMaxX + 1.5f, Tier3Top + 1f)
-            );
-            _checkpoints.Add(cp3);
-
-            CreateWorldLabel(
-                "G3: caixa sobre o botão trava a plataforma",
-                gate,
-                new Vector2(15.5f, Tier2Top + 1.9f),
-                HintColor
-            );
-        }
-
-        /// <summary>
-        /// Subida final (C3 -> C4), poço D. Escada de rocha livre, sem mecanismo: os
-        /// dois convergem e chegam juntos ao corredor das portas.
-        /// </summary>
-        private void CreateFinalClimb()
-        {
-            var climb = CreateGroup("C4_Portas");
-
-            var stepMinX = ShaftDMinX + 0.6f;
-            var stepMaxX = ShaftDMaxX - 0.6f;
-            var stepTop = Tier3Top + 1.7f;
-            CreateRock("PocoD_Degrau", climb, stepMinX, stepMaxX, stepTop - SlabThickness, stepTop);
-            RegisterSurface("PocoD_Degrau", stepMinX, stepMaxX, stepTop);
-
-            _playerOneDoor = CreateFinishLineObject(
-                "Porta_P1",
-                climb,
-                new Vector2(22f, Tier4Top + 1.3f),
+            _playerOneSpawnCheckpoint = CreateCheckpointObject(
+                "Checkpoint_Largada_P1",
+                group,
                 1,
-                "PORTA P1",
+                new Vector2(2.5f, 2.3f)
+            );
+            _checkpoints.Add(_playerOneSpawnCheckpoint);
+            _checkpoints.Add(
+                CreateCheckpointObject("Checkpoint_Esq_B", group, 2, new Vector2(9.5f, 6.2f))
+            );
+            _checkpoints.Add(
+                CreateCheckpointObject("Checkpoint_Esq_C", group, 3, new Vector2(10.5f, 10.2f))
+            );
+            _checkpoints.Add(
+                CreateCheckpointObject("Checkpoint_Esq_D", group, 4, new Vector2(6.5f, 14.2f))
+            );
+
+            _playerTwoSpawnCheckpoint = CreateCheckpointObject(
+                "Checkpoint_Largada_P2",
+                group,
+                5,
+                new Vector2(MirrorX(2.5f), 2.3f)
+            );
+            _checkpoints.Add(_playerTwoSpawnCheckpoint);
+            _checkpoints.Add(
+                CreateCheckpointObject(
+                    "Checkpoint_Dir_B",
+                    group,
+                    6,
+                    new Vector2(MirrorX(9.5f), 6.2f)
+                )
+            );
+            _checkpoints.Add(
+                CreateCheckpointObject(
+                    "Checkpoint_Dir_C",
+                    group,
+                    7,
+                    new Vector2(MirrorX(10.5f), 10.2f)
+                )
+            );
+            _checkpoints.Add(
+                CreateCheckpointObject(
+                    "Checkpoint_Dir_D",
+                    group,
+                    8,
+                    new Vector2(MirrorX(6.5f), 14.2f)
+                )
+            );
+        }
+
+        // ---------------------------------------------------------------------
+        // Saída única no centro do topo: quem chega primeiro vence.
+        // ---------------------------------------------------------------------
+        private void CreateExit()
+        {
+            var group = CreateGroup("Saida");
+            _finishLine = CreateFinishLineObject(
+                "Saida",
+                group,
+                new Vector2(ExitX, 13f + 1.3f),
+                0,
+                "SAÍDA",
+                new Color(1f, 0.84f, 0f)
+            );
+        }
+
+        // ---------------------------------------------------------------------
+        // Perigos na rota direta, espelhados: lama em A e D, espinhos em B e D.
+        // ---------------------------------------------------------------------
+        private void CreateHazards()
+        {
+            var hazards = CreateGroup("Perigos");
+
+            foreach (var mirrored in new[] { false, true })
+            {
+                var suffix = mirrored ? "Dir" : "Esq";
+                var respawn = mirrored ? PlayerTwoSpawn : PlayerOneSpawn;
+
+                _mudHazards.Add(
+                    CreateMudHazardObject(
+                        $"Lama_A_{suffix}",
+                        hazards,
+                        new Vector2(RangeCenter(3, 4, mirrored), 1f + 0.2f),
+                        new Vector2(2f, 0.4f),
+                        0.7f
+                    )
+                );
+                _mudHazards.Add(
+                    CreateMudHazardObject(
+                        $"Lama_D_{suffix}",
+                        hazards,
+                        new Vector2(RangeCenter(9, 10, mirrored), 13f + 0.2f),
+                        new Vector2(2f, 0.4f),
+                        0.7f
+                    )
+                );
+
+                _spikes.Add(
+                    CreateSpikeHazardObject(
+                        $"Espinhos_B_{suffix}",
+                        hazards,
+                        new Vector2(ColumnCenter(12, mirrored), 5f + 0.2f),
+                        new Vector2(1f, 0.4f),
+                        5,
+                        respawn
+                    )
+                );
+                _spikes.Add(
+                    CreateSpikeHazardObject(
+                        $"Espinhos_D_{suffix}",
+                        hazards,
+                        new Vector2(ColumnCenter(12, mirrored), 13f + 0.2f),
+                        new Vector2(1f, 0.4f),
+                        5,
+                        respawn
+                    )
+                );
+            }
+        }
+
+        private static float RangeCenter(int minColumn, int maxColumn, bool mirrored)
+        {
+            var a = ColumnCenter(minColumn, mirrored);
+            var b = ColumnCenter(maxColumn, mirrored);
+            return (a + b) * 0.5f;
+        }
+
+        // ---------------------------------------------------------------------
+        // Coletáveis. Ultraprocessados no piso do caminho, saudáveis em nichos de
+        // salto no teto e num degrau sem saída. As duas metades somam os mesmos
+        // pontos de alimento saudável (590) para a corrida ser justa.
+        // ---------------------------------------------------------------------
+        private void CreateCollectibles()
+        {
+            var foods = CreateGroup("Coletaveis");
+
+            // Metade esquerda (P1)
+            PlaceFood("Burger", 3, 1, 0.7f, foods, false);
+            PlaceFood("Fries", 5, 1, 0.7f, foods, false);
+            PlaceFood("Donut", 10, 5, 0.7f, foods, false);
+            PlaceFood("Candy", 10, 9, 0.7f, foods, false);
+            PlaceFood("Water", 1, 2, 0.7f, foods, false);
+            PlaceFood("Banana", 2, 4, 0.4f, foods, false);
+            PlaceFood("Carrot", 4, 4, 0.4f, foods, false);
+            PlaceFood("Strawberry", 13, 12, 0.4f, foods, false);
+            PlaceFood("Fish", 11, 16, 0.3f, foods, false);
+
+            // Metade direita (P2), posições espelhadas
+            PlaceFood("Pizza", 3, 1, 0.7f, foods, true);
+            PlaceFood("HotDog", 5, 1, 0.7f, foods, true);
+            PlaceFood("Soda", 10, 5, 0.7f, foods, true);
+            PlaceFood("Chips", 10, 9, 0.7f, foods, true);
+            PlaceFood("Broccoli", 1, 2, 0.7f, foods, true);
+            PlaceFood("Apple", 2, 4, 0.4f, foods, true);
+            PlaceFood("Avocado", 4, 4, 0.4f, foods, true);
+            PlaceFood("Orange", 13, 12, 0.4f, foods, true);
+            PlaceFood("Watermelon", 11, 16, 0.3f, foods, true);
+        }
+
+        private void PlaceFood(
+            string id,
+            int column,
+            int row,
+            float heightInCell,
+            Transform parent,
+            bool mirrored
+        )
+        {
+            var c = mirrored ? MirrorColumn(column) : column;
+            SpawnFood(
+                id,
+                new Vector2((c + 0.5f) * TileSize, row * TileSize + heightInCell),
+                parent
+            );
+            _foodPlacements.Add(new MazeFood(id, new Vector2Int(c, row)));
+        }
+
+        private void CreateLabels()
+        {
+            var labels = CreateGroup("Rotulos");
+            CreateWorldLabel(
+                "LARGADA P1",
+                labels,
+                new Vector2(2.5f, 3.55f),
                 new Color(0.15f, 0.67f, 1f)
             );
-            _playerTwoDoor = CreateFinishLineObject(
-                "Porta_P2",
-                climb,
-                new Vector2(25.5f, Tier4Top + 1.3f),
-                2,
-                "PORTA P2",
+            CreateWorldLabel(
+                "LARGADA P2",
+                labels,
+                new Vector2(MirrorX(2.5f), 3.55f),
                 new Color(0.35f, 1f, 0.55f)
             );
-
-            var cp4 = CreateCheckpointObject(
-                "Checkpoint_4",
-                climb,
-                4,
-                new Vector2(ShaftDMaxX + 1.5f, Tier4Top + 1f)
-            );
-            _checkpoints.Add(cp4);
-
             CreateWorldLabel(
-                "CHEGADA — os dois nas portas",
-                climb,
-                new Vector2(23f, Tier4Top + 0.4f),
-                Color.white
+                "quem chegar primeiro vence",
+                labels,
+                new Vector2(ExitX, 15.35f),
+                HintColor
             );
+        }
+
+        // ---------------------------------------------------------------------
+        // Anti-deadlock da caixa: se cair do corredor C (poço do elevador aberto),
+        // volta ao spawn sozinha.
+        // ---------------------------------------------------------------------
+        private void MonitorBoxes()
+        {
+            foreach (var box in _boxes)
+            {
+                if (box != null && box.transform.position.y < 9f - 1f)
+                {
+                    box.ResetToSpawn();
+                }
+            }
         }
 
         private CooperativePuzzleController CreateGateController(
@@ -1254,114 +1127,6 @@ namespace HealthyRace.Level
             controller.OnPuzzleSolved += () =>
                 AudioService.Instance.PlaySfx(AudioClipId.Sfx_PuzzleSolved);
             return controller;
-        }
-
-        // ---------------------------------------------------------------------
-        // Perigos: lama e espinhos na rota direta dos corredores baixos, e a
-        // travessia de plataformas que caem no corredor C3.
-        // ---------------------------------------------------------------------
-        private void CreateHazards()
-        {
-            var hazards = CreateGroup("Perigos");
-
-            _mudHazards.Add(
-                CreateMudHazardObject(
-                    "C0_Lama1",
-                    hazards,
-                    new Vector2(15f, Tier0Top + 0.2f),
-                    new Vector2(3.6f, 0.4f),
-                    0.7f
-                )
-            );
-            _mudHazards.Add(
-                CreateMudHazardObject(
-                    "C0_Lama2",
-                    hazards,
-                    new Vector2(22f, Tier0Top + 0.2f),
-                    new Vector2(3.6f, 0.4f),
-                    0.7f
-                )
-            );
-            _mudHazards.Add(
-                CreateMudHazardObject(
-                    "C1_Lama1",
-                    hazards,
-                    new Vector2(14f, Tier1Top + 0.2f),
-                    new Vector2(3.2f, 0.4f),
-                    0.7f
-                )
-            );
-
-            // Entre os dois pilares de C0: é preciso calcular o pulo.
-            _spikes.Add(
-                CreateSpikeHazardObject(
-                    "C0_Espinhos",
-                    hazards,
-                    new Vector2(10.4f, Tier0Top + 0.2f),
-                    new Vector2(2.4f, 0.4f),
-                    5,
-                    DefaultRespawn
-                )
-            );
-
-            // Travessia de C3: o vão de 5.0 m excede o alcance, então as duas
-            // plataformas que caem são obrigatórias. Quem cair volta para C2 e sobe
-            // de novo pela AP3, que continua travada pela caixa.
-            _fallingPlatforms.Add(
-                CreateFallingPlatformObject(
-                    "C3_Queda1",
-                    hazards,
-                    new Vector2(13.35f, Tier3Top - SlabThickness * 0.5f),
-                    new Vector2(1.7f, SlabThickness),
-                    0.5f,
-                    3f
-                )
-            );
-            _fallingPlatforms.Add(
-                CreateFallingPlatformObject(
-                    "C3_Queda2",
-                    hazards,
-                    new Vector2(15.65f, Tier3Top - SlabThickness * 0.5f),
-                    new Vector2(1.7f, SlabThickness),
-                    0.5f,
-                    3f
-                )
-            );
-            RegisterSurface("C3_Queda1", 12.5f, 14.2f, Tier3Top);
-            RegisterSurface("C3_Queda2", 14.8f, 16.5f, Tier3Top);
-        }
-
-        // ---------------------------------------------------------------------
-        // Coletáveis: ultraprocessados na linha reta dos corredores baixos, onde
-        // estão a lama e os espinhos; saudáveis em cima dos pilares e nas pontas
-        // que exigem desviar do caminho.
-        // ---------------------------------------------------------------------
-        private void CreateCollectibles()
-        {
-            var foods = CreateGroup("Coletaveis");
-
-            SpawnFood("Burger", new Vector2(6f, Tier0Top + 0.7f), foods);
-            SpawnFood("Soda", new Vector2(12.9f, Tier0Top + 0.7f), foods);
-            SpawnFood("Fries", new Vector2(15f, Tier0Top + 0.7f), foods);
-            SpawnFood("Donut", new Vector2(22f, Tier0Top + 0.7f), foods);
-            SpawnFood("Pizza", new Vector2(25f, Tier0Top + 0.7f), foods);
-            SpawnFood("HotDog", new Vector2(14f, Tier1Top + 0.7f), foods);
-            SpawnFood("Chips", new Vector2(18.4f, Tier1Top + 0.7f), foods);
-            SpawnFood("Candy", new Vector2(27f, Tier1Top + 0.7f), foods);
-
-            // Em cima dos pilares: exige um pulo extra.
-            SpawnFood("Apple", new Vector2(8.4f, Tier0Top + PillarHeight + 0.6f), foods);
-            SpawnFood("Carrot", new Vector2(11f, Tier1Top + PillarHeight + 0.6f), foods);
-            SpawnFood("Orange", new Vector2(25.8f, Tier2Top + PillarHeight + 0.6f), foods);
-            SpawnFood("Broccoli", new Vector2(5.6f, Tier3Top + PillarHeight + 0.6f), foods);
-
-            // Nas pontas opostas ao caminho: exige atravessar o corredor inteiro.
-            SpawnFood("Water", new Vector2(1.5f, Tier1Top + 0.7f), foods);
-            SpawnFood("Avocado", new Vector2(30.5f, Tier2Top + 0.7f), foods);
-            SpawnFood("Fish", new Vector2(1.5f, Tier2Top + 0.7f), foods);
-            SpawnFood("Strawberry", new Vector2(30.5f, Tier3Top + 0.7f), foods);
-            SpawnFood("Watermelon", new Vector2(2f, Tier3Top + 0.7f), foods);
-            SpawnFood("Banana", new Vector2(20.8f, Tier4Top + PillarHeight + 0.6f), foods);
         }
 
         // =========================================================================
@@ -1479,7 +1244,7 @@ namespace HealthyRace.Level
             var cam = cameraObject.GetComponent<Camera>();
             cam.orthographic = true;
             cam.orthographicSize = CameraOrthographicSize;
-            cam.backgroundColor = new Color(0.07f, 0.17f, 0.29f);
+            cam.backgroundColor = TunnelColor;
             cam.clearFlags = CameraClearFlags.SolidColor;
 
             // Enquadramento fixo: a arena inteira cabe na tela, sem scroll nem zoom.
@@ -1591,8 +1356,10 @@ namespace HealthyRace.Level
             var matchControllerObj = new GameObject("MatchCompletionController");
             matchControllerObj.transform.SetParent(transform, false);
             _matchController = matchControllerObj.AddComponent<MatchCompletionController>();
+            // Corrida: a primeira chegada abre a janela final de 20 s; a segunda
+            // encerra a partida ou vira DNF. É o fluxo do GOAL-01.
             _matchController.Configure(
-                _playerOneDoor,
+                _finishLine,
                 _matchHud,
                 _playerOne,
                 _playerTwo,
@@ -1603,9 +1370,7 @@ namespace HealthyRace.Level
                 20,
                 _playerOneHud,
                 _playerTwoHud,
-                _gateTwo,
-                secondFinishLine: _playerTwoDoor,
-                requireBothAtDoors: true
+                _leftDoorGate
             );
             _matchController.MatchConcluded += (results) =>
             {
@@ -1806,7 +1571,8 @@ namespace HealthyRace.Level
             Transform parent,
             Vector2 position,
             Vector2 size,
-            bool instantMotion = false
+            bool instantMotion = false,
+            Vector2? openOffset = null
         )
         {
             var doorObj = new GameObject(name);
@@ -1836,7 +1602,7 @@ namespace HealthyRace.Level
             FitSpriteToSize(doorObj.transform, sr, col, size);
 
             var door = doorObj.AddComponent<PuzzleDoor>();
-            door.Configure(new Vector2(0f, size.y + 0.5f), 4f, instantMotion);
+            door.Configure(openOffset ?? new Vector2(0f, size.y + 0.5f), 4f, instantMotion);
 
             CreateWorldLabel("PORTÃO", doorObj.transform, new Vector2(0f, 0f), Color.cyan);
             return door;

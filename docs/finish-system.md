@@ -27,9 +27,11 @@ O sistema de chegada e encerramento do Healthy Race gerencia a conclusão da cor
    - Em caso de tempos idênticos, o desempate é feito pelo maior valor de **Bem-Estar final**;
    - Se ainda persistir igualdade, o resultado é considerado empate (`WinnerPlayerIndex = 0`).
 
-## Modo Portas Duplas (Fase 1 — arena cooperativa)
+## Modo Portas Duplas (opcional)
 
-Na arena da Fase 1 a chegada funciona como em *Fireboy & Watergirl*:
+O controlador também suporta chegada cooperativa com duas portas, uma por jogador.
+A Fase 1 **não** usa este modo: ela é uma corrida com saída única e segue o fluxo
+de janela final e DNF descrito acima. O modo fica disponível para fases futuras:
 
 1. Há duas `FinishLine`, cada uma com `AcceptedPlayerIndex` (Porta P1 só aceita P1,
    Porta P2 só aceita P2). A porta registra ocupação (`IsOccupiedBy`) e a libera ao

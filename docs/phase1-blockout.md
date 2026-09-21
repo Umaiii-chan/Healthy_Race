@@ -1,9 +1,11 @@
-# Fase 1: Corrida do Equilíbrio — Labirinto Cooperativo de Tela Única
+# Fase 1: Corrida do Equilíbrio — Labirinto Competitivo de Tela Única
 
 Este documento descreve o desenho de nível da **Fase 1** do **Healthy Race** após a
-refatoração para labirinto de corredores escavados numa tela única, no estilo *Fireboy & Watergirl*.
-Ele cobre o enquadramento, os corredores, os portais cooperativos, o orçamento
-de pulo, a distribuição pedagógica dos coletáveis e os critérios anti-deadlock.
+refatoração para labirinto competitivo de tela única, com a composição de rocha
+escavada do *Fireboy & Watergirl*.
+Ele cobre o enquadramento, o mapa de ladrilhos, os mecanismos de cada metade, o
+orçamento de pulo, a distribuição pedagógica dos coletáveis e os critérios
+anti-deadlock.
 
 ---
 
@@ -14,13 +16,14 @@ de pulo, a distribuição pedagógica dos coletáveis e os critérios anti-deadl
 - **Área jogável**: $X \in [0, 32]$, $Y \in [0, 18]$ (proporção 16:9)
 - **Câmera**: fixa em $(16, 9, -10)$, sem scroll nem zoom, com letterbox via
   `Camera.rect` para que nenhuma proporção de tela mostre além das paredes
-- **Jogadores**: P1 e P2 locais, sempre visíveis
-- **Objetivo**: os dois jogadores devem ocupar **simultaneamente** suas portas no
-  corredor C4. Não há janela final nem DNF neste modo.
+- **Jogadores**: P1 e P2 locais, sempre visíveis, com largadas separadas nos cantos
+  de baixo e checkpoints próprios
+- **Objetivo**: corrida. Quem chega primeiro à saída única do topo vence; a segunda
+  chegada tem 20 s antes do DNF
 - **Tema pedagógico**: o dilema deixa de ser "rota de cima vs. rota de baixo" e passa
   a ser "pressa vs. bem-estar" em cada escolha de trajeto. Os ultraprocessados
-  ficam na linha reta dos corredores baixos; os saudáveis exigem subir num pilar
-  ou atravessar até uma das pontas.
+  ficam no piso por onde se passa; os saudáveis exigem desvio, num nicho de salto
+  ou num degrau sem saída.
 
 ---
 
@@ -75,8 +78,8 @@ continua sendo o declarado. Valores resultantes:
 | Vão seguro (`SafeGap`) | alcance menos 0.67 m |
 | Altura da caixa empurrável | 1.22 m |
 
-O espaçamento entre corredores é de 3.2 m: **excede** o ápice de propósito. Toda
-subida depende de um poço vertical e do mecanismo que o serve.
+O espaçamento entre corredores é de 4 m: **excede** o ápice de propósito. Toda
+subida depende de escada, elevador ou caixa.
 
 Geometria, HUD e testes consomem `Phase1Bootstrap.DesignBudget()` ou
 `Phase1Bootstrap.BudgetFor(playerIndex)`. Nenhum número de orçamento é literal.
@@ -90,182 +93,193 @@ divergência entre documentação e física.
 
 ---
 
-## 3. Traçado: labirinto de corredores escavados
+## 3. Traçado: labirinto competitivo em ladrilhos
 
-A referência de composição é um labirinto: massa de rocha sólida com corredores
-escavados, ligados por poços verticais. Não há plataformas soltas no vazio.
+A Fase 1 é uma **corrida**: cada jogador larga num canto de baixo, atravessa a sua
+metade do labirinto e quem chega primeiro à saída única, no centro do topo,
+vence. A referência de composição é o Fireboy & Watergirl: massa de rocha com
+corredores escavados, escadas, poços e nichos. O labirinto é o espaço negativo.
+
+### Mapa
+
+O nível é um mapa de 32 por 18 ladrilhos de 1 m, autorado em texto em
+`Phase1Bootstrap.MazeRows`. `#` é rocha e `.` é túnel. A metade direita é o
+espelho da esquerda, então as duas rotas têm exatamente a mesma dificuldade.
+
+```text
+################################
+###########.########.###########
+####........................####
+####........................####
+####........................####
+####..#..####.####.####..#..####
+####...........##...........####
+####....#......##......#....####
+####....#......##......#....####
+#############..##..#############
+#########......##......#########
+########.......##.......########
+#######....#...##...#....#######
+##.#.#...##############...#.#.##
+#.......################.......#
+#......##################......#
+##....####################....##
+################################
+```
+
+Cada sequência horizontal de rocha vira um bloco com colisor exato e visual
+ladrilhado. Os túneis são a cor de fundo da câmera.
 
 ### Corredores
 
-Cada corredor tem 2.6 m de altura livre, contra 1.25 m do jogador, e as lajes de
-rocha entre eles têm 0.8 m. Visualmente o labirinto é espaço negativo: a arena
-inteira é pintada com ladrilhos de rocha e os corredores e poços são túneis
-escuros por cima. Os colisores ficam onde a rocha permanece.
+Quatro corredores por metade, com 3 ladrilhos de altura livre contra 1.25 m do
+jogador. O espaçamento de 4 m entre pisos excede o ápice de pulo de 2 m: subir
+depende sempre de escada, elevador ou caixa.
 
-| Corredor | Piso | Teto | Trechos de piso (X) |
-| :-- | --: | --: | :-- |
-| C0 | 1.0 | 3.6 | 0 a 30.8, com tampão de rocha até a parede |
-| C1 | 4.4 | 7.0 | 0 a 25.5 e 28.5 a 32 |
-| C2 | 7.8 | 10.4 | 0 a 3 e 6 a 32 |
-| C3 | 11.2 | 13.8 | 0 a 12, 17 a 19.5 e 22.5 a 32 |
-| C4 | 14.6 | 17.2 | 0 a 8 e 11 a 32 |
+| Corredor | Piso | Metade esquerda (colunas) | Como se sobe para o próximo |
+| :-- | --: | :-- | :-- |
+| A | 1 | 1 a 5, largada | Escada de rocha nas colunas 6 a 9 |
+| B | 5 | 9 a 14 | Elevador 1 nas colunas 13 e 14 |
+| C | 9 | 6 a 14 | Elevador 2 nas colunas 4 e 5 |
+| D | 13 | 4 a 14, com poço nas colunas 7 e 8 | Saída na câmara central, colunas 14 a 17 |
 
-O espaçamento entre pisos é de 3.4 m e o ápice de pulo é de 2.0 m. Nenhum
-corredor alcança o de cima por salto: subir sempre depende de um poço.
+Largadas: P1 em (2.5, 1.75) e P2 em (29.5, 1.75), espelhadas.
 
-### Poços verticais
+### Regras de movimento que o mapa respeita
 
-Os buracos nas lajes ficam escalonados de propósito. Como alternam de lado, é
-preciso percorrer cada corredor de ponta a ponta antes de subir, e o percurso
-vira um ziguezague. É o que dá a leitura de labirinto.
+Validadas pelo simulador de travessia dos testes:
 
-| Poço | Laje | X | Liga | Mecanismo |
-| :-- | :-- | :-- | :-- | :-- |
-| A | 1 | 25.5 a 28.5 | C0 para C1 | G1, botão e plataforma |
-| B | 2 | 3 a 6 | C1 para C2 | G2, alavanca e plataforma |
-| C | 3 | 19.5 a 22.5 | C2 para C3 | G3, caixa, botão e plataforma |
-| D | 4 | 8 a 11 | C3 para C4 | degrau de rocha, livre |
+- Andar exige 2 ladrilhos livres, um para os pés e um para a cabeça.
+- Subir 1 ladrilho exige 3 livres acima do piso de partida.
+- Saltar um vão de até 3 ladrilhos sob teto de 3, ou de 4 sob teto de 4.
+- Subir 2 ladrilhos de uma vez é impossível: é parede.
+- Cair é sempre permitido.
 
-Largada no corredor C0: P1 em (3.5, 1.7) e P2 em (5.0, 1.7).
-
-### Textura do labirinto
-
-Dentro dos corredores, dois elementos quebram a linha reta sem nunca fechar a
-passagem:
-
-- **Pilares** de 1.2 m, vencidos com um pulo mesmo sob o teto baixo, já que
-  1.2 + 1.25 fica abaixo dos 2.6 m livres. Sete no total, e cinco deles carregam
-  alimento saudável no topo.
-- **Arcos** presos ao teto, deixando 2.0 m de passagem livre embaixo. Quatro no
-  total.
-- **Dentes de rocha**: 15 saliências de 0.5 m no piso e 15 estalactites de
-  0.45 m no teto, com larguras variadas, para o corredor parecer escavado e não
-  cortado a régua. Nenhum deles fecha a passagem.
-- **Tampão** que encerra o corredor C0 em X 30.8, para o túnel ter começo e fim.
-
-Todos os blocos são ladrilhados com peças uniformes de 0.8 m em vez de um sprite
-esticado, e só o ladrilho da borda encolhe para fechar a medida.
+O nicho que dá folga de cabeça no topo do muro da caixa (linha 12, colunas 7 e 8)
+é também o piso do corredor D. Isso abre um poço de dois ladrilhos em D, logo
+depois do elevador 2: quem não salta cai de volta no corredor C, ao lado do
+elevador, e sobe de novo. É a armadilha da reta final.
 
 ---
 
-## 4. Portais cooperativos
+## 4. Mecanismos, um conjunto por metade
 
-### G1 — C0 para C1, poço A
+Numa corrida nenhum mecanismo pode depender do outro jogador. Cada metade tem:
 
-- Botão **B1** no meio do corredor C0, em X 19, longe do poço.
-- Plataforma **AP1** no poço, repouso com topo em 1.6 e curso até 4.4.
-- Botão **B2** já em C1, em X 23, para devolver o favor.
-- Enquanto um jogador mantém o botão, a plataforma sobe com o outro. A distância
-  entre botão e poço é o que impede a travessia solo.
-- **Saída de emergência**: os dois botões são momentâneos e o poço fica aberto,
-  então qualquer jogador se deixa cair de volta a C0. Nenhum estado trava.
+### Escada de rocha (A para B)
 
-### G2 — C1 para C2, poço B
+Quatro degraus de 1 m nas colunas 6 a 9, com o teto recortado para dar folga de
+salto. Não precisa de mecanismo.
 
-- Alavanca **L2** na ponta oposta do corredor C1, em X 29, não alternável.
-- Plataforma **AP2** no poço, repouso com topo em 5.0 e curso até 7.8.
-- Quem puxa atravessa o corredor inteiro, então os dois avançam em vez de um
-  ficar parado esperando.
-- **Saída de emergência**: a alavanca não volta, então a plataforma fica erguida
-  para sempre e o caminho nunca fecha.
+### Elevadores de uso individual (B para C e C para D)
 
-### G3 — C2 para C3, poço C
+`ActivatedPlatform` com um `PressureButton` montado na própria plataforma. O
+passageiro pisa no botão, a plataforma sobe com ele, e desce sozinha quando ele
+sai no topo. Quem cair de volta encontra a plataforma embaixo de novo. Um
+`CooperativePuzzleController` amarra botão e plataforma.
 
-- Botão **B3** em X 15.5 e plataforma **AP3** no poço, de 8.4 até 11.2.
-- Rota cooperativa: um segura B3 e o outro sobe.
-- Rota anti-deadlock: a caixa empurrada sobre B3 trava a plataforma erguida, e os
-  dois sobem sem depender de sincronia.
-- **Saída de emergência**: a alavanca **R3** em X 30 devolve a caixa ao spawn, e o
-  bootstrap também a devolve se ela cair do corredor.
+### Portão e alavanca (corredor C)
 
-### Subida final — C3 para C4, poço D
+`PuzzleDoor` na coluna 12 de C, aberto pela `Lever` do degrau da coluna 11 de B,
+não alternável. Quem passa reto pela alavanca encontra o portão fechado e precisa
+voltar: é o custo de navegação do labirinto. Aberto, o portão fica translúcido
+e sem colisor, no lugar.
 
-Degrau de rocha livre, com topo em 12.9: dois lances de 1.7 m, ambos dentro do
-degrau seguro. Sem mecanismo: os dois convergem e chegam juntos ao corredor das
-portas.
+### Caixa e muro (corredor C)
+
+`PushableBox` na coluna 11, empurrada até o muro de 2 m da coluna 8. Com 1.22 m
+de altura, a caixa vira degrau: faltam 0.78 m até o topo do muro. Do topo se desce
+para a parte esquerda de C. Se a caixa cair do corredor pelo poço do elevador,
+o bootstrap a devolve ao spawn.
 
 ---
 
 ## 5. Perigos
 
-| Perigo | Posição | Efeito |
-| :-- | :-- | :-- |
-| Lama | C0 em X 13.2 a 16.8 e 20.2 a 23.8, C1 em X 12.4 a 15.6 | Velocidade a 70% e fadiga acelerada |
-| Espinhos | C0 em X 9.2 a 11.6, entre os dois pilares | Menos 5 de bem-estar e respawn no checkpoint |
-| Plataformas que caem | C3, vão de 5.0 m entre X 12 e 17 | 0.5 s de aviso e 3 s fora |
+Espelhados nas duas metades, sempre na rota direta.
 
-O vão de C3 excede o alcance de pulo, então as duas plataformas são obrigatórias.
-Quem cai volta para C2 e sobe de novo pela AP3, que continua travada pela caixa.
+| Perigo | Metade esquerda | Efeito |
+| :-- | :-- | :-- |
+| Lama | A, colunas 3 e 4; D, colunas 9 e 10 | Velocidade a 70% e fadiga acelerada |
+| Espinhos | B, coluna 12; D, coluna 12 | Menos 5 de bem-estar e respawn no último checkpoint do jogador |
+
+Os espinhos ocupam 1 ladrilho e se vencem com um pulo. Em B, eles ficam logo
+abaixo do degrau da alavanca: descer sem olhar custa.
 
 ---
 
-## 6. Checkpoints
+## 6. Checkpoints e respawn separado
 
-Um por corredor, sempre na saída do poço, mantendo o isolamento por jogador.
+Quatro checkpoints por metade. O primeiro fica na largada e é ativado pelo
+bootstrap para o dono da metade assim que os jogadores nascem, então morrer nos
+espinhos antes de qualquer outro checkpoint devolve cada um à sua própria
+largada, nunca à do adversário. O isolamento por jogador já existente em
+`Checkpoint` garante o resto.
 
-| Checkpoint | Posição | Corredor |
+| Checkpoint | P1 | P2 |
 | :-- | :-- | :-- |
-| CP1 | (30.0, 5.4) | C1 |
-| CP2 | (7.5, 8.8) | C2 |
-| CP3 | (24.0, 12.2) | C3 |
-| CP4 | (12.5, 15.6) | C4 |
+| Largada | (2.5, 2.3) | (29.5, 2.3) |
+| Topo da escada, B | (9.5, 6.2) | (22.5, 6.2) |
+| Corredor C | (10.5, 10.2) | (21.5, 10.2) |
+| Corredor D | (6.5, 14.2) | (25.5, 14.2) |
 
 ---
 
 ## 7. Coletáveis
 
-O dilema deixou de ser altura e passou a ser desvio. Os ultraprocessados ficam na
-linha reta dos corredores baixos, junto da lama e dos espinhos. Os saudáveis
-exigem subir num pilar ou atravessar até uma das pontas.
+O dilema pedagógico é desvio contra pressa. Os ultraprocessados ficam no piso por
+onde se passa, junto da lama. Os saudáveis exigem desvio: um nicho de salto no
+teto ou um degrau sem saída.
 
-**Ultraprocessados**, na rota direta: `Burger` (6, C0), `Soda` (12.9, C0),
-`Fries` (15, C0), `Donut` (22, C0), `Pizza` (25, C0), `HotDog` (14, C1),
-`Chips` (18.4, C1) e `Candy` (27, C1).
+As duas metades somam **590 pontos** de alimento saudável cada, e as penalidades
+dos ultraprocessados diferem em 1 ponto de bem-estar (57 contra 58), para a
+corrida ser justa.
 
-**Saudáveis sobre pilares**: `Apple` (8.4, C0), `Carrot` (11, C1),
-`Orange` (25.8, C2), `Broccoli` (5.6, C3) e `Banana` (20.8, C4).
-
-**Saudáveis nas pontas**: `Water` (1.5, C1), `Fish` (1.5, C2),
-`Avocado` (30.5, C2), `Watermelon` (2, C3) e `Strawberry` (30.5, C3).
+| | Metade esquerda (P1) | Metade direita (P2) |
+| :-- | :-- | :-- |
+| Ultraprocessados no piso | `Burger` e `Fries` em A, `Donut` em B, `Candy` em C | `Pizza` e `HotDog` em A, `Soda` em B, `Chips` em C |
+| Saudável em degrau sem saída | `Water`, coluna 1 de A | `Broccoli`, coluna 30 de A |
+| Saudáveis em nicho de salto | `Banana` e `Carrot` no teto de A, `Strawberry` no teto de C, `Fish` no teto de D | `Apple` e `Avocado` no teto de A, `Orange` no teto de C, `Watermelon` no teto de D |
 
 ---
 
 ## 8. Chegada
 
-Duas portas no corredor C4, `FinishLine` com `AcceptedPlayerIndex`: a Porta P1 em
-X 22 só aceita P1, e a Porta P2 em X 25.5 só aceita P2. Ficam fora das faixas
-que os painéis do HUD cobrem nos cantos superiores. A partida encerra quando
-os dois estão em suas portas ao mesmo tempo. O primeiro a chegar não congela e
-pode voltar para ajudar.
+Uma `FinishLine` única em X 16, aceitando os dois jogadores. O
+`MatchCompletionController` roda no modo de corrida do GOAL-01: a primeira
+chegada congela o jogador e abre a janela final de 20 s; a segunda encerra a
+partida, ou o atrasado recebe DNF. O modo de portas duplas continua disponível
+no controlador, mas a Fase 1 não o usa.
 
 ---
 
 ## 9. Progresso no HUD
 
-Cinco marcos: corredor alcançado, com apoio real conferido pelo `PlayerGroundCheck`,
-e porta ocupada. Pular no lugar não avança nada. O marco é monotônico: cair de
-volta não reduz o progresso.
+Quatro marcos, com apoio real conferido pelo `PlayerGroundCheck`: corredor B,
+corredor C, corredor D e saída cruzada, em 25%, 50%, 75% e 100%. Pular no
+lugar não avança nada e cair de volta não reduz o progresso.
 
 ---
 
 ## 10. Anti-deadlock
 
-1. Todo poço fica aberto, então dá para descer de qualquer corredor até C0 e
-   refazer o percurso.
-2. Os botões são momentâneos e as alavancas não são alternáveis: nenhum mecanismo
-   volta a um estado pior.
-3. A caixa de G3 tem alavanca de reset e retorno automático se cair.
-4. Morrer nos espinhos devolve ao checkpoint sem alterar o estado dos portais.
-5. Pilares e arcos nunca fecham um corredor.
+1. Todo poço fica aberto embaixo do elevador, então dá para cair de qualquer
+   corredor e refazer o percurso.
+2. Elevadores voltam sozinhos ao soltar o botão. Alavancas não são alternáveis:
+   o portão nunca volta a fechar.
+3. A caixa volta ao spawn automaticamente se cair do corredor C.
+4. Morrer nos espinhos devolve ao próprio checkpoint sem alterar mecanismos.
+5. O simulador dos testes garante que nenhuma célula em pé fica inalcançável em
+   nenhuma metade.
 
 ---
 
 ## 11. Limitação conhecida
 
-O G2 usa alavanca permanente, então é cooperação fraca: um jogador sozinho
-consegue puxar e depois subir. Quem impede de fato a travessia solo é o G1, que
-exige alguém segurando o botão enquanto o outro sobe. A cooperação forte nos três
-portais depende da assimetria entre P1 e P2, ainda não implementada.
+A assimetria entre P1 e P2 descrita em `docs/player-profiles.md` foi pensada para
+o modo cooperativo. Numa corrida com metades espelhadas ela deixaria as rotas
+desiguais, então não foi implementada. Se voltar à pauta, o caminho é adaptar
+cada metade ao perfil do seu jogador.
 
 ---
 
@@ -273,22 +287,34 @@ portais depende da assimetria entre P1 e P2, ainda não implementada.
 
 - **EditMode** (`Phase1BlockoutTests.cs`):
   - integridade da cena e das referências serializadas;
-  - `FinishLine_DoorForPlayer_RejectsOtherPlayerAndTracksOccupancy`;
-  - `MatchCompletion_DualDoors_*`: conclusão só com os dois nas portas;
-  - `SharedCamera_FixedFraming_IgnoresTargetsAndKeepsSize`;
-  - `Phase1Bootstrap_BuildsArenaTiersGatesAndDoors`: patamares, portais, portas,
-    checkpoints, perigos e câmera fixa;
-  - `Phase1Bootstrap_AllGeometryAndActorsStayInsideArenaRectangle`: geometria,
-    jogadores e distribuição saudável/ultraprocessado;
-  - `Phase1Bootstrap_ArenaIsTraversable_WithinJumpBudget_UsingCooperativeLinks`:
-    **guarda-corpo do design** — busca em largura sobre as superfícies registradas
-    (`Surfaces`) e ligações cooperativas (`CooperativeLinks`); falha se alguma
-    superfície exigir desnível > 1.8 m ou vão > 4.0 m sem mecanismo, e falha se T1 ou
-    as portas forem alcançáveis sem cooperação.
+  - `Maze_MapIsWellFormed_AndMirrored`: 18 linhas de 32 ladrilhos, borda fechada,
+    metades espelhadas, largadas em pé e saída aberta;
+  - `Phase1Bootstrap_BuildsMirroredMaze_WithSeparateSpawnsAndSharedExit`: largadas
+    separadas e espelhadas, checkpoint de largada ativo para o dono da metade,
+    saída única em modo corrida, mecanismos espelhados, câmera fixa;
+  - `Phase1Bootstrap_MazeIsTraversable_ForEachPlayer_OnlyWithMechanisms`:
+    **guarda-corpo do design**. Um simulador percorre o mapa célula a célula com
+    as regras de movimento (andar, subir 1, cair, saltar até 3, ou 4 sob teto de
+    4) e os mecanismos registrados. Cada jogador precisa chegar à saída pela
+    própria metade, nenhum pode chegar sem elevadores, caixa e portão, nenhuma
+    célula em pé pode ficar órfã e os dois caminhos precisam ter o mesmo
+    comprimento;
+  - `Phase1Bootstrap_FoodsFollowTheDetourRule_AndHalvesAreBalanced`:
+    ultraprocessado no piso de passagem, saudável em nicho ou beco, mesmos pontos
+    nas duas metades;
+  - `Phase1Bootstrap_SpawnsEveryFood_ResolvedFromTheCatalog`: 18 alimentos, 10
+    saudáveis e 8 ultraprocessados;
+  - `JumpBudget_IsDerivedFromArenaPhysics_NotFromLiterals`: as regras do simulador
+    cabem no orçamento real de pulo;
+  - `SharedCamera_FixedFraming_IgnoresTargetsAndKeepsSize` e
+    `SharedCamera_Letterbox_MatchesTheArenaAspect`.
 - **PlayMode** (`Phase1PlayModeTests.cs`):
-  - spawn dos dois jogadores dentro do retângulo e no chão;
+  - largadas separadas, espelhadas e no chão, cada jogador com o próprio
+    checkpoint de retorno;
   - checkpoint com isolamento por jogador;
-  - progresso por patamar (correr no piso não conta);
-  - conclusão da partida exigindo os dois jogadores em suas próprias portas;
-  - câmera imóvel (posição e `orthographicSize`) enquanto os jogadores percorrem a
-    arena, com ambos sempre dentro do viewport.
+  - espinhos devolvem cada jogador à própria largada;
+  - progresso por corredor, e pular no lugar não conta;
+  - corrida: a primeira chegada abre a janela final e congela o jogador, a segunda
+    encerra sem DNF com as colocações certas;
+  - câmera imóvel enquanto os jogadores percorrem o labirinto, com ambos sempre
+    dentro do viewport.

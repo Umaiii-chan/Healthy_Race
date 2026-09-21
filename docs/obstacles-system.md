@@ -54,10 +54,10 @@ O sistema de obstáculos e perigos (hazards) do Healthy Race introduz desafios d
 
 ## Integração na Fase 1 (Corrida do Equilíbrio)
 
-- **Arena da Fase 1** (ver `docs/phase1-blockout.md`):
-  - `MudHazard` em T0, $X \in [15, 19]$ e $[22, 26]$, sobre a rota dos ultraprocessados.
-  - `SpikeHazard` em T0, $X \in [10, 13]$, sob o vão entre as ilhas de T1, e no canto do nicho de G2 como saída de emergência.
-  - `FallingPlatform` na travessia de T3, $X \in [18, 21]$ e $[13.5, 16.5]$.
+- **Labirinto da Fase 1** (ver `docs/phase1-blockout.md`), espelhado nas duas metades:
+  - `MudHazard` no corredor A, colunas 3 e 4, e no corredor D, colunas 9 e 10.
+  - `SpikeHazard` de 1 ladrilho nos corredores B e D, coluna 12, com respawn no último checkpoint do próprio jogador.
+  - Sem `FallingPlatform` nesta versão: os elementos móveis são os elevadores.
 
 ## Testes Automatizados
 
