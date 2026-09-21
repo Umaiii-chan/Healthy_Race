@@ -24,6 +24,12 @@ namespace HealthyRace.Player
 
         public bool IsGrounded => _groundCheck != null && _groundCheck.IsGrounded;
 
+        /// <summary>Velocidade vertical base do pulo, sem multiplicadores.</summary>
+        public float JumpVelocity => _jumpVelocity;
+
+        /// <summary>Velocidade horizontal base, sem multiplicadores.</summary>
+        public float MoveSpeed => _moveSpeed;
+
         public bool IsMovementEnabled => _isMovementEnabled;
 
         public float JumpMultiplier => _jumpMultiplier;
