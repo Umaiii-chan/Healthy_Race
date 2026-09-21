@@ -12,8 +12,8 @@ namespace HealthyRace.UI
     [DisallowMultipleComponent]
     public sealed class MatchResultsPanel : MonoBehaviour
     {
-        private const float Width = 640f;
-        private const float Height = 420f;
+        private const float Width = 660f;
+        private const float Height = 460f;
 
         private Text _winnerText;
         private Text _p1StatsText;
@@ -26,14 +26,14 @@ namespace HealthyRace.UI
         {
             transform.SetParent(parent, false);
 
-            var rect =
-                gameObject.GetComponent<RectTransform>()
-                ?? gameObject.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(Width, Height);
+            if (transform is RectTransform rect)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = Vector2.zero;
+                rect.sizeDelta = new Vector2(Width, Height);
+            }
 
             _contentRoot = new GameObject("ResultsContent", typeof(RectTransform));
             _contentRoot.transform.SetParent(transform, false);
@@ -51,55 +51,57 @@ namespace HealthyRace.UI
                 "Title",
                 _contentRoot.transform,
                 "RESULTADOS DA CORRIDA",
-                26,
+                24,
                 FontStyle.Bold,
                 Color.white,
-                new Vector2(0f, 150f),
-                new Vector2(500f, 40f)
+                new Vector2(0f, 190f),
+                new Vector2(500f, 36f)
             );
 
             _winnerText = CreateText(
                 "WinnerText",
                 _contentRoot.transform,
                 string.Empty,
-                22,
+                20,
                 FontStyle.Bold,
                 new Color(1f, 0.85f, 0.25f),
-                new Vector2(0f, 90f),
-                new Vector2(500f, 36f)
+                new Vector2(0f, 150f),
+                new Vector2(500f, 32f)
             );
 
             _p1StatsText = CreateText(
                 "P1Stats",
                 _contentRoot.transform,
                 string.Empty,
-                18,
+                13,
                 FontStyle.Normal,
                 new Color(0.4f, 0.8f, 1f),
-                new Vector2(-140f, -10f),
-                new Vector2(260f, 140f)
+                new Vector2(-150f, 0f),
+                new Vector2(280f, 240f),
+                TextAnchor.UpperLeft
             );
 
             _p2StatsText = CreateText(
                 "P2Stats",
                 _contentRoot.transform,
                 string.Empty,
-                18,
+                13,
                 FontStyle.Normal,
                 new Color(1f, 0.6f, 0.4f),
-                new Vector2(140f, -10f),
-                new Vector2(260f, 140f)
+                new Vector2(150f, 0f),
+                new Vector2(280f, 240f),
+                TextAnchor.UpperLeft
             );
 
             CreateText(
                 "PromptText",
                 _contentRoot.transform,
                 "Corrida finalizada com sucesso!",
-                15,
+                14,
                 FontStyle.Italic,
                 new Color(0.7f, 0.7f, 0.7f),
-                new Vector2(0f, -160f),
-                new Vector2(500f, 30f)
+                new Vector2(0f, -195f),
+                new Vector2(500f, 28f)
             );
 
             _contentRoot.SetActive(false);
@@ -151,15 +153,25 @@ namespace HealthyRace.UI
 
         private static string FormatPlayerSummary(PlayerMatchResult player)
         {
-            var placementStr = player.IsDnf ? "DNF (Tempo Expirado)" : $"{player.Placement}º LUGAR";
+            var placementStr = player.IsDnf ? "DNF" : $"{player.Placement}º LUGAR";
             var timeStr = player.IsDnf
-                ? "--:--"
+                ? "Não concluiu"
                 : $"{TimeSpan.FromSeconds(Mathf.Max(0f, player.FinishTime)):mm\\:ss}";
 
-            return $"JOGADOR {player.PlayerIndex}\n\n"
-                + $"Posição: {placementStr}\n"
+            var score = player.Score;
+
+            return $"JOGADOR {player.PlayerIndex} ({placementStr})\n"
+                + $"SCORE: {score.FinalScore}\n\n"
                 + $"Tempo: {timeStr}\n"
-                + $"Bem-Estar: {player.FinalWellbeing} WB";
+                + $"Bem-Estar: {player.FinalWellbeing}/100\n\n"
+                + $"Alimentos: +{score.HealthyPoints}\n"
+                + $"Puzzles: +{score.PuzzlePoints}\n"
+                + $"Bônus Tempo: +{score.TimeBonus}\n"
+                + $"Bônus Chegada: +{score.ArrivalBonus}\n"
+                + $"Bônus Bem-Estar: +{score.WellbeingBonus}\n"
+                + (score.UltraPenalty > 0 ? $"Penalidade Ultra: -{score.UltraPenalty}\n" : "")
+                + (score.FatiguePenalty > 0 ? $"Penalidade Fadiga: -{score.FatiguePenalty}\n" : "")
+                + (score.DnfPenalty > 0 ? $"Penalidade DNF: -{score.DnfPenalty}\n" : "");
         }
 
         private static Text CreateText(
@@ -170,7 +182,8 @@ namespace HealthyRace.UI
             FontStyle fontStyle,
             Color color,
             Vector2 position,
-            Vector2 size
+            Vector2 size,
+            TextAnchor alignment = TextAnchor.MiddleCenter
         )
         {
             var textObject = new GameObject(name, typeof(RectTransform));
@@ -182,7 +195,7 @@ namespace HealthyRace.UI
             text.fontSize = fontSize;
             text.fontStyle = fontStyle;
             text.color = color;
-            text.alignment = TextAnchor.MiddleCenter;
+            text.alignment = alignment;
 
             var rect = (RectTransform)text.transform;
             rect.anchorMin = new Vector2(0.5f, 0.5f);
