@@ -131,6 +131,9 @@ namespace HealthyRace.Editor.Visuals
             }
                 .Select(n => sprites[n])
                 .ToArray();
+            _catalog.Background = AssetDatabase.LoadAssetAtPath<Sprite>(
+                Root + "Art/Environment/Visual/SP_Background.png"
+            );
             _catalog.Particle = CreateShape("SP_Spark", true);
             _catalog.Heart = CreateShape("SP_Heart", true);
             _catalog.Droplet = CreateShape("SP_Droplet", true);

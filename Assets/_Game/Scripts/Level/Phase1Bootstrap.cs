@@ -80,7 +80,7 @@ namespace HealthyRace.Level
         // orçamento é literal: geometria, HUD e testes leem JumpBudget, que por
         // sua vez lê a física viva. Ver Assets/_Game/Scripts/Player/JumpBudget.cs.
         // ---------------------------------------------------------------------
-        public const float ArenaGravityY = -18f;
+        public const float PhaseGravityY = -18f;
         public const float TargetJumpApex = 2.0f;
 
         /// <summary>
@@ -243,7 +243,7 @@ namespace HealthyRace.Level
             BuildFoodLookup();
 
             Application.targetFrameRate = 60;
-            Physics2D.gravity = new Vector2(0f, ArenaGravityY);
+            Physics2D.gravity = new Vector2(0f, PhaseGravityY);
 
             CreateBackground();
             CreateZones();
@@ -372,13 +372,13 @@ namespace HealthyRace.Level
         public static JumpBudget DesignBudget(float jumpVelocity = 12f, float moveSpeed = 7f)
         {
             var gravityScale = JumpBudget.GravityScaleForApex(
-                ArenaGravityY,
+                PhaseGravityY,
                 jumpVelocity,
                 TargetJumpApex,
                 FixedDeltaTime
             );
             return JumpBudget.FromPhysics(
-                ArenaGravityY,
+                PhaseGravityY,
                 gravityScale,
                 jumpVelocity,
                 moveSpeed,

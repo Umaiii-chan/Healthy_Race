@@ -57,7 +57,7 @@ alcança. `IdealApex` fica disponível apenas para comparação.
 A arena declara o ápice que quer e **deriva** a gravidade do jogador:
 
 ```text
-ArenaGravityY  = -18
+PhaseGravityY  = -18
 TargetJumpApex = 2.0 m
 gravityScale   = JumpBudget.GravityScaleForApex(...)  ->  ~1.888
 ```

@@ -26,7 +26,7 @@ namespace HealthyRace.Tests.PlayMode
         public void SetUp()
         {
             _originalGravity = Physics2D.gravity;
-            Physics2D.gravity = new Vector2(0f, Phase1Bootstrap.ArenaGravityY);
+            Physics2D.gravity = new Vector2(0f, Phase1Bootstrap.PhaseGravityY);
         }
 
         [TearDown]

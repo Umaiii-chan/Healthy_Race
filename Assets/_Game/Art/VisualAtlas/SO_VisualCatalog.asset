@@ -51,6 +51,7 @@ MonoBehaviour:
   - {fileID: -1142339061, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: 224527991, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: 2057899880, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  Background: {fileID: -4597459666837265003, guid: 8875450d6adf3b94fb4bb9795fcd6202, type: 3}
   PlayerAnimator: {fileID: 9100000, guid: fe6517c1337f1ef44be0adf64de060ea, type: 2}
   Particle: {fileID: 21300000, guid: b410977cd9255614e8d0e08aff44dc8e, type: 2}
   Heart: {fileID: 21300000, guid: 589c3f7026b8a5e46a9511a1fda87289, type: 2}

@@ -608,14 +608,14 @@ namespace HealthyRace.Tests.EditMode
 
             // g = |gravity| * gravityScale derivado do ápice de projeto
             var expectedGravityScale = JumpBudget.GravityScaleForApex(
-                Phase1Bootstrap.ArenaGravityY,
+                Phase1Bootstrap.PhaseGravityY,
                 12f,
                 Phase1Bootstrap.TargetJumpApex,
                 Phase1Bootstrap.FixedDeltaTime
             );
             Assert.That(
                 budget.Gravity,
-                Is.EqualTo(Mathf.Abs(Phase1Bootstrap.ArenaGravityY) * expectedGravityScale)
+                Is.EqualTo(Mathf.Abs(Phase1Bootstrap.PhaseGravityY) * expectedGravityScale)
                     .Within(0.001f)
             );
             Assert.That(budget.Apex, Is.EqualTo(Phase1Bootstrap.TargetJumpApex).Within(0.01f));
@@ -637,8 +637,8 @@ namespace HealthyRace.Tests.EditMode
 
             // O orçamento acompanha a física: dobrar a gravidade reduz o ápice à metade.
             var heavier = JumpBudget.FromPhysics(
-                Phase1Bootstrap.ArenaGravityY,
-                budget.Gravity / Mathf.Abs(Phase1Bootstrap.ArenaGravityY) * 2f,
+                Phase1Bootstrap.PhaseGravityY,
+                budget.Gravity / Mathf.Abs(Phase1Bootstrap.PhaseGravityY) * 2f,
                 12f,
                 7f,
                 Phase1Bootstrap.FixedDeltaTime

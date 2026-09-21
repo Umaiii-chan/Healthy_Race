@@ -19,8 +19,12 @@ namespace HealthyRace.UI
         private Text _p1StatsText;
         private Text _p2StatsText;
         private GameObject _contentRoot;
+        private Button _replayButton;
 
         public bool IsVisible => _contentRoot != null && _contentRoot.activeSelf;
+        public Button ReplayButton => _replayButton;
+
+        public event Action ReplayRequested;
 
         public void Initialize(Transform parent)
         {
@@ -93,14 +97,23 @@ namespace HealthyRace.UI
                 TextAnchor.UpperLeft
             );
 
+            _replayButton = CreateButton(
+                "ReplayButton",
+                _contentRoot.transform,
+                "JOGAR NOVAMENTE",
+                new Vector2(0f, -174f),
+                new Vector2(230f, 44f)
+            );
+            _replayButton.onClick.AddListener(RequestReplay);
+
             CreateText(
                 "PromptText",
                 _contentRoot.transform,
-                "Corrida finalizada com sucesso!",
+                "Corrida finalizada com sucesso",
                 14,
                 FontStyle.Italic,
                 new Color(0.7f, 0.7f, 0.7f),
-                new Vector2(0f, -195f),
+                new Vector2(0f, -216f),
                 new Vector2(500f, 28f)
             );
 
@@ -149,6 +162,11 @@ namespace HealthyRace.UI
             {
                 _contentRoot.SetActive(false);
             }
+        }
+
+        public void RequestReplay()
+        {
+            ReplayRequested?.Invoke();
         }
 
         private static string FormatPlayerSummary(PlayerMatchResult player)
@@ -205,6 +223,44 @@ namespace HealthyRace.UI
             rect.sizeDelta = size;
 
             return text;
+        }
+
+        private static Button CreateButton(
+            string name,
+            Transform parent,
+            string label,
+            Vector2 position,
+            Vector2 size
+        )
+        {
+            var buttonObject = new GameObject(name, typeof(RectTransform), typeof(Image));
+            buttonObject.transform.SetParent(parent, false);
+
+            var rect = (RectTransform)buttonObject.transform;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+
+            var image = buttonObject.GetComponent<Image>();
+            image.sprite = PlaceholderSpriteFactory.Square;
+            image.color = new Color(0.18f, 0.62f, 0.34f, 1f);
+
+            var button = buttonObject.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            CreateText(
+                "Label",
+                buttonObject.transform,
+                label,
+                16,
+                FontStyle.Bold,
+                Color.white,
+                Vector2.zero,
+                size
+            );
+            return button;
         }
     }
 }
