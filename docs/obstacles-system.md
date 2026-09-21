@@ -1,73 +1,30 @@
-# Sistema de Obstáculos (HAZ-01)
+# Sistema de obstáculos (HAZ-01)
 
-## Descrição
+## Sistemas
 
-O sistema de obstáculos e perigos (hazards) do Healthy Race introduz desafios de plataforma e consequências pedagógicas de jogabilidade através de três tipos principais de obstáculos: **Espinhos** (`SpikeHazard`), **Lama** (`MudHazard`) e **Plataformas que Caem** (`FallingPlatform`).
+A fase reutiliza `SpikeHazard`, `MudHazard` e `FallingPlatform` sem alterar suas regras de dano, lentidão, respawn ou cooldown.
 
-## Componentes Arquiteturais
+## Distribuição final
 
-### 1. SpikeHazard (`SpikeHazard.cs`)
+### Z3 — Copa superior
 
-- **Namespace**: `HealthyRace.Obstacles`;
-- **Gatilho de Contato**: `BoxCollider2D` (`isTrigger = true`);
-- **Detecção de Jogador**: Suporta `PlayerController` e `PlayerMovement`;
-- **Penalidade de Bem-Estar**:
-  - Aplica redução imediata no Bem-Estar (`_wellbeingPenalty = 5`);
-  - Clampa respeitando o valor mínimo (`0 WB`);
-- **Respawn no Checkpoint**:
-  - Consulta `Checkpoint.GetLastCheckpoint(playerIndex)`;
-  - Se um checkpoint já foi alcançado pelo jogador, ele é reposicionado em `checkpoint.RespawnPosition`;
-  - Caso contrário, utiliza a posição padrão de spawn (`_defaultRespawnPosition`);
-  - Zera o vetor de velocidade (`rb.linearVelocity = Vector2.zero`) para cessar inércia;
-- **Janela de Invulnerabilidade (Cooldown)**:
-  - Cooldown configurável (`_hitCooldown = 1.0s`) por índice de jogador;
-  - Evita dano contínuo acidental ou penalidades em loop;
-- **Eventos**: `event Action<int, Vector2> PlayerPenalized`, `event Action OnAnyPlayerHit`.
+- `Upper_FallingA` e `Upper_FallingB` criam pressão de timing na rota de maior recompensa.
+- Ambas retornam após a queda, portanto a rota nunca fica permanentemente bloqueada.
 
-### 2. MudHazard (`MudHazard.cs`)
+### Z3 — Córrego inferior
 
-- **Namespace**: `HealthyRace.Obstacles`;
-- **Gatilho de Área**: `BoxCollider2D` (`isTrigger = true`);
-- **Penalidade de Velocidade**:
-  - Multiplicador de velocidade horizontal (`_speedMultiplier = 0.7f`, correspondendo a -30%);
-- **Rastreamento e Isolamento**:
-  - Utiliza `HashSet<PlayerMovement>` para acompanhar os jogadores presentes na área;
-  - Aplica o multiplicador no `OnTriggerEnter2D` e restaura `1.0f` no `OnTriggerExit2D`;
-  - No `OnDisable` / `OnDestroy`, restaura automaticamente a velocidade normal de todos os jogadores para evitar debuffs permanentes;
-- **Eventos**: `event Action<PlayerMovement> PlayerEntered`, `event Action<PlayerMovement> PlayerExited`.
+- `Lower_MudA` e `Lower_MudB` tornam o atalho terrestre mais lento.
+- `Lower_SpikesA` e `Lower_SpikesB` interrompem a corrida automática e devolvem o jogador ao Checkpoint 1.
+- Alimentos ultraprocessados ficam próximos da linha rápida; alimentos saudáveis aparecem antes de conexões e saídas.
 
-### 3. FallingPlatform (`FallingPlatform.cs`)
+### Z6 — chegada
 
-- **Namespace**: `HealthyRace.Obstacles`;
-- **Colisor Sólido**: `BoxCollider2D` na layer 6 (`Ground`);
-- **Detecção de Pouso**:
-  - `OnCollisionEnter2D` / `OnCollisionStay2D` validando colisão superior (pouso pelo topo);
-- **Ciclo de Queda e Respawn**:
-  1. **Antecipação / Tremor (`0.5s`)**:
-     - Vibração visual e aviso sonoro/textual (integrado a `HazardPresentation` com texto `! VAI CAIR !` e shake angular/horizontal);
-  2. **Queda / Desativação**:
-     - Desativa o colisor físico e o renderer visual;
-  3. **Respawn (`3.0s`)**:
-     - Retorna à posição original, reativa o colisor e restaura o estado `Idle`;
-  - Suporta restauração manual via `ResetPlatform()` para garantir anti-deadlock;
-- **Eventos**: `event Action PlatformTriggered`, `event Action PlatformFell`, `event Action PlatformRespawned`.
+- `Z6_FinalSpikes` cria o último pico de atenção antes do terraço final e retorna ao Checkpoint 2.
 
-## Integração na Fase 1 (Corrida do Equilíbrio)
+## Leitura visual
 
-- **Zona 3 — Rotas (X: 65 a 125)**:
-  - **Rota Superior (Saudável)**: Adicionada a plataforma que cai `Upper_FallingPlatform` (`x = 87`, `y = 2.7`), exigindo agilidade e timing no parkour elevado.
-  - **Rota Inferior (Tentação)**: Adicionadas duas poças de lama `Lower_Mud1` (`x = 84.5`) e `Lower_Mud2` (`x = 105.5`), penalizando em 30% a velocidade de quem escolhe o caminho reto e plano.
-- **Zona 4 — Reencontro (X: 125 a 160)**:
-  - Adicionado fosso com espinhos `Z4_Spikes` (`x = 150`, `y = -1.25`), com retorno ao `Checkpoint 2` (`x = 130`) em caso de queda.
+Os hazards usam sprites próprios e dimensões visuais iguais às dos colliders. Rótulos técnicos como “ESPINHOS” e “LAMA (-30%)” foram removidos; forma, cor, posição e animação comunicam a função.
 
-## Testes Automatizados
+## Validação
 
-- **EditMode** (`ObstacleTests.cs`):
-  - `SpikeHazard_PenalizesWellbeing_AndTeleportsPlayerToCheckpoint`
-  - `SpikeHazard_RespectsHitCooldown`
-  - `MudHazard_ConfiguresMultiplier_AndManagesAffectedPlayers`
-  - `FallingPlatform_InitializesStable_AndStartsAnticipationOnTrigger`
-- **PlayMode** (`ObstaclePlayModeTests.cs`):
-  - `Player_StepsOnSpikeHazard_TakesPenaltyAndRespawns`
-  - `Player_EntersMudHazard_ReducesSpeed_AndRestoresOnExit`
-  - `Player_LandsOnFallingPlatform_TriggersCollapseAndRespawn`
+Além dos testes unitários de penalidade, cooldown, multiplicador e respawn, os testes de layout verificam que o piso e as plataformas ao redor dos hazards respeitam o envelope real de salto do jogador.
