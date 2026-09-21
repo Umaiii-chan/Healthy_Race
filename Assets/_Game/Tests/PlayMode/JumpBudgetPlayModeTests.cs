@@ -46,10 +46,10 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator JumpBudget_MatchesMeasuredPhysics_ForPhasePlayer()
+        public IEnumerator JumpBudget_MatchesMeasuredPhysics_ForArenaPlayer()
         {
             CreateGround();
-            var player = CreatePhasePlayer(new Vector2(0f, 0.5f));
+            var player = CreateArenaPlayer(new Vector2(0f, 0.5f));
 
             yield return WaitForGrounded(player);
             Assert.That(player.IsGrounded, Is.True, "Player must settle on the ground first.");
@@ -58,7 +58,7 @@ namespace HealthyRace.Tests.PlayMode
             Assert.That(
                 budget.Apex,
                 Is.EqualTo(Phase1Bootstrap.TargetJumpApex).Within(0.01f),
-                "Declared budget must match the phase design target."
+                "Declared budget must match the arena design target."
             );
 
             var measuredApex = 0f;
@@ -75,7 +75,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator JumpBudget_MatchesMeasuredHorizontalReach()
         {
             CreateGround();
-            var player = CreatePhasePlayer(new Vector2(-6f, 0.5f));
+            var player = CreateArenaPlayer(new Vector2(-6f, 0.5f));
 
             yield return WaitForGrounded(player);
 
@@ -91,29 +91,21 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator JumpBudget_MeasuredApexStaysBelowTheDeclaredSafeStepPlusMargin()
+        public IEnumerator JumpBudget_CannotClearTheArenaTierSpacing()
         {
             CreateGround();
-            var player = CreatePhasePlayer(new Vector2(0f, 0.5f));
+            var player = CreateArenaPlayer(new Vector2(0f, 0.5f));
 
             yield return WaitForGrounded(player);
 
-            var budget = JumpBudget.For(player);
             var measuredApex = 0f;
             yield return MeasureJump(player, 0f, apex => measuredApex = apex, _ => { });
 
-            // O degrau seguro precisa ser efetivamente vencível, e um degrau acima do
-            // ápice precisa ser efetivamente intransponível. É isso que garante que a
-            // geometria calibrada contra o orçamento se comporte como o projeto diz.
+            var tierSpacing = Phase1Bootstrap.Tier1Top - Phase1Bootstrap.Tier0Top;
             Assert.That(
                 measuredApex,
-                Is.GreaterThan(budget.SafeStep),
-                "A safe step must be clearable by a real jump."
-            );
-            Assert.That(
-                measuredApex,
-                Is.LessThan(budget.Apex + 0.05f),
-                "A jump must not exceed the declared apex."
+                Is.LessThan(tierSpacing),
+                "A single jump must not reach the next tier; cooperation would be optional."
             );
         }
 
@@ -177,7 +169,7 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         /// <summary>Jogador com a mesma física que <see cref="Phase1Bootstrap"/> aplica.</summary>
-        private PlayerMovement CreatePhasePlayer(Vector2 position)
+        private PlayerMovement CreateArenaPlayer(Vector2 position)
         {
             var player = new GameObject("Jump Budget Test Player");
             player.transform.position = position;

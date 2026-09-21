@@ -41,6 +41,19 @@ namespace HealthyRace.Core
         [SerializeField]
         private Bounds _playableBounds;
 
+        [Header("Fixed Framing (arena de tela única)")]
+        [SerializeField]
+        private bool _useFixedFraming;
+
+        [SerializeField]
+        private Vector3 _fixedPosition = new(0f, 0f, -10f);
+
+        [SerializeField, Min(0.1f)]
+        private float _fixedOrthographicSize = 9f;
+
+        [SerializeField, Min(0f)]
+        private float _fixedMinimumHalfWidth;
+
         private Camera _camera;
         private Vector3 _positionVelocity;
         private float _zoomVelocity;
@@ -64,6 +77,9 @@ namespace HealthyRace.Core
         public Vector2 Padding => _padding;
         public bool UsePlayableBounds => _usePlayableBounds;
         public Bounds PlayableBounds => _playableBounds;
+        public bool UseFixedFraming => _useFixedFraming;
+        public Vector3 FixedPosition => _fixedPosition;
+        public float FixedOrthographicSize => _fixedOrthographicSize;
 
         public void Configure(Transform firstTarget, Transform secondTarget)
         {
@@ -81,6 +97,49 @@ namespace HealthyRace.Core
         {
             _minimumOrthographicSize = Mathf.Max(0.1f, minSize);
             _maximumOrthographicSize = Mathf.Max(_minimumOrthographicSize, maxSize);
+        }
+
+        /// <summary>
+        /// Trava a câmera em uma posição e tamanho fixos, ignorando o cálculo dinâmico
+        /// de ponto médio e zoom. <paramref name="minimumHalfWidth"/> garante que uma
+        /// largura mínima do mundo continue visível em proporções mais estreitas que 16:9.
+        /// </summary>
+        public void SetFixedFraming(
+            Vector3 position,
+            float orthographicSize,
+            float minimumHalfWidth = 0f
+        )
+        {
+            _useFixedFraming = true;
+            _fixedPosition = position;
+            _fixedOrthographicSize = Mathf.Max(0.1f, orthographicSize);
+            _fixedMinimumHalfWidth = Mathf.Max(0f, minimumHalfWidth);
+            _positionVelocity = Vector3.zero;
+            _zoomVelocity = 0f;
+            ApplyFixedFraming();
+        }
+
+        public void ClearFixedFraming()
+        {
+            _useFixedFraming = false;
+        }
+
+        public float CalculateFixedOrthographicSize()
+        {
+            var cam = CameraComponent;
+            var aspect = cam != null && cam.aspect > 0.01f ? cam.aspect : (16f / 9f);
+            var sizeForWidth = _fixedMinimumHalfWidth > 0f ? _fixedMinimumHalfWidth / aspect : 0f;
+            return Mathf.Max(_fixedOrthographicSize, sizeForWidth);
+        }
+
+        private void ApplyFixedFraming()
+        {
+            transform.position = _fixedPosition;
+            var cam = CameraComponent;
+            if (cam != null)
+            {
+                cam.orthographicSize = CalculateFixedOrthographicSize();
+            }
         }
 
         public void SetPadding(Vector2 padding)
@@ -135,6 +194,12 @@ namespace HealthyRace.Core
 
         public void ExecuteCameraUpdate(float deltaTime)
         {
+            if (_useFixedFraming)
+            {
+                ApplyFixedFraming();
+                return;
+            }
+
             if (_firstTarget == null || _secondTarget == null)
             {
                 AutoFindTargets();
@@ -152,6 +217,11 @@ namespace HealthyRace.Core
 
         public Vector3 CalculateDesiredPosition()
         {
+            if (_useFixedFraming)
+            {
+                return _fixedPosition;
+            }
+
             if (_firstTarget == null || _secondTarget == null)
             {
                 return transform.position;
@@ -172,6 +242,11 @@ namespace HealthyRace.Core
 
         public float CalculateDesiredOrthographicSize()
         {
+            if (_useFixedFraming)
+            {
+                return CalculateFixedOrthographicSize();
+            }
+
             var cam = CameraComponent;
             if (_firstTarget == null || _secondTarget == null || cam == null)
             {

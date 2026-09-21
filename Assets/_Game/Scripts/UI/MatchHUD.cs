@@ -87,6 +87,22 @@ namespace HealthyRace.UI
             }
         }
 
+        /// <summary>Mostra uma mensagem de estado no lugar da janela final (ex.: aguardando parceiro).</summary>
+        public void ShowStatusMessage(string message)
+        {
+            if (_finalWindowText == null)
+            {
+                return;
+            }
+
+            _finalWindowText.gameObject.SetActive(true);
+            _finalWindowText.text = message;
+            if (_panelImage != null)
+            {
+                _panelImage.color = new Color(0.04f, 0.14f, 0.12f, 0.92f);
+            }
+        }
+
         public void SetFinalWindow(bool active, float secondsRemaining = 20f)
         {
             _isFinalWindowActive = active;
