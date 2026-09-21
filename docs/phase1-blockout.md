@@ -1,9 +1,9 @@
-# Fase 1: Corrida do Equilíbrio — Arena Cooperativa de Tela Única
+# Fase 1: Corrida do Equilíbrio — Labirinto Cooperativo de Tela Única
 
 Este documento descreve o desenho de nível da **Fase 1** do **Healthy Race** após a
-refatoração para arena vertical de tela única, no estilo *Fireboy & Watergirl*.
-Ele cobre o enquadramento, os patamares, os portais cooperativos, o orçamento de
-pulo, a distribuição pedagógica dos coletáveis e os critérios anti-deadlock.
+refatoração para labirinto de corredores escavados numa tela única, no estilo *Fireboy & Watergirl*.
+Ele cobre o enquadramento, os corredores, os portais cooperativos, o orçamento
+de pulo, a distribuição pedagógica dos coletáveis e os critérios anti-deadlock.
 
 ---
 
@@ -12,14 +12,15 @@ pulo, a distribuição pedagógica dos coletáveis e os critérios anti-deadlock
 - **Cena**: `Assets/_Game/Scenes/Phase1_CorridaDoEquilibrio.unity`
 - **Orquestrador**: `HealthyRace.Level.Phase1Bootstrap` (constrói tudo em código)
 - **Área jogável**: $X \in [0, 32]$, $Y \in [0, 18]$ (proporção 16:9)
-- **Câmera**: fixa em $(16, 9, -10)$ com `orthographicSize = 9`, sem scroll nem zoom
+- **Câmera**: fixa em $(16, 9, -10)$, sem scroll nem zoom, com letterbox via
+  `Camera.rect` para que nenhuma proporção de tela mostre além das paredes
 - **Jogadores**: P1 e P2 locais, sempre visíveis
 - **Objetivo**: os dois jogadores devem ocupar **simultaneamente** suas portas no
-  patamar T4. Não há janela final nem DNF neste modo.
+  corredor C4. Não há janela final nem DNF neste modo.
 - **Tema pedagógico**: o dilema deixa de ser "rota de cima vs. rota de baixo" e passa
   a ser "pressa vs. bem-estar" em cada escolha de trajeto. Os ultraprocessados
-  ficam enfileirados na rota rápida do piso; os saudáveis exigem subir, desviar ou
-  cooperar.
+  ficam na linha reta dos corredores baixos; os saudáveis exigem subir num pilar
+  ou atravessar até uma das pontas.
 
 ---
 
@@ -74,8 +75,8 @@ continua sendo o declarado. Valores resultantes:
 | Vão seguro (`SafeGap`) | alcance menos 0.67 m |
 | Altura da caixa empurrável | 1.22 m |
 
-O espaçamento entre patamares é de 3.4 m: **excede** o ápice de propósito. Toda
-subida exige degrau intermediário, caixa ou plataforma acionada.
+O espaçamento entre corredores é de 3.2 m: **excede** o ápice de propósito. Toda
+subida depende de um poço vertical e do mecanismo que o serve.
 
 Geometria, HUD e testes consomem `Phase1Bootstrap.DesignBudget()` ou
 `Phase1Bootstrap.BudgetFor(playerIndex)`. Nenhum número de orçamento é literal.
@@ -89,71 +90,87 @@ divergência entre documentação e física.
 
 ---
 
-## 3. Patamares
+## 3. Traçado: labirinto de corredores escavados
 
-| Patamar | Topo (Y) | Superfícies (X) |
-| :-- | :-- | :-- |
-| T0 — piso | 1.0 | Piso completo $[0, 32]$; nicho da alavanca $[0, 2]$ fechado por parede de 3 m em $X \in [2, 2.5]$ |
-| T1 | 4.4 | Ilha esquerda $[4, 9.5]$, pedra $[13.5, 16.5]$, ilha direita $[19, 28]$; degrau S2 em $[10.5, 12.5]$ (topo 6.0) |
-| T2 | 7.8 | Plataforma esquerda $[0, 10]$, pedra $[13.5, 15.5]$, trecho direito A $[17, 23]$, vão da AP3 $[23, 24.5]$, trecho direito B $[24.5, 32]$ |
-| T3 | 11.2 | Plataforma direita $[24.5, 28]$, plataformas que caem $[18, 21]$ e $[13.5, 16.5]$, plataforma esquerda $[4, 12]$; degrau S4 em $[1, 3]$ (topo 13.0) |
-| T4 — portas | 14.6 | Patamar $[5, 32]$ com Porta P1 em $X = 26.5$ e Porta P2 em $X = 30$ |
+A referência de composição é um labirinto: massa de rocha sólida com corredores
+escavados, ligados por poços verticais. Não há plataformas soltas no vazio.
 
-Largada: P1 em $(3.5, 1.7)$ e P2 em $(5.0, 1.7)$.
+### Corredores
 
-### Degraus intermediários
+Cada corredor tem 2.6 m de altura livre, contra 1.25 m do jogador.
 
-| Degrau | De | Para | Desnível | Vão |
+| Corredor | Piso | Teto | Trechos de piso (X) |
+| :-- | --: | --: | :-- |
+| C0 | 1.0 | 3.6 | 0 a 32, inteiriço |
+| C1 | 4.2 | 6.8 | 0 a 25.5 e 28.5 a 32 |
+| C2 | 7.4 | 10.0 | 0 a 3 e 6 a 32 |
+| C3 | 10.6 | 13.2 | 0 a 19.5 e 22.5 a 32 |
+| C4 | 13.8 | 16.4 | 0 a 8 e 11 a 32 |
+
+O espaçamento entre pisos é de 3.2 m e o ápice de pulo é de 2.0 m. Nenhum
+corredor alcança o de cima por salto: subir sempre depende de um poço.
+
+### Poços verticais
+
+Os buracos nas lajes ficam escalonados de propósito. Como alternam de lado, é
+preciso percorrer cada corredor de ponta a ponta antes de subir, e o percurso
+vira um ziguezague. É o que dá a leitura de labirinto.
+
+| Poço | Laje | X | Liga | Mecanismo |
 | :-- | :-- | :-- | :-- | :-- |
-| S2 (topo 6.0) | Ilha esquerda T1 (4.4) | Plataforma esquerda T2 (7.8) | 1.6 + 1.8 | 1.0 / 0.5 |
-| S4 (topo 13.0) | Plataforma esquerda T3 (11.2) | Patamar T4 (14.6) | 1.8 + 1.6 | 1.0 / 2.0 |
+| A | 1 | 25.5 a 28.5 | C0 para C1 | G1, botão e plataforma |
+| B | 2 | 3 a 6 | C1 para C2 | G2, alavanca e plataforma |
+| C | 3 | 19.5 a 22.5 | C2 para C3 | G3, caixa, botão e plataforma |
+| D | 4 | 8 a 11 | C3 para C4 | degrau de rocha, livre |
+
+Largada no corredor C0: P1 em (3.5, 1.7) e P2 em (5.0, 1.7).
+
+### Textura do labirinto
+
+Dentro dos corredores, dois elementos quebram a linha reta sem nunca fechar a
+passagem:
+
+- **Pilares** de 1.6 m, abaixo do degrau seguro, vencidos com um pulo. Sete no
+  total, e quatro deles carregam alimento saudável no topo.
+- **Arcos** presos ao teto, deixando 2.0 m de passagem livre embaixo. Quatro no
+  total.
 
 ---
 
 ## 4. Portais cooperativos
 
-### G1 — T0 → T1 (botões + plataforma)
+### G1 — C0 para C1, poço A
 
-- **B1** (`PressureButton`) no piso em $X = 27$.
-- **AP1** (`ActivatedPlatform`) em $X \in [28.5, 31.5]$, repouso com topo em 1.6 e
-  curso de $+2.8$ até o topo 4.4, alinhada à ilha direita de T1.
-- **B2** na ilha direita de T1 em $X = 20$.
-- **Fluxo**: um jogador segura B1, o outro embarca na AP1 e sobe. Quem subiu vai a
-  B2; o parceiro embarca na AP1 (que desceu ao soltar B1) e sobe também.
-- **Amarração**: dois `CooperativePuzzleController` (B1 → AP1 e B2 → AP1); a
-  plataforma obedece ao OU dos dois botões.
-- **Saída de emergência**: botões momentâneos; qualquer jogador pode voltar a T0
-  se deixando cair. Sem estado irreversível.
+- Botão **B1** no meio do corredor C0, em X 19, longe do poço.
+- Plataforma **AP1** no poço, repouso com topo em 1.6 e curso até 4.2.
+- Botão **B2** já em C1, em X 23, para devolver o favor.
+- Enquanto um jogador mantém o botão, a plataforma sobe com o outro. A distância
+  entre botão e poço é o que impede a travessia solo.
+- **Saída de emergência**: os dois botões são momentâneos e o poço fica aberto,
+  então qualquer jogador se deixa cair de volta a C0. Nenhum estado trava.
 
-### G2 — T1 → T2 (alavanca + portão)
+### G2 — C1 para C2, poço B
 
-- **L2** (`Lever`, não alternável) no nicho de T0 em $(1.3, 2.3)$. O nicho só é
-  acessível por cima: a parede de 3 m impede a entrada pelo piso, e o jogador
-  chega nele caindo da ilha esquerda de T1.
-- **D2** (`PuzzleDoor`, movimento instantâneo com colisor desativado ao abrir) em
-  $X = 17.6$ sobre o trecho direito A de T2. Fechado, bloqueia a passagem da pedra
-  de T2 para o trecho direito (o pulo não vence os 2.2 m do portão).
-- **AP2** no nicho (topo 1.6 → 4.4) acionada por **B2r** na ilha esquerda de T1
-  ($X = 7.5$): é o resgate de quem acionou a alavanca.
-- **Fluxo**: um jogador desce ao nicho e aciona L2 (o portão abre e fica aberto).
-  O parceiro segura B2r e a AP2 devolve o acionador a T1. Os dois subem por S2 até
-  T2 e atravessam o portão.
-- **Saída de emergência**: espinhos no canto do nicho ($X \in [0, 0.5]$) devolvem o
-  jogador ao último checkpoint por 5 de bem-estar. Como L2 não é alternável, o
-  portão nunca volta a fechar.
+- Alavanca **L2** na ponta oposta do corredor C1, em X 29, não alternável.
+- Plataforma **AP2** no poço, repouso com topo em 4.8 e curso até 7.4.
+- Quem puxa atravessa o corredor inteiro, então os dois avançam em vez de um
+  ficar parado esperando.
+- **Saída de emergência**: a alavanca não volta, então a plataforma fica erguida
+  para sempre e o caminho nunca fecha.
 
-### G3 — T2 → T3 (caixa + botão + plataforma)
+### G3 — C2 para C3, poço C
 
-- **Caixa** (`PushableBox`) nasce em $X = 20$ no trecho direito A de T2.
-- **B3** em $X = 22$, ao lado do vão da **AP3** ($X \in [23, 24.5]$), que em repouso
-  fica rente ao patamar e sobe $+3.0$ até o topo 10.8; de lá o degrau até a
-  plataforma direita de T3 é de 0.4 m.
-- **Fluxo cooperativo**: um jogador segura B3, o outro embarca na AP3 e sobe.
-- **Rota anti-deadlock**: a caixa empurrada sobre B3 trava a plataforma erguida e
-  vira degrau (topo 9.02): patamar → caixa (1.22 m) → AP3 (1.78 m) → T3 (0.4 m).
-- **Reset**: alavanca **R3** em $X = 30.5$ devolve a caixa ao spawn. O bootstrap
-  também a devolve automaticamente se ela cair abaixo de T2 (vão da AP3 aberta ou
-  borda do patamar).
+- Botão **B3** em X 15.5 e plataforma **AP3** no poço, de 8.0 até 10.6.
+- Rota cooperativa: um segura B3 e o outro sobe.
+- Rota anti-deadlock: a caixa empurrada sobre B3 trava a plataforma erguida, e os
+  dois sobem sem depender de sincronia.
+- **Saída de emergência**: a alavanca **R3** em X 30 devolve a caixa ao spawn, e o
+  bootstrap também a devolve se ela cair do corredor.
+
+### Subida final — C3 para C4, poço D
+
+Degrau de rocha livre, com topo em 12.2. Sem mecanismo: os dois convergem e
+chegam juntos ao corredor das portas.
 
 ---
 
@@ -161,98 +178,86 @@ Largada: P1 em $(3.5, 1.7)$ e P2 em $(5.0, 1.7)$.
 
 | Perigo | Posição | Efeito |
 | :-- | :-- | :-- |
-| `MudHazard` | T0, $X \in [15, 19]$ e $[22, 26]$ | -30% de velocidade e fadiga para quem escolhe a rota fácil |
-| `SpikeHazard` | T0, $X \in [10, 13]$ (sob o vão entre as ilhas de T1) | -5 de bem-estar e respawn no checkpoint |
-| `SpikeHazard` | Nicho de G2, $X \in [0, 0.5]$ | Saída de emergência do nicho |
-| `FallingPlatform` | T3, $X \in [18, 21]$ e $[13.5, 16.5]$ | 0.5 s de aviso, 3 s fora, pressão de tempo na travessia |
+| Lama | C0 em X 13 a 17 e 20 a 24, C1 em X 12 a 16 | Velocidade a 70% e fadiga acelerada |
+| Espinhos | C0 em X 9 a 12, entre os dois pilares | Menos 5 de bem-estar e respawn no checkpoint |
+| Plataformas que caem | C3, vão de 5.0 m entre X 12 e 17 | 0.5 s de aviso e 3 s fora |
+
+O vão de C3 excede o alcance de pulo, então as duas plataformas são obrigatórias.
+Quem cai volta para C2 e sobe de novo pela AP3, que continua travada pela caixa.
 
 ---
 
 ## 6. Checkpoints
 
-| Checkpoint | Posição | Patamar |
-| :-- | :-- | :-- |
-| CP1 | $(26, 5.6)$ | Ilha direita de T1, na chegada da AP1 |
-| CP2 | $(5, 9.0)$ | Plataforma esquerda de T2 |
-| CP3 | $(26.25, 12.4)$ | Plataforma direita de T3, na chegada da AP3 |
+Um por corredor, sempre na saída do poço, mantendo o isolamento por jogador.
 
-A ativação continua isolada por jogador (`Checkpoint.ActivateForPlayer`).
+| Checkpoint | Posição | Corredor |
+| :-- | :-- | :-- |
+| CP1 | (30.0, 5.2) | C1 |
+| CP2 | (7.5, 8.4) | C2 |
+| CP3 | (24.0, 11.6) | C3 |
+| CP4 | (12.5, 14.8) | C4 |
 
 ---
 
 ## 7. Coletáveis
 
-### Ultraprocessados — rota preguiçosa (T0, $Y = 1.7$)
+O dilema deixou de ser altura e passou a ser desvio. Os ultraprocessados ficam na
+linha reta dos corredores baixos, junto da lama e dos espinhos. Os saudáveis
+exigem subir num pilar ou atravessar até uma das pontas.
 
-`Burger` (7), `Soda` (9), `Fries` (14.5), `Donut` (17, na lama), `Pizza` (19.5),
-`HotDog` (22), `Chips` (24, na lama) e `Candy` (26).
+**Ultraprocessados**, na rota direta: `Burger` (6, C0), `Soda` (12.9, C0),
+`Fries` (15, C0), `Donut` (22, C0), `Pizza` (25, C0), `HotDog` (14, C1),
+`Chips` (18.4, C1) e `Candy` (27, C1).
 
-### Saudáveis — recompensa por explorar
+**Saudáveis sobre pilares**: `Apple` (8.4, C0), `Carrot` (11, C1),
+`Orange` (25.8, C2) e `Broccoli` (5.6, C3).
 
-| Item | Posição | Exige |
-| :-- | :-- | :-- |
-| `Apple` | $(5.5, 5.1)$ | G1 + travessia das ilhas de T1 |
-| `Carrot` | $(8.8, 5.1)$ | G1 + travessia das ilhas de T1 |
-| `Orange` | $(15, 5.1)$ | G1 + pedra de T1 |
-| `Broccoli` | $(2.5, 8.5)$ | S2, plataforma esquerda de T2 |
-| `Avocado` | $(8, 8.5)$ | S2, plataforma esquerda de T2 |
-| `Water` | $(14.5, 8.5)$ | Pedra de T2 |
-| `Fish` | $(8, 11.9)$ | G2 + G3 + travessia de T3 |
-| `Strawberry` | $(15, 11.9)$ | Plataforma que cai em T3 |
-| `Watermelon` | $(10, 15.3)$ | Patamar das portas |
-| `Banana` | $(18, 15.3)$ | Patamar das portas |
+**Saudáveis nas pontas**: `Water` (1.5, C1), `Fish` (1.5, C2),
+`Avocado` (30.5, C2), `Watermelon` (2, C3), `Strawberry` (30.5, C3) e
+`Banana` (3, C4).
 
 ---
 
 ## 8. Chegada
 
-- Duas portas (`FinishLine` com `AcceptedPlayerIndex`): a Porta P1 só aceita P1 e a
-  Porta P2 só aceita P2.
-- `MatchCompletionController` em modo `requireBothAtDoors`: a primeira chegada
-  define a ordem (1º/2º lugar) e o estado passa a `WaitingForPartner`, mas o jogador
-  **não é congelado** e pode sair para ajudar. A partida encerra quando os dois estão
-  em suas portas ao mesmo tempo.
-- O HUD central mostra `P1 NA PORTA - AGUARDANDO P2` (ou vice-versa) até o
-  encerramento.
+Duas portas no corredor C4, `FinishLine` com `AcceptedPlayerIndex`: a Porta P1 em
+X 26.5 só aceita P1, e a Porta P2 em X 30 só aceita P2. A partida encerra quando
+os dois estão em suas portas ao mesmo tempo. O primeiro a chegar não congela e
+pode voltar para ajudar.
 
 ---
 
 ## 9. Progresso no HUD
 
-`PlayerHUD.UpdateProgress` continua recebendo um valor $[0, 1]$, mas quem o
-alimenta é `Phase1Bootstrap.GetProgress`, calculado em cinco marcos:
-
-| Marco | Condição | Progresso |
-| :-- | :-- | :-- |
-| 0 | Piso | 0% |
-| 1 | Pés em T1 | 20% |
-| 2 | Pés em T2 | 40% |
-| 3 | Pés em T3 | 60% |
-| 4 | Pés em T4 | 80% |
-| 5 | Chegada registrada na própria porta | 100% |
-
-O marco é monotônico por jogador: cair de volta não reduz o progresso.
+Cinco marcos: corredor alcançado, com apoio real conferido pelo `PlayerGroundCheck`,
+e porta ocupada. Pular no lugar não avança nada. O marco é monotônico: cair de
+volta não reduz o progresso.
 
 ---
 
-## 10. Critérios anti-deadlock
+## 10. Anti-deadlock
 
-1. **Nenhum estado irreversível**: botões são momentâneos, a alavanca de G2 só abre,
-   a caixa de G3 volta ao spawn pelo reset ou automaticamente ao cair.
-2. **Sempre é possível descer**: nenhum patamar tem teto ou parede que impeça a
-   queda até T0, de onde G1 pode ser refeito.
-3. **Nicho de G2**: saída cooperativa (AP2 + B2r) e saída de emergência (espinhos →
-   checkpoint). Dois jogadores presos no nicho saem pelos espinhos.
-4. **Morte em espinhos**: respawn no último checkpoint do jogador; os puzzles não
-   mudam de estado com a morte.
-5. **Portas**: o primeiro a chegar não é congelado, então pode voltar e ajudar.
-
-Cada portal documenta sua saída de emergência em comentário XML no método
-`CreateGateOne/Two/Three` de `Phase1Bootstrap`.
+1. Todo poço fica aberto, então dá para descer de qualquer corredor até C0 e
+   refazer o percurso.
+2. Os botões são momentâneos e as alavancas não são alternáveis: nenhum mecanismo
+   volta a um estado pior.
+3. A caixa de G3 tem alavanca de reset e retorno automático se cair.
+4. Morrer nos espinhos devolve ao checkpoint sem alterar o estado dos portais.
+5. Pilares e arcos nunca fecham um corredor.
 
 ---
 
-## 11. Testes automatizados
+## 11. Limitação conhecida
+
+O G2 usa alavanca permanente, então é cooperação fraca: um jogador sozinho
+consegue puxar e depois subir. Quem impede de fato a travessia solo é o G1, que
+exige alguém segurando o botão enquanto o outro sobe. A cooperação forte nos três
+portais depende da assimetria entre P1 e P2, ainda não implementada.
+
+---
+
+## 12. Testes automatizados
 
 - **EditMode** (`Phase1BlockoutTests.cs`):
   - integridade da cena e das referências serializadas;

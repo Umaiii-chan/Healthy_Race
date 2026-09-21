@@ -105,7 +105,7 @@ namespace HealthyRace.Tests.PlayMode
             yield return LoadArena();
 
             var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
-            Assert.That(bootstrap.Checkpoints.Count, Is.EqualTo(3));
+            Assert.That(bootstrap.Checkpoints.Count, Is.EqualTo(4));
 
             var cp1 = bootstrap.Checkpoints[0];
             Assert.That(cp1.Index, Is.EqualTo(1));
@@ -141,8 +141,8 @@ namespace HealthyRace.Tests.PlayMode
             yield return null;
             Assert.That(bootstrap.PlayerOneHud.Progress, Is.EqualTo(0f).Within(0.001f));
 
-            // Sobre a plataforma T2 esquerda: marco 2 -> 40%
-            Teleport(p1, new Vector2(5f, Phase1Bootstrap.Tier2Top + 0.7f));
+            // Sobre o piso do corredor C2, à direita do poço B: marco 2 -> 40%
+            Teleport(p1, new Vector2(10f, Phase1Bootstrap.Tier2Top + 0.7f));
             for (var i = 0; i < 6; i++)
             {
                 yield return new WaitForFixedUpdate();

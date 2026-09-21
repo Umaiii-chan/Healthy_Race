@@ -356,14 +356,12 @@ namespace HealthyRace.Tests.EditMode
                     var group in new[]
                     {
                         "Arena_Casca",
-                        "T0_Base",
-                        "T1_Ilhas",
-                        "T2_Rotas",
-                        "T3_Travessia",
-                        "T4_Portas",
+                        "Corredores_Lajes",
+                        "Labirinto_Detalhe",
                         "G1_BotoesPlataforma",
-                        "G2_AlavancaPortao",
+                        "G2_AlavancaPlataforma",
                         "G3_CaixaPlataforma",
+                        "C4_Portas",
                         "Perigos",
                         "Coletaveis",
                     }
@@ -378,7 +376,7 @@ namespace HealthyRace.Tests.EditMode
                 {
                     Assert.That(
                         Phase1Bootstrap.TierTops[i] - Phase1Bootstrap.TierTops[i - 1],
-                        Is.EqualTo(3.4f).Within(0.001f)
+                        Is.EqualTo(3.2f).Within(0.001f)
                     );
                     Assert.That(
                         bootstrap.Surfaces.Any(s =>
@@ -389,10 +387,10 @@ namespace HealthyRace.Tests.EditMode
                     );
                 }
 
-                Assert.That(bootstrap.Checkpoints.Count, Is.EqualTo(3));
+                Assert.That(bootstrap.Checkpoints.Count, Is.EqualTo(4));
                 Assert.That(
                     bootstrap.Checkpoints.Select(c => c.Index),
-                    Is.EqualTo(new[] { 1, 2, 3 })
+                    Is.EqualTo(new[] { 1, 2, 3, 4 })
                 );
 
                 // Três portais cooperativos + retornos, todos amarrados por controlador
@@ -403,7 +401,7 @@ namespace HealthyRace.Tests.EditMode
                 Assert.That(bootstrap.GateOne.Button, Is.Not.Null);
                 Assert.That(bootstrap.GateOne.Platform, Is.Not.Null);
                 Assert.That(bootstrap.GateTwo.Lever, Is.Not.Null);
-                Assert.That(bootstrap.GateTwo.Door, Is.Not.Null);
+                Assert.That(bootstrap.GateTwo.Platform, Is.Not.Null);
                 Assert.That(bootstrap.GateThree.Button, Is.Not.Null);
                 Assert.That(bootstrap.GateThree.Box, Is.Not.Null);
                 Assert.That(bootstrap.GateThree.Platform, Is.Not.Null);
@@ -458,9 +456,11 @@ namespace HealthyRace.Tests.EditMode
 
                 foreach (var collider in geometry.GetComponentsInChildren<Collider2D>(true))
                 {
-                    if (collider.name.StartsWith("Arena_"))
+                    if (collider.name.StartsWith("Arena_") || collider.name.StartsWith("Rocha_"))
                     {
-                        continue; // paredes e teto ficam propositalmente na borda externa
+                        // Paredes externas e a rocha de base e topo ficam
+                        // propositalmente rentes ou além da borda.
+                        continue;
                     }
 
                     // Em EditMode a física não sincroniza bounds; calcula pelo transform.
@@ -534,11 +534,22 @@ namespace HealthyRace.Tests.EditMode
 
                     var isHealthy =
                         collectible.FoodData.Category == Collectibles.FoodCategory.Healthy;
-                    var aboveBase = food.position.y > Phase1Bootstrap.Tier1Top;
+
+                    // No labirinto o dilema é desvio, não altura: os ultraprocessados
+                    // ficam na linha reta dos corredores, e os saudáveis exigem subir
+                    // num pilar ou atravessar até uma das pontas.
+                    var nearestFloor = Phase1Bootstrap
+                        .TierTops.Where(floor => food.position.y >= floor - 0.1f)
+                        .DefaultIfEmpty(Phase1Bootstrap.Tier0Top)
+                        .Max();
+                    var onPillar = food.position.y - nearestFloor > 1f;
+                    var atCorridorEnd = food.position.x < 4f || food.position.x > 28f;
+                    var needsDetour = onPillar || atCorridorEnd;
+
                     Assert.That(
-                        aboveBase,
+                        needsDetour,
                         Is.EqualTo(isHealthy),
-                        $"{food.name}: healthy foods reward climbing, ultra-processed stay on T0."
+                        $"{food.name}: healthy foods must need a detour, ultra-processed stay on the through path."
                     );
                 }
             }
@@ -580,7 +591,7 @@ namespace HealthyRace.Tests.EditMode
                     Assert.That(link.Mechanism, Is.Not.Empty);
                 }
 
-                var reachableWithLinks = Traverse(surfaces, bootstrap.CooperativeLinks, "T0_Piso");
+                var reachableWithLinks = Traverse(surfaces, bootstrap.CooperativeLinks, "C0_Piso");
                 var unreachable = surfaces.Keys.Except(reachableWithLinks).ToList();
                 Assert.That(
                     unreachable,
@@ -589,7 +600,7 @@ namespace HealthyRace.Tests.EditMode
                         + string.Join(", ", unreachable)
                 );
 
-                var reachableWithoutLinks = Traverse(surfaces, new ArenaLink[0], "T0_Piso");
+                var reachableWithoutLinks = Traverse(surfaces, new ArenaLink[0], "C0_Piso");
                 Assert.That(
                     reachableWithoutLinks.Contains("T4_Portas"),
                     Is.False,
@@ -755,11 +766,13 @@ namespace HealthyRace.Tests.EditMode
                 Is.GreaterThan(budget.Apex)
             );
 
-            // Caixa como degrau: topo em 9.02 e AP3 erguida em 10.8.
-            var boxTop = Phase1Bootstrap.Tier2Top + Phase1Bootstrap.BoxHeight;
+            // Pilares e arcos do labirinto cabem no orçamento: o pilar se vence com
+            // um pulo e o arco deixa passagem maior que a altura do jogador.
+            Assert.That(Phase1Bootstrap.PillarHeight, Is.LessThanOrEqualTo(budget.SafeStep));
+            Assert.That(Phase1Bootstrap.ArchOpening, Is.GreaterThan(1.25f));
             Assert.That(
-                Phase1Bootstrap.Tier2Top + 3f - boxTop,
-                Is.LessThanOrEqualTo(budget.SafeStep)
+                Phase1Bootstrap.CorridorClearance,
+                Is.GreaterThan(Phase1Bootstrap.ArchOpening)
             );
         }
 
@@ -798,11 +811,54 @@ namespace HealthyRace.Tests.EditMode
             return visited;
         }
 
+        /// <summary>
+        /// Um pulo é possível quando cabe no orçamento e, se sobe de corredor, passa
+        /// por dentro de um poço. A rocha das lajes fecha todo o resto, então subir
+        /// em um pilar não serve de atalho para o corredor de cima.
+        /// </summary>
         private static bool CanJump(ArenaSurface from, ArenaSurface to)
         {
+            var budget = Phase1Bootstrap.DesignBudget();
             var gap = Mathf.Max(0f, to.MinX - from.MaxX, from.MinX - to.MaxX);
             var rise = to.TopY - from.TopY;
-            return Phase1Bootstrap.DesignBudget().CanClear(rise, gap);
+
+            if (!budget.CanClear(rise, gap))
+            {
+                return false;
+            }
+
+            return PassesThroughShafts(from, to, budget.SafeGap);
+        }
+
+        /// <summary>
+        /// Verifica cada laje cruzada pelo trajeto. A superfície de partida precisa
+        /// estar dentro do poço, e a de chegada precisa encostar nele.
+        /// </summary>
+        private static bool PassesThroughShafts(ArenaSurface from, ArenaSurface to, float safeGap)
+        {
+            const float epsilon = 0.001f;
+
+            for (var i = 0; i < Phase1Bootstrap.Shafts.Length; i++)
+            {
+                var slabTop = Phase1Bootstrap.TierTops[i + 1];
+                var crossesSlab = slabTop > from.TopY + epsilon && slabTop <= to.TopY + epsilon;
+                if (!crossesSlab)
+                {
+                    continue;
+                }
+
+                var shaft = Phase1Bootstrap.Shafts[i];
+                var startsInsideShaft =
+                    from.MaxX > shaft.MinX + epsilon && from.MinX < shaft.MaxX - epsilon;
+                var landingGap = Mathf.Max(0f, to.MinX - shaft.MaxX, shaft.MinX - to.MaxX);
+
+                if (!startsInsideShaft || landingGap > safeGap + epsilon)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static FinishLine CreateDoor(int playerIndex, List<GameObject> created)
