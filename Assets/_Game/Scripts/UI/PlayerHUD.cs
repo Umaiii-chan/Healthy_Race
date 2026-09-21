@@ -68,12 +68,15 @@ namespace HealthyRace.UI
             _accentColor = accentColor;
             transform.SetParent(parent, false);
 
-            var panelRect = (RectTransform)transform;
-            panelRect.anchorMin = anchor;
-            panelRect.anchorMax = anchor;
-            panelRect.pivot = pivot;
-            panelRect.anchoredPosition = position;
-            panelRect.sizeDelta = new Vector2(PanelWidth, PanelHeight);
+            var panelRect = transform as RectTransform;
+            if (panelRect != null)
+            {
+                panelRect.anchorMin = anchor;
+                panelRect.anchorMax = anchor;
+                panelRect.pivot = pivot;
+                panelRect.anchoredPosition = position;
+                panelRect.sizeDelta = new Vector2(PanelWidth, PanelHeight);
+            }
 
             var panelImage = gameObject.AddComponent<Image>();
             panelImage.sprite = PlaceholderSpriteFactory.Square;

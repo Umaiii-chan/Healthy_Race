@@ -1050,7 +1050,12 @@ namespace HealthyRace.Level
                 _playerTwo,
                 p1Wb,
                 p2Wb,
-                _resultsPanel
+                _resultsPanel,
+                20f,
+                20,
+                _playerOneHud,
+                _playerTwoHud,
+                _finalPuzzle
             );
         }
 
