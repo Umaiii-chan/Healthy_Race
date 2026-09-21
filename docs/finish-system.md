@@ -27,6 +27,25 @@ O sistema de chegada e encerramento do Healthy Race gerencia a conclusão da cor
    - Em caso de tempos idênticos, o desempate é feito pelo maior valor de **Bem-Estar final**;
    - Se ainda persistir igualdade, o resultado é considerado empate (`WinnerPlayerIndex = 0`).
 
+## Modo Portas Duplas (Fase 1 — arena cooperativa)
+
+Na arena da Fase 1 a chegada funciona como em *Fireboy & Watergirl*:
+
+1. Há duas `FinishLine`, cada uma com `AcceptedPlayerIndex` (Porta P1 só aceita P1,
+   Porta P2 só aceita P2). A porta registra ocupação (`IsOccupiedBy`) e a libera ao
+   sair do gatilho.
+2. `MatchCompletionController.Configure(..., secondFinishLine, requireBothAtDoors: true)`
+   ativa o modo. A primeira chegada define a ordem (1º/2º) e leva o estado a
+   `WaitingForPartner`, **sem congelar** o jogador e **sem janela final nem DNF**.
+3. A partida encerra (`Concluded`) quando `AreBothPlayersAtDoors()` é verdadeiro, isto
+   é, P1 e P2 estão simultaneamente em suas portas. Se o primeiro sair da porta, a
+   partida aguarda até que ele volte.
+4. O `MatchHUD` mostra `P1 NA PORTA - AGUARDANDO P2` (ou vice-versa) via
+   `ShowStatusMessage`.
+
+O fluxo de linha única com janela de 20 s e DNF descrito acima continua disponível
+quando `requireBothAtDoors` é falso.
+
 ## Componentes Arquiteturais
 
 ### 1. FinishLine (`FinishLine.cs`)

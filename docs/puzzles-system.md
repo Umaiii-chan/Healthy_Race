@@ -50,16 +50,26 @@ O sistema de puzzles e interações cooperativas do Healthy Race provê mecanism
   - Método `ResetPuzzle()` restaura caixa ao spawn original, redefine alavancas e portas;
   - Acionável por botão/alavanca de reset dedicada no cenário ou por gatilho de código.
 
-## Integração na Fase 1 (Zona 5)
+## Integração na Fase 1 (arena cooperativa)
 
-Na Zona 5 (Puzzles e Trabalho em Equipe, X: 155 a 195):
+A Fase 1 é uma arena de tela única com três portais cooperativos, todos amarrados
+por `CooperativePuzzleController.Bind(...)` em `Phase1Bootstrap`
+(métodos `CreateGateOne`, `CreateGateTwo` e `CreateGateThree`):
 
-1. Um `PressureButton` está localizado na base do degrau (`x = 169`).
-2. Uma `PushableBox` (`x = 164`) pode ser empurrada sobre o botão.
-3. Uma alavanca (`Z5_Lever`, `x = 166`) permite ativação alternativa.
-4. Uma alavanca de reset (`Z5_ResetSwitch`, `x = 161`) permite restaurar a caixa se ela cair ou for empurrada para um canto sem saída.
-5. O `CooperativePuzzleController` controla uma porta (`Z5_Door`, `x = 172`) e uma plataforma móvel (`Z5_MovingPlatform`, `x = 180`).
-6. **Bypass Anti-Deadlock**: Três plataformas suspensas (`Z5_Step1`, `Z5_Step2`, `Z5_Step3`) continuam presentes para permitir a progressão via parkour mesmo se os jogadores decidirem ignorar o puzzle.
+1. **G1 (T0 → T1)**: `PressureButton` B1 no piso e B2 na ilha direita de T1 erguem a
+   `ActivatedPlatform` AP1 (topo 1.6 → 4.4). Dois controladores, um por botão; a
+   plataforma obedece ao OU dos dois.
+2. **G2 (T1 → T2)**: `Lever` L2 (não alternável) no nicho de T0 abre a `PuzzleDoor` D2
+   (movimento instantâneo, colisor desligado quando aberta) que bloqueia o trecho
+   direito de T2. Um segundo controlador liga o botão de resgate B2r à plataforma
+   AP2 do nicho, que devolve o acionador a T1.
+3. **G3 (T2 → T3)**: `PressureButton` B3 ergue a AP3 (7.8 → 10.8). A `PushableBox`
+   pode ser empurrada sobre B3 para travar a plataforma e servir de degrau. A
+   alavanca de reset R3 (`_resetSwitch`) devolve a caixa ao spawn, e o bootstrap a
+   devolve automaticamente se ela cair abaixo de T2.
+
+Detalhes de coordenadas e as saídas de emergência de cada portal estão em
+`docs/phase1-blockout.md`.
 
 ## Testes Automatizados
 

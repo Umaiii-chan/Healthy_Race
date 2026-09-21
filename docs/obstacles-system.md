@@ -54,11 +54,10 @@ O sistema de obstáculos e perigos (hazards) do Healthy Race introduz desafios d
 
 ## Integração na Fase 1 (Corrida do Equilíbrio)
 
-- **Zona 3 — Rotas (X: 65 a 125)**:
-  - **Rota Superior (Saudável)**: Adicionada a plataforma que cai `Upper_FallingPlatform` (`x = 87`, `y = 2.7`), exigindo agilidade e timing no parkour elevado.
-  - **Rota Inferior (Tentação)**: Adicionadas duas poças de lama `Lower_Mud1` (`x = 84.5`) e `Lower_Mud2` (`x = 105.5`), penalizando em 30% a velocidade de quem escolhe o caminho reto e plano.
-- **Zona 4 — Reencontro (X: 125 a 160)**:
-  - Adicionado fosso com espinhos `Z4_Spikes` (`x = 150`, `y = -1.25`), com retorno ao `Checkpoint 2` (`x = 130`) em caso de queda.
+- **Arena da Fase 1** (ver `docs/phase1-blockout.md`):
+  - `MudHazard` em T0, $X \in [15, 19]$ e $[22, 26]$, sobre a rota dos ultraprocessados.
+  - `SpikeHazard` em T0, $X \in [10, 13]$, sob o vão entre as ilhas de T1, e no canto do nicho de G2 como saída de emergência.
+  - `FallingPlatform` na travessia de T3, $X \in [18, 21]$ e $[13.5, 16.5]$.
 
 ## Testes Automatizados
 

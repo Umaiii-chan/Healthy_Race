@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using HealthyRace.Audio;
 using HealthyRace.Collectibles;
@@ -14,16 +15,103 @@ using UnityEngine.UI;
 namespace HealthyRace.Level
 {
     /// <summary>
-    /// Level bootstrap and orchestrator for Phase 1: Corrida do Equilíbrio.
-    /// Builds the 6-zone blockout, spawns players, camera, HUD, checkpoints,
-    /// puzzles, and educational food distribution.
+    /// Superfície horizontal onde um jogador pode ficar em pé. Usada pelo teste de
+    /// percorribilidade para conferir desníveis e vãos contra o orçamento de pulo.
+    /// </summary>
+    public readonly struct ArenaSurface
+    {
+        public readonly string Name;
+        public readonly float MinX;
+        public readonly float MaxX;
+        public readonly float TopY;
+
+        public ArenaSurface(string name, float minX, float maxX, float topY)
+        {
+            Name = name;
+            MinX = minX;
+            MaxX = maxX;
+            TopY = topY;
+        }
+    }
+
+    /// <summary>
+    /// Ligação entre duas superfícies que só existe por causa de um mecanismo
+    /// cooperativo (botão, alavanca, caixa, plataforma acionada).
+    /// </summary>
+    public readonly struct ArenaLink
+    {
+        public readonly string From;
+        public readonly string To;
+        public readonly string Mechanism;
+
+        public ArenaLink(string from, string to, string mechanism)
+        {
+            From = from;
+            To = to;
+            Mechanism = mechanism;
+        }
+    }
+
+    /// <summary>
+    /// Bootstrap da Fase 1: Corrida do Equilíbrio.
+    /// Constrói a arena de tela única (32 x 18) com cinco patamares empilhados,
+    /// três portais cooperativos, perigos, coletáveis e duas portas de saída.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class Phase1Bootstrap : MonoBehaviour
     {
         private const int GroundLayer = 6;
-        public const float StartX = 0f;
-        public const float FinishX = 215f;
+
+        // ---------------------------------------------------------------------
+        // Enquadramento da arena (16:9, orthographicSize = 9)
+        // ---------------------------------------------------------------------
+        public const float ArenaMinX = 0f;
+        public const float ArenaMaxX = 32f;
+        public const float ArenaMinY = 0f;
+        public const float ArenaMaxY = 18f;
+        public const float CameraOrthographicSize = 9f;
+        public static readonly Vector3 CameraPosition = new(16f, 9f, -10f);
+
+        // ---------------------------------------------------------------------
+        // Orçamento de pulo (PlayerMovement: v0 = 12, g = 18 * 2 = 36 m/s²)
+        // ---------------------------------------------------------------------
+        public const float MaxJumpHeight = 2.0f;
+        public const float MaxJumpReach = 4.67f;
+        public const float SafeStepHeight = 1.8f;
+        public const float SafeGapWidth = 4.0f;
+        public const float BoxHeight = 1.22f;
+
+        // ---------------------------------------------------------------------
+        // Patamares (topo da superfície)
+        // ---------------------------------------------------------------------
+        public const float Tier0Top = 1.0f;
+        public const float Tier1Top = 4.4f;
+        public const float Tier2Top = 7.8f;
+        public const float Tier3Top = 11.2f;
+        public const float Tier4Top = 14.6f;
+        public static readonly float[] TierTops =
+        {
+            Tier0Top,
+            Tier1Top,
+            Tier2Top,
+            Tier3Top,
+            Tier4Top,
+        };
+
+        /// <summary>Marcos de progresso: T1, T2, T3, T4 e porta ocupada.</summary>
+        public const int ProgressMilestones = 5;
+
+        private const float LedgeThickness = 0.6f;
+        private const float PlayerHalfHeight = 0.625f;
+        private static readonly Vector2 PlayerOneSpawn = new(3.5f, Tier0Top + 0.7f);
+        private static readonly Vector2 PlayerTwoSpawn = new(5.0f, Tier0Top + 0.7f);
+        private static readonly Vector2 DefaultRespawn = new(4.25f, Tier0Top + 0.7f);
+
+        private static readonly Color GroundColor = new(0.12f, 0.48f, 0.36f);
+        private static readonly Color PlatformColor = new(0.16f, 0.63f, 0.47f);
+        private static readonly Color WallColor = new(0.08f, 0.32f, 0.25f);
+        private static readonly Color LabelColor = new(0.85f, 0.95f, 1f);
+        private static readonly Color HintColor = new(0.95f, 0.95f, 0.7f);
 
         [Header("Required Prefabs")]
         [SerializeField]
@@ -54,30 +142,59 @@ namespace HealthyRace.Level
         private readonly List<SpikeHazard> _spikes = new();
         private readonly List<MudHazard> _mudHazards = new();
         private readonly List<FallingPlatform> _fallingPlatforms = new();
-        private FinishLine _finishLine;
+        private readonly List<ArenaSurface> _surfaces = new();
+        private readonly List<ArenaLink> _cooperativeLinks = new();
+        private readonly List<CooperativePuzzleController> _gates = new();
+        private readonly int[] _milestoneReached = new int[3];
+
+        private FinishLine _playerOneDoor;
+        private FinishLine _playerTwoDoor;
         private GameObject _playerOne;
         private GameObject _playerTwo;
+        private PlayerMovement _playerOneMovement;
+        private PlayerMovement _playerTwoMovement;
         private WellbeingComponent _playerOneWellbeing;
         private WellbeingComponent _playerTwoWellbeing;
         private PlayerHUD _playerOneHud;
         private PlayerHUD _playerTwoHud;
         private MatchHUD _matchHud;
         private SharedCameraController _cameraController;
-        private CooperativePuzzleController _finalPuzzle;
+        private CooperativePuzzleController _gateOne;
+        private CooperativePuzzleController _gateOneReturn;
+        private CooperativePuzzleController _gateTwo;
+        private CooperativePuzzleController _gateThree;
+        private ActivatedPlatform _gateOnePlatform;
+        private PushableBox _gateThreeBox;
         private MatchCompletionController _matchController;
         private MatchResultsPanel _resultsPanel;
+        private Transform _levelParent;
 
         public IReadOnlyList<Checkpoint> Checkpoints => _checkpoints;
         public IReadOnlyList<SpikeHazard> Spikes => _spikes;
         public IReadOnlyList<MudHazard> MudHazards => _mudHazards;
         public IReadOnlyList<FallingPlatform> FallingPlatforms => _fallingPlatforms;
-        public FinishLine FinishLine => _finishLine;
+        public IReadOnlyList<ArenaSurface> Surfaces => _surfaces;
+        public IReadOnlyList<ArenaLink> CooperativeLinks => _cooperativeLinks;
+        public IReadOnlyList<CooperativePuzzleController> Gates => _gates;
+
+        /// <summary>Porta de saída do P1 (mantido por compatibilidade com testes antigos).</summary>
+        public FinishLine FinishLine => _playerOneDoor;
+        public FinishLine PlayerOneDoor => _playerOneDoor;
+        public FinishLine PlayerTwoDoor => _playerTwoDoor;
         public GameObject PlayerOne => _playerOne;
         public GameObject PlayerTwo => _playerTwo;
         public PlayerHUD PlayerOneHud => _playerOneHud;
         public PlayerHUD PlayerTwoHud => _playerTwoHud;
         public MatchHUD MatchHud => _matchHud;
-        public CooperativePuzzleController FinalPuzzle => _finalPuzzle;
+        public SharedCameraController CameraController => _cameraController;
+        public CooperativePuzzleController GateOne => _gateOne;
+        public CooperativePuzzleController GateOneReturn => _gateOneReturn;
+        public CooperativePuzzleController GateTwo => _gateTwo;
+        public CooperativePuzzleController GateThree => _gateThree;
+        public PushableBox GateThreeBox => _gateThreeBox;
+
+        /// <summary>Portal persistente usado na pontuação (G2 fica resolvido após a alavanca).</summary>
+        public CooperativePuzzleController FinalPuzzle => _gateTwo;
         public MatchCompletionController MatchController => _matchController;
         public MatchResultsPanel ResultsPanel => _resultsPanel;
         public VisualCatalog VisualCatalog => _visualCatalog;
@@ -122,8 +239,10 @@ namespace HealthyRace.Level
             CreateBackground();
             CreateZones();
 
-            _playerOne = CreatePlayer("P1", new Vector2(-1.5f, -1.8f), 1);
-            _playerTwo = CreatePlayer("P2", new Vector2(1.5f, -1.8f), 2);
+            _playerOne = CreatePlayer("P1", PlayerOneSpawn, 1);
+            _playerTwo = CreatePlayer("P2", PlayerTwoSpawn, 2);
+            _playerOneMovement = _playerOne.GetComponent<PlayerMovement>();
+            _playerTwoMovement = _playerTwo.GetComponent<PlayerMovement>();
 
             _playerOneWellbeing = _playerOne.GetComponent<WellbeingComponent>();
             _playerTwoWellbeing = _playerTwo.GetComponent<WellbeingComponent>();
@@ -146,20 +265,80 @@ namespace HealthyRace.Level
                 _matchHud.UpdateTimer(Time.timeSinceLevelLoad);
             }
 
-            if (_playerOne != null && _playerOneHud != null)
+            UpdateProgress(1, _playerOne, _playerOneMovement, _playerOneHud, _playerOneDoor);
+            UpdateProgress(2, _playerTwo, _playerTwoMovement, _playerTwoHud, _playerTwoDoor);
+            MonitorGateThreeBox();
+        }
+
+        // =====================================================================
+        // PROGRESSO POR MARCOS (patamar alcançado + porta ocupada)
+        // =====================================================================
+        private void UpdateProgress(
+            int playerIndex,
+            GameObject player,
+            PlayerMovement movement,
+            PlayerHUD hud,
+            FinishLine door
+        )
+        {
+            if (player == null || hud == null)
             {
-                var progress1 = Mathf.Clamp01(
-                    (_playerOne.transform.position.x - StartX) / (FinishX - StartX)
-                );
-                _playerOneHud.UpdateProgress(progress1);
+                return;
             }
 
-            if (_playerTwo != null && _playerTwoHud != null)
+            var reached = _milestoneReached[playerIndex];
+            if (door != null && door.HasPlayerFinished(playerIndex))
             {
-                var progress2 = Mathf.Clamp01(
-                    (_playerTwo.transform.position.x - StartX) / (FinishX - StartX)
-                );
-                _playerTwoHud.UpdateProgress(progress2);
+                reached = ProgressMilestones;
+            }
+            else if (movement == null || movement.IsGrounded)
+            {
+                var feetY = player.transform.position.y - PlayerHalfHeight;
+                reached = Mathf.Max(reached, GetTierIndex(feetY));
+            }
+
+            _milestoneReached[playerIndex] = reached;
+            hud.UpdateProgress(GetProgress(playerIndex));
+        }
+
+        /// <summary>Índice do patamar (0..4) cujo topo é o mais alto abaixo dos pés do jogador.</summary>
+        public static int GetTierIndex(float feetY)
+        {
+            var tier = 0;
+            for (var i = 0; i < TierTops.Length; i++)
+            {
+                if (feetY >= TierTops[i] - 0.25f)
+                {
+                    tier = i;
+                }
+            }
+
+            return tier;
+        }
+
+        /// <summary>Progresso em etapas: 0/20/40/60/80/100%.</summary>
+        public float GetProgress(int playerIndex)
+        {
+            if (playerIndex < 1 || playerIndex > 2)
+            {
+                return 0f;
+            }
+
+            return Mathf.Clamp01(_milestoneReached[playerIndex] / (float)ProgressMilestones);
+        }
+
+        public int GetMilestone(int playerIndex)
+        {
+            return playerIndex >= 1 && playerIndex <= 2 ? _milestoneReached[playerIndex] : 0;
+        }
+
+        private void MonitorGateThreeBox()
+        {
+            // Anti-deadlock: a caixa de G3 vive em T2. Se cair em qualquer buraco
+            // (vão da AP3 aberta, borda do patamar), volta sozinha ao spawn.
+            if (_gateThreeBox != null && _gateThreeBox.transform.position.y < Tier2Top - 1f)
+            {
+                _gateThreeBox.ResetToSpawn();
             }
         }
 
@@ -196,587 +375,684 @@ namespace HealthyRace.Level
             var bgParent = new GameObject("Background").transform;
             bgParent.SetParent(transform, false);
 
-            for (var x = -10f; x <= 240f; x += 30f)
-            {
-                var bg = new GameObject($"SkySegment_{x}");
-                bg.transform.SetParent(bgParent, false);
-                bg.transform.position = new Vector3(x, 2f, 5f);
-                bg.transform.localScale = new Vector3(32f, 22f, 1f);
+            var bg = new GameObject("Sky");
+            bg.transform.SetParent(bgParent, false);
+            bg.transform.position = new Vector3(
+                (ArenaMinX + ArenaMaxX) * 0.5f,
+                (ArenaMinY + ArenaMaxY) * 0.5f,
+                5f
+            );
+            bg.transform.localScale = new Vector3(
+                ArenaMaxX - ArenaMinX + 2f,
+                ArenaMaxY - ArenaMinY + 2f,
+                1f
+            );
 
-                var renderer = bg.AddComponent<SpriteRenderer>();
-                renderer.sprite = PlaceholderSpriteFactory.Square;
-                renderer.color = new Color(0.08f, 0.16f, 0.28f);
-                renderer.sortingOrder = -10;
-            }
+            var renderer = bg.AddComponent<SpriteRenderer>();
+            renderer.sprite = PlaceholderSpriteFactory.Square;
+            renderer.color = new Color(0.08f, 0.16f, 0.28f);
+            renderer.sortingOrder = -10;
         }
 
+        // =====================================================================
+        // COMPOSIÇÃO DA ARENA
+        // =====================================================================
         private void CreateZones()
         {
-            var levelParent = new GameObject("LevelGeometry").transform;
-            levelParent.SetParent(transform, false);
+            _surfaces.Clear();
+            _cooperativeLinks.Clear();
+            _gates.Clear();
 
-            CreateZone1_Spawn(levelParent);
-            CreateZone2_Caixa(levelParent);
-            CreateZone3_Rotas(levelParent);
-            CreateZone4_Reencontro(levelParent);
-            CreateZone5_PuzzleFinal(levelParent);
-            CreateZone6_Chegada(levelParent);
+            _levelParent = new GameObject("LevelGeometry").transform;
+            _levelParent.SetParent(transform, false);
+
+            CreateArenaShell();
+            CreateTier0_Base();
+            CreateTier1();
+            CreateTier2();
+            CreateTier3();
+            CreateTier4_Portas();
+            CreateCoopGates();
+            CreateHazards();
+            CreateCollectibles();
         }
 
-        // =========================================================================
-        // ZONE 1: SPAWN (X: -5 to 32)
-        // =========================================================================
-        private void CreateZone1_Spawn(Transform parent)
+        private Transform CreateGroup(string name)
         {
-            var zone = new GameObject("Z1_Spawn").transform;
-            zone.SetParent(parent, false);
+            var group = new GameObject(name).transform;
+            group.SetParent(_levelParent, false);
+            return group;
+        }
 
-            // Ground & left boundary wall
-            CreateStaticBlock(
-                "Z1_Ground",
-                zone,
-                new Vector2(13.5f, -3.4f),
-                new Vector2(37f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f),
+        /// <summary>
+        /// Cria um bloco estático a partir de X mínimo/máximo e topo da superfície,
+        /// registrando-o como superfície percorrível.
+        /// </summary>
+        private void CreateLedge(
+            string name,
+            Transform parent,
+            float minX,
+            float maxX,
+            float topY,
+            float thickness,
+            Color color,
+            StaticBlockKind kind
+        )
+        {
+            var center = new Vector2((minX + maxX) * 0.5f, topY - thickness * 0.5f);
+            var size = new Vector2(maxX - minX, thickness);
+            CreateStaticBlock(name, parent, center, size, color, kind);
+            RegisterSurface(name, minX, maxX, topY);
+        }
+
+        private void RegisterSurface(string name, float minX, float maxX, float topY)
+        {
+            _surfaces.Add(new ArenaSurface(name, minX, maxX, topY));
+        }
+
+        private void RegisterLink(string from, string to, string mechanism)
+        {
+            _cooperativeLinks.Add(new ArenaLink(from, to, mechanism));
+        }
+
+        // ---------------------------------------------------------------------
+        // Casca: paredes, piso e teto. Nada existe fora de X [0, 32] x Y [0, 18].
+        // ---------------------------------------------------------------------
+        private void CreateArenaShell()
+        {
+            var shell = CreateGroup("Arena_Casca");
+
+            CreateLedge(
+                "T0_Piso",
+                shell,
+                ArenaMinX,
+                ArenaMaxX,
+                Tier0Top,
+                1f,
+                GroundColor,
                 StaticBlockKind.Ground
             );
+
             CreateStaticBlock(
-                "Z1_LeftBoundary",
-                zone,
-                new Vector2(-5.5f, 0f),
-                new Vector2(1f, 8f),
-                new Color(0.08f, 0.32f, 0.25f),
+                "Arena_ParedeEsquerda",
+                shell,
+                new Vector2(-0.5f, ArenaMaxY * 0.5f),
+                new Vector2(1f, ArenaMaxY + 2f),
+                WallColor,
+                StaticBlockKind.Wall
+            );
+            CreateStaticBlock(
+                "Arena_ParedeDireita",
+                shell,
+                new Vector2(ArenaMaxX + 0.5f, ArenaMaxY * 0.5f),
+                new Vector2(1f, ArenaMaxY + 2f),
+                WallColor,
+                StaticBlockKind.Wall
+            );
+            CreateStaticBlock(
+                "Arena_Teto",
+                shell,
+                new Vector2((ArenaMinX + ArenaMaxX) * 0.5f, ArenaMaxY + 0.5f),
+                new Vector2(ArenaMaxX - ArenaMinX + 2f, 1f),
+                WallColor,
                 StaticBlockKind.Wall
             );
 
-            // Starting line marker
+            CreateWorldLabel(
+                "CORRIDA DO EQUILÍBRIO — ARENA",
+                shell,
+                new Vector2(16f, 17.2f),
+                LabelColor
+            );
+        }
+
+        // ---------------------------------------------------------------------
+        // T0 (topo 1.0): rota da tentação. Largada à esquerda, botão B1 e
+        // plataforma AP1 à direita. Nicho da alavanca L2 em X [0, 2], fechado por
+        // uma parede de 3 m (só se entra por cima, vindo de T1).
+        // ---------------------------------------------------------------------
+        private void CreateTier0_Base()
+        {
+            var tier = CreateGroup("T0_Base");
+
+            // Nicho da alavanca L2 (G2). Parede de 3 m: intransponível por pulo.
             CreateStaticBlock(
-                "Z1_StartMarker",
-                zone,
-                new Vector2(0f, -2.6f),
-                new Vector2(0.3f, 0.8f),
+                "T0_ParedeNicho",
+                tier,
+                new Vector2(2.25f, Tier0Top + 1.5f),
+                new Vector2(0.5f, 3f),
+                WallColor,
+                StaticBlockKind.Wall
+            );
+            RegisterSurface("T0_Nicho", 0f, 2f, Tier0Top);
+
+            CreateStaticBlock(
+                "T0_MarcadorLargada",
+                tier,
+                new Vector2(4.25f, Tier0Top + 0.15f),
+                new Vector2(2.4f, 0.1f),
                 Color.white,
                 StaticBlockKind.Wall
             );
-            CreateWorldLabel("LARGADA", zone, new Vector2(0f, -1.8f), Color.white);
+            CreateWorldLabel("LARGADA", tier, new Vector2(4.25f, Tier0Top + 2.6f), Color.white);
             CreateWorldLabel(
-                "Z1 — SPAWN",
-                zone,
-                new Vector2(13.5f, -1.8f),
-                new Color(0.85f, 0.95f, 1f)
+                "Rota rápida: fast-food e lama",
+                tier,
+                new Vector2(16f, Tier0Top + 2.4f),
+                HintColor
             );
 
-            // Scenery props
             CreateSceneryProp(
-                "Z1_Tree1",
-                zone,
-                new Vector2(-2f, -1.2f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z1_Tree2",
-                zone,
-                new Vector2(6f, -1.2f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z1_Tree3",
-                zone,
-                new Vector2(22f, -1.2f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z1_Shrub1",
-                zone,
-                new Vector2(2f, -2.4f),
+                "T0_Arbusto1",
+                tier,
+                new Vector2(8f, Tier0Top + 0.5f),
                 new Vector2(1.2f, 1f),
                 GetScenerySprite(SceneryKind.Shrub)
             );
             CreateSceneryProp(
-                "Z1_Shrub2",
-                zone,
-                new Vector2(14f, -2.4f),
+                "T0_Arbusto2",
+                tier,
+                new Vector2(21f, Tier0Top + 0.5f),
                 new Vector2(1.2f, 1f),
                 GetScenerySprite(SceneryKind.Shrub)
             );
-
-            // Introductory low step platforms (jump training: heights 1.2m, gaps 3-4m)
-            CreateStaticBlock(
-                "Z1_Platform1",
-                zone,
-                new Vector2(10f, -2.2f),
-                new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f),
-                StaticBlockKind.Platform
-            );
-            CreateStaticBlock(
-                "Z1_Platform2",
-                zone,
-                new Vector2(18f, -1.4f),
-                new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f),
-                StaticBlockKind.Platform
-            );
-            CreateStaticBlock(
-                "Z1_Platform3",
-                zone,
-                new Vector2(25f, -2.2f),
-                new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f),
-                StaticBlockKind.Platform
-            );
-
-            // Introductory healthy collectibles
-            SpawnFood("Apple", new Vector2(10f, -1.4f), zone);
-            SpawnFood("Banana", new Vector2(18f, -0.6f), zone);
-            SpawnFood("Water", new Vector2(25f, -1.4f), zone);
         }
 
-        // =========================================================================
-        // ZONE 2: CAIXA (X: 32 to 65)
-        // =========================================================================
-        private void CreateZone2_Caixa(Transform parent)
+        // ---------------------------------------------------------------------
+        // T1 (topo 4.4): ilha direita (chegada da AP1, CP1, botão B2), pedra,
+        // ilha esquerda (botão de resgate B2r) e degrau S2 rumo a T2.
+        // ---------------------------------------------------------------------
+        private void CreateTier1()
         {
-            var zone = new GameObject("Z2_Caixa").transform;
-            zone.SetParent(parent, false);
+            var tier = CreateGroup("T1_Ilhas");
 
-            // Ground before cliff
-            CreateStaticBlock(
-                "Z2_GroundLower",
-                zone,
-                new Vector2(41f, -3.4f),
-                new Vector2(18f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f),
-                StaticBlockKind.Ground
-            );
-
-            // Elevated cliff ledge: height -0.6 (2.8m above lower ground, impassable by single jump)
-            CreateStaticBlock(
-                "Z2_CliffLedge",
-                zone,
-                new Vector2(57.5f, -0.6f),
-                new Vector2(15f, 0.6f),
-                new Color(0.16f, 0.63f, 0.47f),
+            CreateLedge(
+                "T1_IlhaDireita",
+                tier,
+                19f,
+                28f,
+                Tier1Top,
+                LedgeThickness,
+                PlatformColor,
                 StaticBlockKind.Platform
             );
-            CreateStaticBlock(
-                "Z2_CliffWall",
-                zone,
-                new Vector2(50f, -2.0f),
-                new Vector2(1f, 2.2f),
-                new Color(0.09f, 0.34f, 0.31f),
-                StaticBlockKind.Wall
-            );
-
-            CreateWorldLabel(
-                "Z2 — CAIXA",
-                zone,
-                new Vector2(45f, -1.8f),
-                new Color(0.85f, 0.95f, 1f)
-            );
-            CreateWorldLabel(
-                "Empurre a caixa para subir!",
-                zone,
-                new Vector2(45f, -2.2f),
-                new Color(0.95f, 0.95f, 0.7f)
-            );
-
-            // Scenery props
-            CreateSceneryProp(
-                "Z2_Tree1",
-                zone,
-                new Vector2(36f, -1.2f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z2_Tree2",
-                zone,
-                new Vector2(62f, 1.6f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z2_Shrub1",
-                zone,
-                new Vector2(40f, -2.4f),
-                new Vector2(1.2f, 1f),
-                GetScenerySprite(SceneryKind.Shrub)
-            );
-
-            // Pushable crate
-            CreatePushableBox("Z2_PushableBox", zone, new Vector2(42f, -2.25f));
-
-            // Elevated perch with reward foods
-            CreateStaticBlock(
-                "Z2_Perch",
-                zone,
-                new Vector2(58f, 1.2f),
-                new Vector2(4f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f),
+            CreateLedge(
+                "T1_Pedra",
+                tier,
+                13.5f,
+                16.5f,
+                Tier1Top,
+                LedgeThickness,
+                PlatformColor,
                 StaticBlockKind.Platform
             );
-            SpawnFood("Carrot", new Vector2(58f, 1.9f), zone);
-            SpawnFood("Orange", new Vector2(54f, 0.1f), zone);
-        }
-
-        // =========================================================================
-        // ZONE 3: ROTAS (X: 65 to 125) - Split routes & Checkpoint 1
-        // =========================================================================
-        private void CreateZone3_Rotas(Transform parent)
-        {
-            var zone = new GameObject("Z3_Rotas").transform;
-            zone.SetParent(parent, false);
-
-            CreateWorldLabel(
-                "Z3 — ROTAS",
-                zone,
-                new Vector2(70f, 0.8f),
-                new Color(0.85f, 0.95f, 1f)
+            CreateLedge(
+                "T1_IlhaEsquerda",
+                tier,
+                4f,
+                9.5f,
+                Tier1Top,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
             );
-            CreateWorldLabel(
-                "↑ Rota Saudável   |   ↓ Rota Rápida",
-                zone,
-                new Vector2(70f, 0.3f),
-                new Color(0.95f, 0.95f, 0.7f)
+            // Degrau intermediário T1 -> T2: 1.6 m acima de T1, 1.8 m abaixo de T2.
+            CreateLedge(
+                "T1_DegrauS2",
+                tier,
+                10.5f,
+                12.5f,
+                6.0f,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
             );
 
-            // Scenery props
-            CreateSceneryProp(
-                "Z3_Tree1",
-                zone,
-                new Vector2(68f, 2.0f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
+            var cp1 = CreateCheckpointObject(
+                "Checkpoint_1",
+                tier,
+                1,
+                new Vector2(26f, Tier1Top + 1.2f)
             );
-            CreateSceneryProp(
-                "Z3_Tree2",
-                zone,
-                new Vector2(90f, -1.2f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z3_Tree3",
-                zone,
-                new Vector2(112f, -1.2f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z3_Shrub1",
-                zone,
-                new Vector2(78f, -2.4f),
-                new Vector2(1.2f, 1f),
-                GetScenerySprite(SceneryKind.Shrub)
-            );
-            CreateSceneryProp(
-                "Z3_Shrub2",
-                zone,
-                new Vector2(100f, -2.4f),
-                new Vector2(1.2f, 1f),
-                GetScenerySprite(SceneryKind.Shrub)
-            );
-
-            // Checkpoint 1 at entrance of Zone 3
-            var cp1 = CreateCheckpointObject("Checkpoint_1", zone, 1, new Vector2(66f, 0.1f));
             _checkpoints.Add(cp1);
 
-            // -------------------------------------------------------------
-            // Upper Route: Healthy & Agility (Elevated platforms with healthy foods)
-            // -------------------------------------------------------------
-            var upper = new GameObject("UpperRoute_Healthy").transform;
-            upper.SetParent(zone, false);
-
-            CreateStaticBlock(
-                "Upper_P1",
-                upper,
-                new Vector2(74f, 1.6f),
-                new Vector2(5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f),
-                StaticBlockKind.Platform
-            );
-            SpawnFood("Broccoli", new Vector2(74f, 2.3f), upper);
-
-            CreateStaticBlock(
-                "Upper_P2",
-                upper,
-                new Vector2(83f, 2.4f),
-                new Vector2(4.5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f),
-                StaticBlockKind.Platform
-            );
-            SpawnFood("Strawberry", new Vector2(83f, 3.1f), upper);
-
-            var falling1 = CreateFallingPlatformObject(
-                "Upper_FallingPlatform",
-                upper,
-                new Vector2(87f, 2.7f),
-                new Vector2(3.5f, 0.4f),
-                0.5f,
-                3.0f
-            );
-            _fallingPlatforms.Add(falling1);
-
-            CreateStaticBlock(
-                "Upper_P3",
-                upper,
-                new Vector2(91f, 3.0f),
-                new Vector2(4.5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f),
-                StaticBlockKind.Platform
-            );
-            SpawnFood("Watermelon", new Vector2(91f, 3.7f), upper);
-
-            CreateStaticBlock(
-                "Upper_P4",
-                upper,
-                new Vector2(99f, 2.4f),
-                new Vector2(4.5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f),
-                StaticBlockKind.Platform
-            );
-            SpawnFood("Avocado", new Vector2(99f, 3.1f), upper);
-
-            CreateStaticBlock(
-                "Upper_P5",
-                upper,
-                new Vector2(107f, 1.6f),
-                new Vector2(5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f),
-                StaticBlockKind.Platform
-            );
-            SpawnFood("Fish", new Vector2(107f, 2.3f), upper);
-
-            CreateStaticBlock(
-                "Upper_P6",
-                upper,
-                new Vector2(116f, 0.6f),
-                new Vector2(5f, 0.4f),
-                new Color(0.2f, 0.7f, 0.5f),
-                StaticBlockKind.Platform
-            );
-            SpawnFood("Banana", new Vector2(116f, 1.3f), upper);
-
-            // -------------------------------------------------------------
-            // Lower Route: Flat & Temptation (Continuous ground with ultra-processed foods)
-            // -------------------------------------------------------------
-            var lower = new GameObject("LowerRoute_Temptation").transform;
-            lower.SetParent(zone, false);
-
-            CreateStaticBlock(
-                "Lower_Ground",
-                lower,
-                new Vector2(95f, -3.4f),
-                new Vector2(60f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f),
-                StaticBlockKind.Ground
-            );
-
-            var mud1 = CreateMudHazardObject(
-                "Lower_Mud1",
-                lower,
-                new Vector2(84.5f, -2.85f),
-                new Vector2(6f, 0.4f),
-                0.7f
-            );
-            _mudHazards.Add(mud1);
-
-            var mud2 = CreateMudHazardObject(
-                "Lower_Mud2",
-                lower,
-                new Vector2(105.5f, -2.85f),
-                new Vector2(6f, 0.4f),
-                0.7f
-            );
-            _mudHazards.Add(mud2);
-
-            SpawnFood("Burger", new Vector2(74f, -2.4f), lower);
-            SpawnFood("Soda", new Vector2(81f, -2.4f), lower);
-            SpawnFood("Fries", new Vector2(88f, -2.4f), lower);
-            SpawnFood("Donut", new Vector2(95f, -2.4f), lower);
-            SpawnFood("Pizza", new Vector2(102f, -2.4f), lower);
-            SpawnFood("HotDog", new Vector2(109f, -2.4f), lower);
-            SpawnFood("Chips", new Vector2(116f, -2.4f), lower);
-            SpawnFood("Candy", new Vector2(122f, -2.4f), lower);
-        }
-
-        // =========================================================================
-        // ZONE 4: REENCONTRO (X: 125 to 160) - Reunion & Checkpoint 2
-        // =========================================================================
-        private void CreateZone4_Reencontro(Transform parent)
-        {
-            var zone = new GameObject("Z4_Reencontro").transform;
-            zone.SetParent(parent, false);
-
-            // Reconnecting transition ramp from lower ground
-            CreateStaticBlock(
-                "Z4_TransitionStep",
-                zone,
-                new Vector2(123.5f, -2.6f),
-                new Vector2(5f, 0.8f),
-                new Color(0.14f, 0.55f, 0.42f),
-                StaticBlockKind.Platform
-            );
-
-            // Main reunion ground plateau at Y = -1.8
-            CreateStaticBlock(
-                "Z4_Ground",
-                zone,
-                new Vector2(142.5f, -1.8f),
-                new Vector2(35f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f),
-                StaticBlockKind.Ground
-            );
-
-            CreateWorldLabel(
-                "Z4 — REENCONTRO",
-                zone,
-                new Vector2(142.5f, -0.2f),
-                new Color(0.85f, 0.95f, 1f)
-            );
-
-            // Scenery props
+            CreateWorldLabel("T1", tier, new Vector2(23.5f, Tier1Top + 2.4f), LabelColor);
             CreateSceneryProp(
-                "Z4_Tree1",
-                zone,
-                new Vector2(128f, 0.4f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z4_Tree2",
-                zone,
-                new Vector2(144f, 0.4f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z4_Shrub1",
-                zone,
-                new Vector2(136f, -0.8f),
+                "T1_Arbusto",
+                tier,
+                new Vector2(6f, Tier1Top + 0.5f),
                 new Vector2(1.2f, 1f),
                 GetScenerySprite(SceneryKind.Shrub)
             );
+        }
 
-            // Checkpoint 2 at start of reunion area
-            var cp2 = CreateCheckpointObject("Checkpoint_2", zone, 2, new Vector2(130f, -0.8f));
+        // ---------------------------------------------------------------------
+        // T2 (topo 7.8): plataforma esquerda (CP2), pedra, portão D2 e o trecho
+        // direito com a caixa, o botão B3 e a plataforma AP3 (G3).
+        // ---------------------------------------------------------------------
+        private void CreateTier2()
+        {
+            var tier = CreateGroup("T2_Rotas");
+
+            CreateLedge(
+                "T2_PlataformaEsquerda",
+                tier,
+                0f,
+                10f,
+                Tier2Top,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
+            );
+            CreateLedge(
+                "T2_Pedra",
+                tier,
+                13.5f,
+                15.5f,
+                Tier2Top,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
+            );
+            CreateLedge(
+                "T2_PlataformaDireitaA",
+                tier,
+                17f,
+                23f,
+                Tier2Top,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
+            );
+            CreateLedge(
+                "T2_PlataformaDireitaB",
+                tier,
+                24.5f,
+                32f,
+                Tier2Top,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
+            );
+
+            var cp2 = CreateCheckpointObject(
+                "Checkpoint_2",
+                tier,
+                2,
+                new Vector2(5f, Tier2Top + 1.2f)
+            );
             _checkpoints.Add(cp2);
 
-            // Spike obstacle on plateau
-            var spike = CreateSpikeHazardObject(
-                "Z4_Spikes",
-                zone,
-                new Vector2(150f, -1.25f),
-                new Vector2(3f, 0.4f),
-                5,
-                new Vector2(130f, -0.3f)
+            CreateWorldLabel("T2", tier, new Vector2(5.25f, Tier2Top + 2.4f), LabelColor);
+            CreateWorldLabel(
+                "Empurre a caixa até o botão",
+                tier,
+                new Vector2(28f, Tier2Top + 2.2f),
+                HintColor
             );
-            _spikes.Add(spike);
-
-            // Hydrating and restorative fruit
-            SpawnFood("Water", new Vector2(138f, -1.0f), zone);
-            SpawnFood("Apple", new Vector2(146f, -1.0f), zone);
-            SpawnFood("Orange", new Vector2(154f, -1.0f), zone);
         }
 
-        // =========================================================================
-        // ZONE 5: PUZZLE FINAL (X: 160 to 195) - Cooperative Challenge & Anti-Deadlock
-        // =========================================================================
-        private void CreateZone5_PuzzleFinal(Transform parent)
+        // ---------------------------------------------------------------------
+        // T3 (topo 11.2): plataforma direita (chegada da AP3, CP3), duas
+        // plataformas que caem e plataforma esquerda com degrau S4 rumo a T4.
+        // ---------------------------------------------------------------------
+        private void CreateTier3()
         {
-            var zone = new GameObject("Z5_PuzzleFinal").transform;
-            zone.SetParent(parent, false);
+            var tier = CreateGroup("T3_Travessia");
 
-            // Ground before gate
-            CreateStaticBlock(
-                "Z5_Ground1",
-                zone,
-                new Vector2(167f, -1.8f),
-                new Vector2(14f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f),
+            CreateLedge(
+                "T3_PlataformaDireita",
+                tier,
+                24.5f,
+                28f,
+                Tier3Top,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
+            );
+            CreateLedge(
+                "T3_PlataformaEsquerda",
+                tier,
+                4f,
+                12f,
+                Tier3Top,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
+            );
+            // Degrau intermediário T3 -> T4: 1.8 m acima de T3, 1.6 m abaixo de T4.
+            CreateLedge(
+                "T3_DegrauS4",
+                tier,
+                1f,
+                3f,
+                13.0f,
+                LedgeThickness,
+                PlatformColor,
+                StaticBlockKind.Platform
+            );
+
+            var cp3 = CreateCheckpointObject(
+                "Checkpoint_3",
+                tier,
+                3,
+                new Vector2(26.25f, Tier3Top + 1.2f)
+            );
+            _checkpoints.Add(cp3);
+
+            CreateWorldLabel("T3", tier, new Vector2(8f, Tier3Top + 2.4f), LabelColor);
+        }
+
+        // ---------------------------------------------------------------------
+        // T4 (topo 14.6): patamar das portas. P1 e P2 têm portas próprias.
+        // ---------------------------------------------------------------------
+        private void CreateTier4_Portas()
+        {
+            var tier = CreateGroup("T4_Portas");
+
+            CreateLedge(
+                "T4_Portas",
+                tier,
+                5f,
+                32f,
+                Tier4Top,
+                LedgeThickness,
+                GroundColor,
                 StaticBlockKind.Ground
             );
 
-            // Interactive puzzle door at X = 175
-            var door = CreatePuzzleDoorObject(
-                "Z5_Door",
-                zone,
-                new Vector2(175f, -0.3f),
-                new Vector2(1.2f, 2.2f)
+            _playerOneDoor = CreateFinishLineObject(
+                "Porta_P1",
+                tier,
+                new Vector2(26.5f, Tier4Top + 1.6f),
+                1,
+                "PORTA P1",
+                new Color(0.15f, 0.67f, 1f)
             );
-
-            // Ground past the barrier
-            CreateStaticBlock(
-                "Z5_Ground2",
-                zone,
-                new Vector2(185f, -1.8f),
-                new Vector2(20f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f),
-                StaticBlockKind.Ground
+            _playerTwoDoor = CreateFinishLineObject(
+                "Porta_P2",
+                tier,
+                new Vector2(30f, Tier4Top + 1.6f),
+                2,
+                "PORTA P2",
+                new Color(0.35f, 1f, 0.55f)
             );
 
             CreateWorldLabel(
-                "Z5 — PUZZLE FINAL",
-                zone,
-                new Vector2(175f, 2.8f),
-                new Color(0.85f, 0.95f, 1f)
+                "CHEGADA — os dois nas portas",
+                tier,
+                new Vector2(14f, Tier4Top + 2.2f),
+                Color.white
             );
-
-            // Scenery props
             CreateSceneryProp(
-                "Z5_Tree1",
-                zone,
-                new Vector2(163f, 0.4f),
+                "T4_Arvore",
+                tier,
+                new Vector2(8f, Tier4Top + 1.6f),
                 new Vector2(2f, 3.2f),
                 GetScenerySprite(SceneryKind.Tree)
             );
-            CreateSceneryProp(
-                "Z5_Tree2",
-                zone,
-                new Vector2(188f, 0.4f),
-                new Vector2(2f, 3.2f),
-                GetScenerySprite(SceneryKind.Tree)
+        }
+
+        // ---------------------------------------------------------------------
+        // Portais cooperativos
+        // ---------------------------------------------------------------------
+        private void CreateCoopGates()
+        {
+            CreateGateOne();
+            CreateGateTwo();
+            CreateGateThree();
+        }
+
+        /// <summary>
+        /// G1 (T0 -> T1): B1 no piso ergue a AP1 (1.6 -> 4.4) enquanto pressionado.
+        /// B2 na ilha direita de T1 devolve o favor: quem já subiu segura B2 e a
+        /// AP1 ergue o parceiro que embarcou nela.
+        /// Saída de emergência: ambos os botões são momentâneos, e qualquer jogador
+        /// pode voltar a T0 se deixando cair. Não há estado irreversível.
+        /// </summary>
+        private void CreateGateOne()
+        {
+            var gate = CreateGroup("G1_BotoesPlataforma");
+
+            var b1 = CreatePressureButtonObject(
+                "G1_BotaoB1",
+                gate,
+                new Vector2(27f, Tier0Top + 0.15f)
             );
-            CreateSceneryProp(
-                "Z5_Shrub1",
-                zone,
-                new Vector2(171f, -0.8f),
-                new Vector2(1.2f, 1f),
-                GetScenerySprite(SceneryKind.Shrub)
+            var b2 = CreatePressureButtonObject(
+                "G1_BotaoB2",
+                gate,
+                new Vector2(20f, Tier1Top + 0.15f)
+            );
+            _gateOnePlatform = CreateActivatedPlatformObject(
+                "G1_PlataformaAP1",
+                gate,
+                new Vector2(30f, Tier0Top + 0.4f),
+                new Vector2(3f, 0.4f),
+                new Vector2(0f, Tier1Top - (Tier0Top + 0.6f))
+            );
+            RegisterSurface("G1_AP1_Baixa", 28.5f, 31.5f, Tier0Top + 0.6f);
+            RegisterSurface("G1_AP1_Alta", 28.5f, 31.5f, Tier1Top);
+            RegisterLink(
+                "G1_AP1_Baixa",
+                "G1_AP1_Alta",
+                "G1: parceiro segura B1 (T0) ou B2 (T1) e a AP1 sobe"
             );
 
-            // Interactive puzzle elements
-            var button = CreatePressureButtonObject(
-                "Z5_PressureButton",
-                zone,
-                new Vector2(169f, -1.32f)
+            _gateOne = CreateGateController(
+                "G1_Controlador",
+                gate,
+                b1,
+                null,
+                null,
+                null,
+                _gateOnePlatform,
+                null
             );
-            var box = CreatePushableBox("Z5_PushableBox", zone, new Vector2(164f, -1.0f));
-            var lever = CreateLeverObject("Z5_Lever", zone, new Vector2(166f, -1.0f), "ALAVANCA");
+            _gateOneReturn = CreateGateController(
+                "G1_ControladorRetorno",
+                gate,
+                b2,
+                null,
+                null,
+                null,
+                _gateOnePlatform,
+                null
+            );
+
+            // A plataforma obedece ao OU dos dois botões (os controladores rodam antes).
+            void SyncPlatform(bool _)
+            {
+                _gateOnePlatform.SetState(_gateOne.IsSolved || _gateOneReturn.IsSolved);
+            }
+
+            _gateOne.OnPuzzleStateChanged += SyncPlatform;
+            _gateOneReturn.OnPuzzleStateChanged += SyncPlatform;
+
+            CreateWorldLabel(
+                "G1: um segura, o outro sobe",
+                gate,
+                new Vector2(27f, Tier0Top + 1.6f),
+                HintColor
+            );
+        }
+
+        /// <summary>
+        /// G2 (T1 -> T2): a alavanca L2 fica num nicho de T0 acessível só por cima
+        /// (queda a partir da ilha esquerda de T1). Ao ser acionada abre o portão D2,
+        /// que bloqueia a entrada do trecho direito de T2. Quem acionou não sobe
+        /// sozinho: o parceiro segura o botão de resgate B2r na ilha esquerda e a
+        /// AP2 do nicho o leva de volta a T1.
+        /// Saída de emergência: espinhos no canto do nicho devolvem o jogador ao
+        /// último checkpoint (custo de 5 de bem-estar). A alavanca não é
+        /// alternável, então o portão nunca volta a fechar.
+        /// </summary>
+        private void CreateGateTwo()
+        {
+            var gate = CreateGroup("G2_AlavancaPortao");
+
+            var lever = CreateLeverObject(
+                "G2_AlavancaL2",
+                gate,
+                new Vector2(1.3f, Tier0Top + 1.3f),
+                "ALAVANCA",
+                false
+            );
+            var door = CreatePuzzleDoorObject(
+                "G2_PortaoD2",
+                gate,
+                new Vector2(17.6f, Tier2Top + 1.1f),
+                new Vector2(1.2f, 2.2f),
+                instantMotion: true
+            );
+            RegisterLink(
+                "T2_Pedra",
+                "T2_PlataformaDireitaA",
+                "G2: alavanca L2 (nicho em T0) abre o portão D2"
+            );
+
+            var rescueButton = CreatePressureButtonObject(
+                "G2_BotaoResgateB2r",
+                gate,
+                new Vector2(7.5f, Tier1Top + 0.15f)
+            );
+            var rescuePlatform = CreateActivatedPlatformObject(
+                "G2_PlataformaAP2",
+                gate,
+                new Vector2(1.3f, Tier0Top + 0.4f),
+                new Vector2(1.2f, 0.4f),
+                new Vector2(0f, Tier1Top - (Tier0Top + 0.6f))
+            );
+            RegisterSurface("G2_AP2_Baixa", 0.7f, 1.9f, Tier0Top + 0.6f);
+            RegisterSurface("G2_AP2_Alta", 0.7f, 1.9f, Tier1Top);
+            RegisterLink(
+                "G2_AP2_Baixa",
+                "G2_AP2_Alta",
+                "G2: parceiro segura B2r (T1) e a AP2 resgata quem acionou a alavanca"
+            );
+
+            _gateTwo = CreateGateController(
+                "G2_Controlador",
+                gate,
+                null,
+                lever,
+                null,
+                door,
+                null,
+                null
+            );
+            var rescue = CreateGateController(
+                "G2_ControladorResgate",
+                gate,
+                rescueButton,
+                null,
+                null,
+                null,
+                rescuePlatform,
+                null
+            );
+            _gates.Add(rescue);
+
+            CreateWorldLabel(
+                "G2: alavanca no nicho",
+                gate,
+                new Vector2(1.3f, Tier0Top + 2.6f),
+                HintColor
+            );
+        }
+
+        /// <summary>
+        /// G3 (T2 -> T3): a caixa nasce no trecho direito de T2 e é empurrada até o
+        /// botão B3, ao lado do vão da AP3. Com B3 pressionado (por jogador ou pela
+        /// caixa) a AP3 sobe de 7.8 para 10.8; de lá o degrau até T3 é de 0.4 m.
+        /// Rota cooperativa: um segura B3 e o outro sobe. Rota anti-deadlock: a
+        /// caixa sobre B3 trava a plataforma e serve de degrau (topo 9.02) para
+        /// alcançar a AP3 erguida (desnível 1.78 m).
+        /// Saída de emergência: alavanca de reset R3 devolve a caixa ao spawn e o
+        /// bootstrap também a devolve se ela cair abaixo de T2.
+        /// </summary>
+        private void CreateGateThree()
+        {
+            var gate = CreateGroup("G3_CaixaPlataforma");
+
+            var b3 = CreatePressureButtonObject(
+                "G3_BotaoB3",
+                gate,
+                new Vector2(22f, Tier2Top + 0.15f)
+            );
+            var platform = CreateActivatedPlatformObject(
+                "G3_PlataformaAP3",
+                gate,
+                new Vector2(23.75f, Tier2Top - LedgeThickness * 0.5f),
+                new Vector2(1.5f, LedgeThickness),
+                new Vector2(0f, 3f)
+            );
+            RegisterSurface("G3_AP3_Baixa", 23f, 24.5f, Tier2Top);
+            RegisterSurface("G3_AP3_Alta", 23f, 24.5f, Tier2Top + 3f);
+            RegisterLink(
+                "G3_AP3_Baixa",
+                "G3_AP3_Alta",
+                "G3: parceiro segura B3 ou a caixa trava B3 e a AP3 sobe"
+            );
+
+            _gateThreeBox = CreatePushableBox(
+                "G3_Caixa",
+                gate,
+                new Vector2(20f, Tier2Top + BoxHeight * 0.5f)
+            );
+            if (_gateThreeBox != null)
+            {
+                _gateThreeBox.SetSpawnPosition(new Vector2(20f, Tier2Top + BoxHeight * 0.5f));
+                RegisterSurface("G3_CaixaSobreB3", 21.39f, 22.61f, Tier2Top + BoxHeight);
+                RegisterLink(
+                    "T2_PlataformaDireitaA",
+                    "G3_CaixaSobreB3",
+                    "G3: caixa empurrada sobre B3 vira degrau"
+                );
+            }
+
             var resetSwitch = CreateLeverObject(
-                "Z5_ResetSwitch",
-                zone,
-                new Vector2(161f, -1.0f),
+                "G3_ResetR3",
+                gate,
+                new Vector2(30.5f, Tier2Top + 0.8f),
                 "RESET",
                 false
             );
-            var platform = CreateActivatedPlatformObject(
-                "Z5_MovingPlatform",
-                zone,
-                new Vector2(180f, -0.8f),
-                new Vector2(3.5f, 0.4f),
-                new Vector2(0f, 2.5f)
+            _gateThree = CreateGateController(
+                "G3_Controlador",
+                gate,
+                b3,
+                null,
+                _gateThreeBox,
+                null,
+                platform,
+                resetSwitch
             );
 
-            // Cooperative puzzle controller orchestrates door and moving platform
-            var puzzleControllerObj = new GameObject("CooperativePuzzleController");
-            puzzleControllerObj.transform.SetParent(zone, false);
-            _finalPuzzle = puzzleControllerObj.AddComponent<CooperativePuzzleController>();
-            _finalPuzzle.Bind(button, lever, box, door, platform, resetSwitch, requireAll: false);
+            CreateWorldLabel(
+                "G3: caixa sobre o botão trava a plataforma",
+                gate,
+                new Vector2(20f, Tier2Top + 3.0f),
+                HintColor
+            );
+        }
+
+        private CooperativePuzzleController CreateGateController(
+            string name,
+            Transform parent,
+            PressureButton button,
+            Lever lever,
+            PushableBox box,
+            PuzzleDoor door,
+            ActivatedPlatform platform,
+            Lever resetSwitch
+        )
+        {
+            var controllerObj = new GameObject(name);
+            controllerObj.transform.SetParent(parent, false);
+            var controller = controllerObj.AddComponent<CooperativePuzzleController>();
+            controller.Bind(button, lever, box, door, platform, resetSwitch, requireAll: false);
+            _gates.Add(controller);
 
             if (button != null)
             {
@@ -788,127 +1064,130 @@ namespace HealthyRace.Level
                     }
                 };
             }
+
             if (lever != null)
             {
-                lever.OnToggled += (active) => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
+                lever.OnToggled += (_) => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
             }
+
+            if (resetSwitch != null)
+            {
+                resetSwitch.OnToggled += (_) =>
+                    AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
+            }
+
             if (door != null)
             {
                 door.OnOpened += () => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Door);
             }
-            if (_finalPuzzle != null)
-            {
-                _finalPuzzle.OnPuzzleSolved += () =>
-                    AudioService.Instance.PlaySfx(AudioClipId.Sfx_PuzzleSolved);
-            }
 
-            // Anti-deadlock bypass stepping stones (allows jump-clearing even if puzzle is skipped)
-            CreateStaticBlock(
-                "Z5_Step1",
-                zone,
-                new Vector2(167f, 0.2f),
-                new Vector2(3f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f),
-                StaticBlockKind.Platform
-            );
-            CreateStaticBlock(
-                "Z5_Step2",
-                zone,
-                new Vector2(175f, 1.2f),
-                new Vector2(3f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f),
-                StaticBlockKind.Platform
-            );
-            CreateStaticBlock(
-                "Z5_Step3",
-                zone,
-                new Vector2(182f, 0.2f),
-                new Vector2(3f, 0.4f),
-                new Color(0.16f, 0.63f, 0.47f),
-                StaticBlockKind.Platform
-            );
-
-            SpawnFood("Carrot", new Vector2(175f, 1.9f), zone);
-            SpawnFood("Avocado", new Vector2(188f, -1.0f), zone);
+            controller.OnPuzzleSolved += () =>
+                AudioService.Instance.PlaySfx(AudioClipId.Sfx_PuzzleSolved);
+            return controller;
         }
 
-        // =========================================================================
-        // ZONE 6: CHEGADA (X: 195 to 230) - Finish Line & Podium
-        // =========================================================================
-        private void CreateZone6_Chegada(Transform parent)
+        // ---------------------------------------------------------------------
+        // Perigos: lama e espinhos na rota preguiçosa (T0), espinhos de emergência
+        // no nicho e plataformas que caem na travessia de T3.
+        // ---------------------------------------------------------------------
+        private void CreateHazards()
         {
-            var zone = new GameObject("Z6_Chegada").transform;
-            zone.SetParent(parent, false);
+            var hazards = CreateGroup("Perigos");
 
-            // Ground & right containment wall
-            CreateStaticBlock(
-                "Z6_Ground",
-                zone,
-                new Vector2(212.5f, -1.8f),
-                new Vector2(35f, 0.8f),
-                new Color(0.12f, 0.48f, 0.36f),
-                StaticBlockKind.Ground
+            _mudHazards.Add(
+                CreateMudHazardObject(
+                    "T0_Lama1",
+                    hazards,
+                    new Vector2(17f, Tier0Top + 0.2f),
+                    new Vector2(4f, 0.4f),
+                    0.7f
+                )
             );
-            CreateStaticBlock(
-                "Z6_RightBoundary",
-                zone,
-                new Vector2(228f, 0f),
-                new Vector2(1f, 8f),
-                new Color(0.08f, 0.32f, 0.25f),
-                StaticBlockKind.Wall
-            );
-
-            CreateWorldLabel(
-                "Z6 — CHEGADA",
-                zone,
-                new Vector2(215f, 2.8f),
-                new Color(0.85f, 0.95f, 1f)
-            );
-            CreateWorldLabel("LINHA DE CHEGADA", zone, new Vector2(215f, -0.6f), Color.white);
-
-            // Scenery props
-            CreateSceneryProp(
-                "Z6_Tree1",
-                zone,
-                new Vector2(200f, 0.4f),
-                new Vector2(2.2f, 3.5f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z6_Tree2",
-                zone,
-                new Vector2(210f, 0.4f),
-                new Vector2(2.2f, 3.5f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z6_Tree3",
-                zone,
-                new Vector2(225f, 0.4f),
-                new Vector2(2.2f, 3.5f),
-                GetScenerySprite(SceneryKind.Tree)
-            );
-            CreateSceneryProp(
-                "Z6_Shrub1",
-                zone,
-                new Vector2(205f, -0.8f),
-                new Vector2(1.4f, 1.1f),
-                GetScenerySprite(SceneryKind.Shrub)
+            _mudHazards.Add(
+                CreateMudHazardObject(
+                    "T0_Lama2",
+                    hazards,
+                    new Vector2(24f, Tier0Top + 0.2f),
+                    new Vector2(4f, 0.4f),
+                    0.7f
+                )
             );
 
-            // Finish Line trigger
-            _finishLine = CreateFinishLineObject("FinishLine", zone, new Vector2(FinishX, -0.5f));
-
-            // Celebratory podium
-            CreateStaticBlock(
-                "Z6_Podium",
-                zone,
-                new Vector2(221f, -1.2f),
-                new Vector2(4f, 0.4f),
-                new Color(0.85f, 0.7f, 0.2f),
-                StaticBlockKind.Platform
+            // Sob o vão entre as ilhas de T1: pune o pulo mal calculado.
+            _spikes.Add(
+                CreateSpikeHazardObject(
+                    "T0_Espinhos",
+                    hazards,
+                    new Vector2(11.5f, Tier0Top + 0.2f),
+                    new Vector2(3f, 0.4f),
+                    5,
+                    DefaultRespawn
+                )
             );
-            CreateWorldLabel("PÓDIO", zone, new Vector2(221f, -0.6f), new Color(1f, 0.9f, 0.3f));
+            // Saída de emergência do nicho de G2.
+            _spikes.Add(
+                CreateSpikeHazardObject(
+                    "T0_EspinhosNicho",
+                    hazards,
+                    new Vector2(0.25f, Tier0Top + 0.2f),
+                    new Vector2(0.5f, 0.4f),
+                    5,
+                    DefaultRespawn
+                )
+            );
+
+            _fallingPlatforms.Add(
+                CreateFallingPlatformObject(
+                    "T3_Queda1",
+                    hazards,
+                    new Vector2(19.5f, Tier3Top - LedgeThickness * 0.5f),
+                    new Vector2(3f, LedgeThickness),
+                    0.5f,
+                    3f
+                )
+            );
+            _fallingPlatforms.Add(
+                CreateFallingPlatformObject(
+                    "T3_Queda2",
+                    hazards,
+                    new Vector2(15f, Tier3Top - LedgeThickness * 0.5f),
+                    new Vector2(3f, LedgeThickness),
+                    0.5f,
+                    3f
+                )
+            );
+            RegisterSurface("T3_Queda1", 18f, 21f, Tier3Top);
+            RegisterSurface("T3_Queda2", 13.5f, 16.5f, Tier3Top);
+        }
+
+        // ---------------------------------------------------------------------
+        // Coletáveis: ultraprocessados enfileirados em T0; saudáveis em pontos
+        // que exigem subir, desviar ou cooperar.
+        // ---------------------------------------------------------------------
+        private void CreateCollectibles()
+        {
+            var foods = CreateGroup("Coletaveis");
+            var lowY = Tier0Top + 0.7f;
+
+            SpawnFood("Burger", new Vector2(7f, lowY), foods);
+            SpawnFood("Soda", new Vector2(9f, lowY), foods);
+            SpawnFood("Fries", new Vector2(14.5f, lowY), foods);
+            SpawnFood("Donut", new Vector2(17f, lowY), foods);
+            SpawnFood("Pizza", new Vector2(19.5f, lowY), foods);
+            SpawnFood("HotDog", new Vector2(22f, lowY), foods);
+            SpawnFood("Chips", new Vector2(24f, lowY), foods);
+            SpawnFood("Candy", new Vector2(26f, lowY), foods);
+
+            SpawnFood("Apple", new Vector2(5.5f, Tier1Top + 0.7f), foods);
+            SpawnFood("Carrot", new Vector2(8.8f, Tier1Top + 0.7f), foods);
+            SpawnFood("Orange", new Vector2(15f, Tier1Top + 0.7f), foods);
+            SpawnFood("Broccoli", new Vector2(2.5f, Tier2Top + 0.7f), foods);
+            SpawnFood("Avocado", new Vector2(8f, Tier2Top + 0.7f), foods);
+            SpawnFood("Water", new Vector2(14.5f, Tier2Top + 0.7f), foods);
+            SpawnFood("Fish", new Vector2(8f, Tier3Top + 0.7f), foods);
+            SpawnFood("Strawberry", new Vector2(15f, Tier3Top + 0.7f), foods);
+            SpawnFood("Watermelon", new Vector2(10f, Tier4Top + 0.7f), foods);
+            SpawnFood("Banana", new Vector2(18f, Tier4Top + 0.7f), foods);
         }
 
         // =========================================================================
@@ -1012,20 +1291,29 @@ namespace HealthyRace.Level
                 typeof(AudioListener)
             );
             cameraObject.transform.SetParent(transform, false);
-            cameraObject.transform.position = new Vector3(0f, 0f, -10f);
+            cameraObject.transform.position = CameraPosition;
             cameraObject.tag = "MainCamera";
 
             var cam = cameraObject.GetComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 6.5f;
+            cam.orthographicSize = CameraOrthographicSize;
             cam.backgroundColor = new Color(0.07f, 0.17f, 0.29f);
             cam.clearFlags = CameraClearFlags.SolidColor;
 
+            // Enquadramento fixo: a arena inteira cabe na tela, sem scroll nem zoom.
             _cameraController = cameraObject.AddComponent<SharedCameraController>();
             _cameraController.Configure(p1, p2);
             _cameraController.SetPlayableBounds(
-                new Bounds(new Vector3(110f, 1f, 0f), new Vector3(250f, 18f, 20f)),
+                new Bounds(
+                    new Vector3((ArenaMinX + ArenaMaxX) * 0.5f, (ArenaMinY + ArenaMaxY) * 0.5f, 0f),
+                    new Vector3(ArenaMaxX - ArenaMinX, ArenaMaxY - ArenaMinY, 20f)
+                ),
                 true
+            );
+            _cameraController.SetFixedFraming(
+                CameraPosition,
+                CameraOrthographicSize,
+                (ArenaMaxX - ArenaMinX) * 0.5f
             );
         }
 
@@ -1108,7 +1396,7 @@ namespace HealthyRace.Level
             matchControllerObj.transform.SetParent(transform, false);
             _matchController = matchControllerObj.AddComponent<MatchCompletionController>();
             _matchController.Configure(
-                _finishLine,
+                _playerOneDoor,
                 _matchHud,
                 _playerOne,
                 _playerTwo,
@@ -1119,7 +1407,9 @@ namespace HealthyRace.Level
                 20,
                 _playerOneHud,
                 _playerTwoHud,
-                _finalPuzzle
+                _gateTwo,
+                secondFinishLine: _playerTwoDoor,
+                requireBothAtDoors: true
             );
             _matchController.MatchConcluded += (results) =>
             {
@@ -1319,17 +1609,16 @@ namespace HealthyRace.Level
             string name,
             Transform parent,
             Vector2 position,
-            Vector2 size
+            Vector2 size,
+            bool instantMotion = false
         )
         {
             var doorObj = new GameObject(name);
             doorObj.transform.SetParent(parent, false);
             doorObj.transform.position = position;
-            doorObj.transform.localScale = new Vector3(size.x, size.y, 1f);
             doorObj.layer = GroundLayer;
 
             var col = doorObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
 
             var sr = doorObj.AddComponent<SpriteRenderer>();
             if (
@@ -1348,9 +1637,10 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.2f, 0.45f, 0.6f);
             }
             sr.sortingOrder = 1;
+            FitSpriteToSize(doorObj.transform, sr, col, size);
 
             var door = doorObj.AddComponent<PuzzleDoor>();
-            door.Configure(new Vector2(0f, size.y + 0.5f), 4f);
+            door.Configure(new Vector2(0f, size.y + 0.5f), 4f, instantMotion);
 
             CreateWorldLabel("PORTÃO", doorObj.transform, new Vector2(0f, 0f), Color.cyan);
             return door;
@@ -1367,11 +1657,9 @@ namespace HealthyRace.Level
             var platObj = new GameObject(name);
             platObj.transform.SetParent(parent, false);
             platObj.transform.position = position;
-            platObj.transform.localScale = new Vector3(size.x, size.y, 1f);
             platObj.layer = GroundLayer;
 
             var col = platObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
 
             var sr = platObj.AddComponent<SpriteRenderer>();
             if (
@@ -1390,6 +1678,7 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.18f, 0.72f, 0.52f);
             }
             sr.sortingOrder = 1;
+            FitSpriteToSize(platObj.transform, sr, col, size);
 
             var platform = platObj.AddComponent<ActivatedPlatform>();
             platform.Configure(targetOffset, 3f);
@@ -1409,10 +1698,8 @@ namespace HealthyRace.Level
             var spikeObj = new GameObject(name);
             spikeObj.transform.SetParent(parent, false);
             spikeObj.transform.position = position;
-            spikeObj.transform.localScale = new Vector3(size.x, size.y, 1f);
 
             var col = spikeObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
             col.isTrigger = true;
 
             var sr = spikeObj.AddComponent<SpriteRenderer>();
@@ -1432,6 +1719,7 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.85f, 0.2f, 0.2f);
             }
             sr.sortingOrder = 2;
+            FitSpriteToSize(spikeObj.transform, sr, col, size);
 
             var spike = spikeObj.AddComponent<SpikeHazard>();
             spike.Configure(penalty, 1.0f, defaultRespawn);
@@ -1456,10 +1744,8 @@ namespace HealthyRace.Level
             var mudObj = new GameObject(name);
             mudObj.transform.SetParent(parent, false);
             mudObj.transform.position = position;
-            mudObj.transform.localScale = new Vector3(size.x, size.y, 1f);
 
             var col = mudObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
             col.isTrigger = true;
 
             var sr = mudObj.AddComponent<SpriteRenderer>();
@@ -1479,6 +1765,7 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.42f, 0.28f, 0.15f, 0.75f);
             }
             sr.sortingOrder = 2;
+            FitSpriteToSize(mudObj.transform, sr, col, size);
 
             var mud = mudObj.AddComponent<MudHazard>();
             mud.Configure(speedMultiplier);
@@ -1504,11 +1791,9 @@ namespace HealthyRace.Level
             var platObj = new GameObject(name);
             platObj.transform.SetParent(parent, false);
             platObj.transform.position = position;
-            platObj.transform.localScale = new Vector3(size.x, size.y, 1f);
             platObj.layer = GroundLayer;
 
             var col = platObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
 
             var sr = platObj.AddComponent<SpriteRenderer>();
             if (
@@ -1527,6 +1812,7 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.75f, 0.55f, 0.35f);
             }
             sr.sortingOrder = 1;
+            FitSpriteToSize(platObj.transform, sr, col, size);
 
             var platform = platObj.AddComponent<FallingPlatform>();
             platform.Configure(anticipation, respawnDelay);
@@ -1596,21 +1882,28 @@ namespace HealthyRace.Level
             return checkpoint;
         }
 
-        private FinishLine CreateFinishLineObject(string name, Transform parent, Vector2 position)
+        private FinishLine CreateFinishLineObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            int acceptedPlayerIndex = 0,
+            string label = "LINHA DE CHEGADA",
+            Color? bannerColor = null
+        )
         {
             var fl = new GameObject(name);
             fl.transform.SetParent(parent, false);
             fl.transform.position = position;
 
             var col = fl.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(1.5f, 5.0f);
+            col.size = new Vector2(1.5f, 3.0f);
             col.isTrigger = true;
 
-            // Visual arch banners
+            // Portal visual
             var banner = new GameObject("ArchBanner");
             banner.transform.SetParent(fl.transform, false);
-            banner.transform.localPosition = new Vector2(0f, 2.2f);
-            banner.transform.localScale = new Vector3(1.2f, 4.5f, 1f);
+            banner.transform.localPosition = new Vector2(0f, 0.2f);
+            banner.transform.localScale = new Vector3(1.4f, 3.0f, 1f);
 
             var sr = banner.AddComponent<SpriteRenderer>();
             if (
@@ -1621,16 +1914,17 @@ namespace HealthyRace.Level
             )
             {
                 sr.sprite = _visualCatalog.Environment[6];
-                sr.color = Color.white;
+                sr.color = bannerColor ?? Color.white;
             }
             else
             {
                 sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(1f, 0.84f, 0f);
+                sr.color = bannerColor ?? new Color(1f, 0.84f, 0f);
             }
             sr.sortingOrder = 2;
 
             var finishLine = fl.AddComponent<FinishLine>();
+            finishLine.ConfigureAcceptedPlayer(acceptedPlayerIndex);
             finishLine.PlayerCrossedFinish += (playerIndex, finishTime) =>
             {
                 AudioService.Instance.PlaySfx(AudioClipId.Sfx_Finish);
@@ -1640,6 +1934,7 @@ namespace HealthyRace.Level
                 }
             };
 
+            CreateWorldLabel(label, fl.transform, new Vector2(0f, 2.0f), Color.white);
             return finishLine;
         }
 
@@ -1691,7 +1986,6 @@ namespace HealthyRace.Level
             var block = new GameObject(blockName);
             block.transform.SetParent(parent, false);
             block.transform.position = position;
-            block.transform.localScale = new Vector3(size.x, size.y, 1f);
             block.layer = GroundLayer;
 
             var sr = block.AddComponent<SpriteRenderer>();
@@ -1712,7 +2006,39 @@ namespace HealthyRace.Level
             }
 
             sr.sortingOrder = 0;
-            block.AddComponent<BoxCollider2D>();
+            var collider = block.AddComponent<BoxCollider2D>();
+            FitSpriteToSize(block.transform, sr, collider, size);
+        }
+
+        /// <summary>
+        /// Ajusta escala e colisor para que o visual e a física tenham exatamente
+        /// <paramref name="size"/> em unidades de mundo, independentemente do
+        /// tamanho do sprite do atlas. Sem isso o BoxCollider2D auto-ajustado ao
+        /// sprite ficaria maior que a geometria desenhada no projeto.
+        /// </summary>
+        private static void FitSpriteToSize(
+            Transform target,
+            SpriteRenderer renderer,
+            BoxCollider2D collider,
+            Vector2 size
+        )
+        {
+            var spriteSize = Vector2.one;
+            if (renderer != null && renderer.sprite != null)
+            {
+                var bounds = renderer.sprite.bounds.size;
+                if (bounds.x > 0.0001f && bounds.y > 0.0001f)
+                {
+                    spriteSize = new Vector2(bounds.x, bounds.y);
+                }
+            }
+
+            target.localScale = new Vector3(size.x / spriteSize.x, size.y / spriteSize.y, 1f);
+            if (collider != null)
+            {
+                collider.offset = Vector2.zero;
+                collider.size = spriteSize;
+            }
         }
 
         private Sprite GetEnvironmentSprite(StaticBlockKind kind)

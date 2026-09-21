@@ -25,7 +25,7 @@ Painel individualizado por jogador (P1 e P2). Cada instância é vinculada a uma
 - **Pontuação**:
   - Pontuação acumulada (`Pontos: N`), preparado para integração com `SCORE-01`;
 - **Progresso de Corrida**:
-  - Indicador percentual (`Progresso: N%`), preparado para integração com `GOAL-01` e `LEVEL-01`.
+  - Indicador percentual (`Progresso: N%`). Na Fase 1 é alimentado por `Phase1Bootstrap.GetProgress`, em cinco marcos (patamares T1 a T4 e porta ocupada): 0/20/40/60/80/100%.
 
 #### Métodos e APIs Públicas do PlayerHUD
 

@@ -12,6 +12,7 @@ namespace HealthyRace.Level
     {
         Running,
         FinalCountdown,
+        WaitingForPartner,
         Concluded,
     }
 
@@ -59,6 +60,13 @@ namespace HealthyRace.Level
         [SerializeField]
         private FinishLine _finishLine;
 
+        [Header("Portas duplas (arena cooperativa)")]
+        [SerializeField]
+        private FinishLine _secondFinishLine;
+
+        [SerializeField]
+        private bool _requireBothAtDoors;
+
         [SerializeField]
         private MatchHUD _matchHud;
 
@@ -84,6 +92,9 @@ namespace HealthyRace.Level
         public int FirstFinisherIndex => _firstFinisherIndex;
         public MatchResultData FinalResults => _finalResults;
         public ScoreConfig ScoreConfig => _scoreConfig;
+        public bool RequireBothAtDoors => _requireBothAtDoors;
+        public FinishLine PlayerOneDoor => _finishLine;
+        public FinishLine PlayerTwoDoor => _requireBothAtDoors ? _secondFinishLine : _finishLine;
 
         public event Action<int, float> PlayerFinished;
         public event Action<float> FinalWindowStarted;
@@ -103,12 +114,16 @@ namespace HealthyRace.Level
             PlayerHUD p1Hud = null,
             PlayerHUD p2Hud = null,
             CooperativePuzzleController finalPuzzle = null,
-            ScoreConfig scoreConfig = null
+            ScoreConfig scoreConfig = null,
+            FinishLine secondFinishLine = null,
+            bool requireBothAtDoors = false
         )
         {
             UnbindFinishLine();
 
             _finishLine = finishLine;
+            _secondFinishLine = secondFinishLine;
+            _requireBothAtDoors = requireBothAtDoors && secondFinishLine != null;
             _matchHud = matchHud;
             _playerOne = playerOne;
             _playerTwo = playerTwo;
@@ -142,6 +157,12 @@ namespace HealthyRace.Level
                 _finishLine.PlayerCrossedFinish -= HandlePlayerCrossedFinish;
                 _finishLine.PlayerCrossedFinish += HandlePlayerCrossedFinish;
             }
+
+            if (_secondFinishLine != null && _secondFinishLine != _finishLine)
+            {
+                _secondFinishLine.PlayerCrossedFinish -= HandlePlayerCrossedFinish;
+                _secondFinishLine.PlayerCrossedFinish += HandlePlayerCrossedFinish;
+            }
         }
 
         private void UnbindFinishLine()
@@ -150,10 +171,45 @@ namespace HealthyRace.Level
             {
                 _finishLine.PlayerCrossedFinish -= HandlePlayerCrossedFinish;
             }
+
+            if (_secondFinishLine != null)
+            {
+                _secondFinishLine.PlayerCrossedFinish -= HandlePlayerCrossedFinish;
+            }
+        }
+
+        private FinishLine GetDoor(int playerIndex)
+        {
+            if (_requireBothAtDoors && playerIndex == 2)
+            {
+                return _secondFinishLine;
+            }
+
+            return _finishLine;
+        }
+
+        /// <summary>Verdadeiro quando P1 e P2 estão simultaneamente em suas portas.</summary>
+        public bool AreBothPlayersAtDoors()
+        {
+            var doorOne = GetDoor(1);
+            var doorTwo = GetDoor(2);
+            return doorOne != null
+                && doorTwo != null
+                && doorOne.IsOccupiedBy(1)
+                && doorTwo.IsOccupiedBy(2);
         }
 
         private void Update()
         {
+            if (_state == MatchCompletionState.WaitingForPartner)
+            {
+                if (AreBothPlayersAtDoors())
+                {
+                    ConcludeMatch();
+                }
+                return;
+            }
+
             if (_state != MatchCompletionState.FinalCountdown)
             {
                 return;
@@ -175,6 +231,12 @@ namespace HealthyRace.Level
 
         public void HandlePlayerCrossedFinish(int playerIndex, float finishTime)
         {
+            if (_requireBothAtDoors)
+            {
+                HandleDoorArrival(playerIndex, finishTime);
+                return;
+            }
+
             FreezePlayer(playerIndex);
 
             if (_state == MatchCompletionState.Running)
@@ -194,6 +256,39 @@ namespace HealthyRace.Level
             else if (_state == MatchCompletionState.FinalCountdown)
             {
                 PlayerFinished?.Invoke(playerIndex, finishTime);
+                ConcludeMatch();
+            }
+        }
+
+        /// <summary>
+        /// Modo portas duplas: a primeira chegada define a ordem, mas ninguém é
+        /// congelado (o primeiro pode sair para ajudar). A partida só encerra quando
+        /// os dois estão em suas portas ao mesmo tempo. Não há janela final nem DNF.
+        /// </summary>
+        private void HandleDoorArrival(int playerIndex, float finishTime)
+        {
+            if (_state == MatchCompletionState.Concluded)
+            {
+                return;
+            }
+
+            if (_state == MatchCompletionState.Running)
+            {
+                _firstFinisherIndex = playerIndex;
+                _state = MatchCompletionState.WaitingForPartner;
+                _finalWindowTimeRemaining = 0f;
+
+                if (_matchHud != null)
+                {
+                    var partner = playerIndex == 1 ? 2 : 1;
+                    _matchHud.ShowStatusMessage($"P{playerIndex} NA PORTA - AGUARDANDO P{partner}");
+                }
+            }
+
+            PlayerFinished?.Invoke(playerIndex, finishTime);
+
+            if (AreBothPlayersAtDoors())
+            {
                 ConcludeMatch();
             }
         }
@@ -241,11 +336,13 @@ namespace HealthyRace.Level
 
         public MatchResultData CompileResults()
         {
-            var p1Finished = _finishLine != null && _finishLine.HasPlayerFinished(1);
-            var p2Finished = _finishLine != null && _finishLine.HasPlayerFinished(2);
+            var doorOne = GetDoor(1);
+            var doorTwo = GetDoor(2);
+            var p1Finished = doorOne != null && doorOne.HasPlayerFinished(1);
+            var p2Finished = doorTwo != null && doorTwo.HasPlayerFinished(2);
 
-            var p1Time = _finishLine != null ? _finishLine.GetPlayerFinishTime(1) : -1f;
-            var p2Time = _finishLine != null ? _finishLine.GetPlayerFinishTime(2) : -1f;
+            var p1Time = doorOne != null ? doorOne.GetPlayerFinishTime(1) : -1f;
+            var p2Time = doorTwo != null ? doorTwo.GetPlayerFinishTime(2) : -1f;
 
             var p1Wb = _playerOneWellbeing != null ? _playerOneWellbeing.CurrentValue : 0;
             var p2Wb = _playerTwoWellbeing != null ? _playerTwoWellbeing.CurrentValue : 0;
@@ -273,7 +370,6 @@ namespace HealthyRace.Level
             }
             else if (p2Finished && !p1Finished)
             {
-                r1.Placement = 2;
                 r1.Placement = 2;
                 r2.Placement = 1;
             }
@@ -411,6 +507,11 @@ namespace HealthyRace.Level
             if (_finishLine != null)
             {
                 _finishLine.ResetState();
+            }
+
+            if (_secondFinishLine != null)
+            {
+                _secondFinishLine.ResetState();
             }
 
             if (_matchHud != null)

@@ -12,8 +12,35 @@ namespace HealthyRace.Tests.PlayMode
     {
         private const string SceneName = "Phase1_CorridaDoEquilibrio";
 
-        [UnityTest]
-        public IEnumerator Phase1_LoadsInPlayMode_SpawnsPlayersAndInitializesHud()
+        private Vector2 _originalGravity;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _originalGravity = Physics2D.gravity;
+        }
+
+        /// <summary>
+        /// A arena ocupa a região da origem; se ficasse carregada, os testes de
+        /// física seguintes (que montam cenários em torno de (0, 0)) colidiriam com
+        /// ela. Descarrega a cena e restaura a gravidade do projeto.
+        /// </summary>
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            var arena = SceneManager.GetSceneByName(SceneName);
+            if (arena.IsValid() && arena.isLoaded)
+            {
+                var empty = SceneManager.CreateScene("Phase1PlayModeTests_Empty");
+                SceneManager.SetActiveScene(empty);
+                yield return SceneManager.UnloadSceneAsync(arena);
+            }
+
+            Checkpoint.ResetRegistry();
+            Physics2D.gravity = _originalGravity;
+        }
+
+        private static IEnumerator LoadArena()
         {
             var loadOp = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Single);
             while (!loadOp.isDone)
@@ -22,72 +49,68 @@ namespace HealthyRace.Tests.PlayMode
             }
 
             yield return new WaitForSeconds(0.2f);
+        }
 
-            var bootstrapObject = GameObject.Find("Phase1_CorridaDoEquilibrio");
-            Assert.That(bootstrapObject, Is.Not.Null, "Bootstrap GameObject must exist.");
+        private static void Teleport(GameObject player, Vector2 position)
+        {
+            var rb = player.GetComponent<Rigidbody2D>();
+            rb.linearVelocity = Vector2.zero;
+            rb.position = position;
+            player.transform.position = position;
+        }
 
-            var bootstrap = bootstrapObject.GetComponent<Phase1Bootstrap>();
-            Assert.That(bootstrap, Is.Not.Null, "Phase1Bootstrap component must exist.");
+        [UnityTest]
+        public IEnumerator Phase1_LoadsInPlayMode_SpawnsPlayersInsideArenaAndGrounded()
+        {
+            yield return LoadArena();
+
+            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            Assert.That(bootstrap, Is.Not.Null, "Phase1Bootstrap must exist.");
 
             var p1 = bootstrap.PlayerOne;
             var p2 = bootstrap.PlayerTwo;
-
-            Assert.That(p1, Is.Not.Null, "Player 1 must exist.");
-            Assert.That(p2, Is.Not.Null, "Player 2 must exist.");
-
+            Assert.That(p1, Is.Not.Null);
+            Assert.That(p2, Is.Not.Null);
             Assert.That(p1.activeInHierarchy, Is.True);
             Assert.That(p2.activeInHierarchy, Is.True);
 
-            var p1Movement = p1.GetComponent<PlayerMovement>();
-            var p2Movement = p2.GetComponent<PlayerMovement>();
-
-            Assert.That(p1Movement, Is.Not.Null);
-            Assert.That(p2Movement, Is.Not.Null);
+            foreach (var player in new[] { p1, p2 })
+            {
+                var pos = player.transform.position;
+                Assert.That(
+                    pos.x,
+                    Is.InRange(Phase1Bootstrap.ArenaMinX, Phase1Bootstrap.ArenaMaxX)
+                );
+                Assert.That(
+                    pos.y,
+                    Is.InRange(Phase1Bootstrap.ArenaMinY, Phase1Bootstrap.ArenaMaxY)
+                );
+            }
 
             yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
 
-            Assert.That(
-                p1Movement.IsGrounded,
-                Is.True,
-                "Player 1 should spawn grounded on Z1 platform."
-            );
-            Assert.That(
-                p2Movement.IsGrounded,
-                Is.True,
-                "Player 2 should spawn grounded on Z1 platform."
-            );
+            Assert.That(p1.GetComponent<PlayerMovement>().IsGrounded, Is.True, "P1 spawns on T0.");
+            Assert.That(p2.GetComponent<PlayerMovement>().IsGrounded, Is.True, "P2 spawns on T0.");
 
             Assert.That(bootstrap.PlayerOneHud, Is.Not.Null);
             Assert.That(bootstrap.PlayerTwoHud, Is.Not.Null);
             Assert.That(bootstrap.MatchHud, Is.Not.Null);
+            Assert.That(bootstrap.PlayerOneHud.Progress, Is.EqualTo(0f).Within(0.001f));
         }
 
         [UnityTest]
         public IEnumerator Phase1_PlayerReachesCheckpoint_ActivatesIndependently()
         {
-            var loadOp = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Single);
-            while (!loadOp.isDone)
-            {
-                yield return null;
-            }
-
-            yield return new WaitForSeconds(0.2f);
+            yield return LoadArena();
 
             var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
-            Assert.That(bootstrap, Is.Not.Null);
-            Assert.That(bootstrap.Checkpoints.Count, Is.GreaterThanOrEqualTo(1));
+            Assert.That(bootstrap.Checkpoints.Count, Is.EqualTo(3));
 
             var cp1 = bootstrap.Checkpoints[0];
             Assert.That(cp1.Index, Is.EqualTo(1));
-            Assert.That(cp1.IsActivatedByPlayer(1), Is.False);
-            Assert.That(cp1.IsActivatedByPlayer(2), Is.False);
 
-            // Move P1 to Checkpoint 1
-            var p1 = bootstrap.PlayerOne;
-            var rb1 = p1.GetComponent<Rigidbody2D>();
-            rb1.position = cp1.transform.position;
-            p1.transform.position = cp1.transform.position;
-
+            Teleport(bootstrap.PlayerOne, cp1.transform.position);
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
 
@@ -96,125 +119,123 @@ namespace HealthyRace.Tests.PlayMode
                 Is.True,
                 "Checkpoint 1 should activate for P1."
             );
-            Assert.That(
-                cp1.IsActivatedByPlayer(2),
-                Is.False,
-                "P2 should remain isolated from P1 checkpoint activation."
-            );
+            Assert.That(cp1.IsActivatedByPlayer(2), Is.False, "P2 must remain isolated.");
             Assert.That(Checkpoint.GetLastCheckpoint(1), Is.SameAs(cp1));
+            Assert.That(Checkpoint.GetLastCheckpoint(2), Is.Null);
         }
 
         [UnityTest]
-        public IEnumerator Phase1_PlayerReachesFinishLine_RegistersFinishEvent()
+        public IEnumerator Phase1_ProgressAdvancesByTier_NotByHorizontalPosition()
         {
-            var loadOp = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Single);
-            while (!loadOp.isDone)
-            {
-                yield return null;
-            }
-
-            yield return new WaitForSeconds(0.2f);
+            yield return LoadArena();
 
             var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
-            Assert.That(bootstrap, Is.Not.Null);
-            Assert.That(bootstrap.FinishLine, Is.Not.Null);
-
-            var finishLine = bootstrap.FinishLine;
-            Assert.That(finishLine.HasPlayerFinished(1), Is.False);
-
-            // Move P1 to finish line
             var p1 = bootstrap.PlayerOne;
-            var rb1 = p1.GetComponent<Rigidbody2D>();
-            rb1.position = finishLine.transform.position;
-            p1.transform.position = finishLine.transform.position;
 
+            // Correr até o fim do piso não gera progresso: o marco é o patamar.
+            Teleport(p1, new Vector2(26f, Phase1Bootstrap.Tier0Top + 0.7f));
+            for (var i = 0; i < 6; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+            yield return null;
+            Assert.That(bootstrap.PlayerOneHud.Progress, Is.EqualTo(0f).Within(0.001f));
+
+            // Sobre a plataforma T2 esquerda: marco 2 -> 40%
+            Teleport(p1, new Vector2(5f, Phase1Bootstrap.Tier2Top + 0.7f));
+            for (var i = 0; i < 6; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+            yield return null;
+            Assert.That(bootstrap.GetMilestone(1), Is.EqualTo(2));
+            Assert.That(bootstrap.PlayerOneHud.Progress, Is.EqualTo(0.4f).Within(0.001f));
+            Assert.That(bootstrap.PlayerTwoHud.Progress, Is.EqualTo(0f).Within(0.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator Phase1_MatchConcludesOnlyWhenBothPlayersOccupyTheirOwnDoors()
+        {
+            yield return LoadArena();
+
+            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var doorOne = bootstrap.PlayerOneDoor;
+            var doorTwo = bootstrap.PlayerTwoDoor;
+            var controller = bootstrap.MatchController;
+            Assert.That(controller.RequireBothAtDoors, Is.True);
+
+            // P2 na porta do P1: nada acontece.
+            Teleport(bootstrap.PlayerTwo, doorOne.transform.position);
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
+            Assert.That(doorOne.HasPlayerFinished(2), Is.False, "P1 door rejects P2.");
+            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.Running));
 
+            // P1 na própria porta: chegada registrada, partida aguarda o parceiro.
+            Teleport(bootstrap.PlayerOne, doorOne.transform.position);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(doorOne.HasPlayerFinished(1), Is.True);
+            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.WaitingForPartner));
             Assert.That(
-                finishLine.HasPlayerFinished(1),
+                bootstrap.PlayerOne.GetComponent<PlayerMovement>().IsMovementEnabled,
                 Is.True,
-                "P1 should be registered as finished."
+                "First arrival must stay free to help the partner."
             );
-            Assert.That(
-                finishLine.HasPlayerFinished(2),
-                Is.False,
-                "P2 has not reached finish line yet."
-            );
-            Assert.That(finishLine.FirstFinishTime, Is.GreaterThanOrEqualTo(0f));
+
+            // P2 na própria porta com P1 ainda na dele: partida encerra.
+            Teleport(bootstrap.PlayerTwo, doorTwo.transform.position);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(doorTwo.HasPlayerFinished(2), Is.True);
+            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.Concluded));
+            Assert.That(controller.FinalResults.HasDnf, Is.False);
+            Assert.That(bootstrap.GetMilestone(1), Is.EqualTo(Phase1Bootstrap.ProgressMilestones));
         }
 
         [UnityTest]
-        public IEnumerator Phase1_BothPlayers_CanPhysicallyTraverseFromSpawnToFinish_AndActivateCheckpoints()
+        public IEnumerator Phase1_CameraStaysFixed_WhilePlayersMoveAcrossTheArena()
         {
-            var loadOp = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Single);
-            while (!loadOp.isDone)
-            {
-                yield return null;
-            }
-
-            yield return new WaitForSeconds(0.2f);
+            yield return LoadArena();
 
             var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
-            Assert.That(bootstrap, Is.Not.Null);
+            var cam = bootstrap.CameraController.CameraComponent;
+            var initialPosition = cam.transform.position;
+            var initialSize = cam.orthographicSize;
 
-            var p1 = bootstrap.PlayerOne;
-            var p2 = bootstrap.PlayerTwo;
-            Assert.That(p1, Is.Not.Null);
-            Assert.That(p2, Is.Not.Null);
+            Assert.That(initialPosition, Is.EqualTo(Phase1Bootstrap.CameraPosition));
+            Assert.That(
+                initialSize,
+                Is.GreaterThanOrEqualTo(Phase1Bootstrap.CameraOrthographicSize)
+            );
 
-            // Assert visual presentation is active on both players
-            Assert.That(p1.transform.Find("VisualPresentation"), Is.Not.Null);
-            Assert.That(p2.transform.Find("VisualPresentation"), Is.Not.Null);
+            var positions = new[]
+            {
+                new Vector2(1f, Phase1Bootstrap.Tier0Top + 0.7f),
+                new Vector2(30f, Phase1Bootstrap.Tier4Top + 0.7f),
+                new Vector2(16f, Phase1Bootstrap.Tier2Top + 0.7f),
+            };
 
-            Assert.That(bootstrap.Checkpoints.Count, Is.EqualTo(2));
-            var cp1 = bootstrap.Checkpoints[0];
-            var cp2 = bootstrap.Checkpoints[1];
-            var finishLine = bootstrap.FinishLine;
+            foreach (var target in positions)
+            {
+                Teleport(bootstrap.PlayerOne, target);
+                Teleport(bootstrap.PlayerTwo, new Vector2(32f - target.x, target.y));
+                for (var frame = 0; frame < 5; frame++)
+                {
+                    yield return null;
+                    Assert.That(cam.transform.position, Is.EqualTo(initialPosition));
+                    Assert.That(cam.orthographicSize, Is.EqualTo(initialSize).Within(0.0001f));
+                }
+            }
 
-            var rb1 = p1.GetComponent<Rigidbody2D>();
-            var rb2 = p2.GetComponent<Rigidbody2D>();
-
-            // Phase traversal Step 1: Checkpoint 1 (Zone 3)
-            rb1.position = cp1.transform.position;
-            p1.transform.position = cp1.transform.position;
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
-            Assert.That(cp1.IsActivatedByPlayer(1), Is.True, "P1 should activate CP1.");
-
-            rb2.position = cp1.transform.position;
-            p2.transform.position = cp1.transform.position;
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
-            Assert.That(cp1.IsActivatedByPlayer(2), Is.True, "P2 should activate CP1.");
-
-            // Phase traversal Step 2: Checkpoint 2 (Zone 4)
-            rb1.position = cp2.transform.position;
-            p1.transform.position = cp2.transform.position;
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
-            Assert.That(cp2.IsActivatedByPlayer(1), Is.True, "P1 should activate CP2.");
-
-            rb2.position = cp2.transform.position;
-            p2.transform.position = cp2.transform.position;
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
-            Assert.That(cp2.IsActivatedByPlayer(2), Is.True, "P2 should activate CP2.");
-
-            // Phase traversal Step 3: Finish Line (Zone 6)
-            rb1.position = finishLine.transform.position;
-            p1.transform.position = finishLine.transform.position;
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
-            Assert.That(finishLine.HasPlayerFinished(1), Is.True, "P1 should reach finish.");
-
-            rb2.position = finishLine.transform.position;
-            p2.transform.position = finishLine.transform.position;
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
-            Assert.That(finishLine.HasPlayerFinished(2), Is.True, "P2 should reach finish.");
-
-            Assert.That(finishLine.FinishedPlayerCount, Is.EqualTo(2));
+            // Os dois jogadores continuam visíveis em qualquer canto da arena.
+            foreach (var player in new[] { bootstrap.PlayerOne, bootstrap.PlayerTwo })
+            {
+                var viewport = cam.WorldToViewportPoint(player.transform.position);
+                Assert.That(viewport.x, Is.InRange(0f, 1f));
+                Assert.That(viewport.y, Is.InRange(0f, 1f));
+            }
         }
     }
 }
