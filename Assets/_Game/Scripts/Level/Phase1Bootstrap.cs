@@ -26,6 +26,22 @@ namespace HealthyRace.Level
         public const float StartX = 0f;
         public const float FinishX = 215f;
 
+        // ---------------------------------------------------------------------
+        // Física da fase e intenção de projeto.
+        //
+        // A fase declara o ápice de pulo que quer e deriva o gravityScale do
+        // jogador a partir dele e da gravidade em vigor, em vez de fixar um
+        // número. Ver Assets/_Game/Scripts/Player/JumpBudget.cs.
+        // ---------------------------------------------------------------------
+        public const float PhaseGravityY = -18f;
+        public const float TargetJumpApex = 2.0f;
+
+        /// <summary>
+        /// Passo de física assumido pelo orçamento fora do runtime, onde
+        /// <see cref="Time.fixedDeltaTime"/> pode não refletir o jogo.
+        /// </summary>
+        public const float FixedDeltaTime = 0.02f;
+
         [Header("Required Prefabs")]
         [SerializeField]
         private GameObject _playerPrefab;
@@ -120,7 +136,7 @@ namespace HealthyRace.Level
             BuildFoodLookup();
 
             Application.targetFrameRate = 60;
-            Physics2D.gravity = new Vector2(0f, -18f);
+            Physics2D.gravity = new Vector2(0f, PhaseGravityY);
 
             CreateBackground();
             CreateZones();
@@ -135,6 +151,34 @@ namespace HealthyRace.Level
 
             CreateSharedCamera(_playerOne.transform, _playerTwo.transform);
             CreateHud(_playerOneWellbeing, p1Fatigue, _playerTwoWellbeing, p2Fatigue);
+        }
+
+        /// <summary>Orçamento de pulo medido no jogador vivo.</summary>
+        public JumpBudget BudgetFor(int playerIndex)
+        {
+            var player = playerIndex == 1 ? _playerOne : _playerTwo;
+            return player != null ? JumpBudget.For(player.GetComponent<PlayerMovement>()) : default;
+        }
+
+        /// <summary>
+        /// Orçamento de projeto da fase, disponível sem jogador instanciado
+        /// (usado pelos testes de geometria em EditMode).
+        /// </summary>
+        public static JumpBudget DesignBudget(float jumpVelocity = 12f, float moveSpeed = 7f)
+        {
+            var gravityScale = JumpBudget.GravityScaleForApex(
+                PhaseGravityY,
+                jumpVelocity,
+                TargetJumpApex,
+                FixedDeltaTime
+            );
+            return JumpBudget.FromPhysics(
+                PhaseGravityY,
+                gravityScale,
+                jumpVelocity,
+                moveSpeed,
+                FixedDeltaTime
+            );
         }
 
         private void Start()
@@ -929,10 +973,20 @@ namespace HealthyRace.Level
             var player = Instantiate(_playerPrefab, position, Quaternion.identity, transform);
             player.name = playerName;
 
+            var movement = player.GetComponent<PlayerMovement>();
             var rb = player.GetComponent<Rigidbody2D>();
             if (rb != null)
             {
-                rb.gravityScale = 2f;
+                // Deriva a gravidade do jogador do ápice de projeto em vez de fixar
+                // um número: se a gravidade global, o passo de física ou a velocidade
+                // de pulo mudarem, o ápice continua sendo o declarado.
+                var jumpVelocity = movement != null ? movement.JumpVelocity : 12f;
+                rb.gravityScale = JumpBudget.GravityScaleForApex(
+                    Physics2D.gravity.y,
+                    jumpVelocity,
+                    TargetJumpApex,
+                    FixedDeltaTime
+                );
                 rb.constraints = RigidbodyConstraints2D.FreezeRotation;
                 rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             }
@@ -977,7 +1031,6 @@ namespace HealthyRace.Level
                 CreateWorldLabel(playerName, player.transform, new Vector2(0f, 0.86f), Color.white);
             }
 
-            var movement = player.GetComponent<PlayerMovement>();
             if (movement != null)
             {
                 movement.Jumped += () => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Jump);

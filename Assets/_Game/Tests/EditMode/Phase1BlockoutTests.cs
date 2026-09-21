@@ -3,6 +3,7 @@ using System.Reflection;
 using HealthyRace.Collectibles;
 using HealthyRace.Core;
 using HealthyRace.Level;
+using HealthyRace.Player;
 using HealthyRace.UI;
 using HealthyRace.Visuals;
 using NUnit.Framework;
@@ -481,25 +482,31 @@ namespace HealthyRace.Tests.EditMode
             try
             {
                 var routes = holder.transform.Find("LevelGeometry/Z3_Rotas");
+
+                // Limites vindos da física real, não de literais.
+                var budget = Phase1Bootstrap.DesignBudget();
+                var maxGap = budget.Reach;
+                var maxRise = budget.Apex;
+
                 AssertSurfaceChain(
                     routes,
                     collider => collider.name.StartsWith("Upper_") && !collider.isTrigger,
-                    4.67f,
-                    2f,
+                    maxGap,
+                    maxRise,
                     "upper canopy"
                 );
                 AssertSurfaceChain(
                     routes,
                     collider => collider.name.StartsWith("Central_Bridge"),
-                    4.67f,
-                    2f,
+                    maxGap,
+                    maxRise,
                     "central bridge"
                 );
                 AssertSurfaceChain(
                     routes,
                     collider => collider.name.StartsWith("Lower_CreekBank"),
-                    4.67f,
-                    2f,
+                    maxGap,
+                    maxRise,
                     "lower creek"
                 );
             }
@@ -630,23 +637,38 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
-        public void PlatformingMetrics_ConfirmPlayerJumpEnvelope()
+        public void PlatformingMetrics_AreDerivedFromPhysics_NotFromLiterals()
         {
-            // Physics calculations:
-            // jumpVelocity = 12, gravityScale = 2, Physics2D.gravity = (0, -18) -> g = 36 m/s^2
-            // Jump apex: h = v^2 / (2g) = 144 / 72 = 2.0 m
-            // Jump duration: t = 2 * (v / g) = 24 / 36 = 0.667 s
-            // Max horizontal reach at 7 m/s: d = 7 * 0.667 = 4.67 m
-            const float jumpVelocity = 12f;
-            const float effectiveGravity = 36f;
-            const float moveSpeed = 7f;
+            var budget = Phase1Bootstrap.DesignBudget();
 
-            var maxJumpHeight = (jumpVelocity * jumpVelocity) / (2f * effectiveGravity);
-            var jumpDuration = 2f * (jumpVelocity / effectiveGravity);
-            var maxHorizontalReach = moveSpeed * jumpDuration;
+            // O gravityScale é derivado do ápice declarado, então o ápice previsto
+            // pelo orçamento é exatamente o alvo de projeto.
+            Assert.That(budget.Apex, Is.EqualTo(Phase1Bootstrap.TargetJumpApex).Within(0.01f));
 
-            Assert.That(maxJumpHeight, Is.EqualTo(2.0f).Within(0.01f));
-            Assert.That(maxHorizontalReach, Is.GreaterThan(4.5f));
+            // A fórmula contínua v0^2/(2g) superestima o ápice em ~v0*dt/2, porque a
+            // Unity integra em passos. O orçamento usa o valor do integrador discreto,
+            // que é o que o jogador realmente alcança.
+            Assert.That(budget.IdealApex, Is.GreaterThan(budget.Apex));
+            Assert.That(
+                budget.IdealApex - budget.Apex,
+                Is.EqualTo(budget.JumpVelocity * Phase1Bootstrap.FixedDeltaTime * 0.5f)
+                    .Within(0.02f)
+            );
+
+            // Alcance e folgas são consequência, nunca números escolhidos.
+            Assert.That(budget.Reach, Is.EqualTo(budget.MoveSpeed * budget.AirTime).Within(0.001f));
+            Assert.That(budget.SafeStep, Is.LessThan(budget.Apex));
+            Assert.That(budget.SafeGap, Is.LessThan(budget.Reach));
+
+            // O orçamento acompanha a física: mais gravidade, menos ápice.
+            var heavier = JumpBudget.FromPhysics(
+                Phase1Bootstrap.PhaseGravityY,
+                budget.Gravity / Mathf.Abs(Phase1Bootstrap.PhaseGravityY) * 2f,
+                budget.JumpVelocity,
+                budget.MoveSpeed,
+                Phase1Bootstrap.FixedDeltaTime
+            );
+            Assert.That(heavier.Apex, Is.LessThan(budget.Apex * 0.55f));
         }
 
         private static void AssertSurfaceChain(
