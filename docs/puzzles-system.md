@@ -1,76 +1,36 @@
-# Sistema de Puzzles e Interações (PUZZ-01)
+# Sistema de puzzles e interações (PUZZ-01)
 
-## Descrição
+## Componentes reutilizados
 
-O sistema de puzzles e interações cooperativas do Healthy Race provê mecanismos físicos e lógicos integrados que exigem coordenação entre os jogadores ou resolução de quebra-cabeças no cenário. Inclui botões de pressão, caixas empurráveis com respawn, alavancas físicas, portas de passagem, plataformas móveis e salvaguardas anti-deadlock.
+A Fase 1 usa os sistemas existentes `PushableBox`, `PressureButton`, `Lever`, `PuzzleDoor`, `ActivatedPlatform` e `CooperativePuzzleController`. A caixa mantém reset automático ao cair; cada área com caixa também possui uma alavanca de recuperação.
 
-## Componentes Arquiteturais
+## Z2 — ensino espacial
 
-### 1. Lever (`Lever.cs`)
+1. A caixa nasce no pátio inferior.
+2. A placa fica depois da caixa e aciona um elevador junto à parede do jardim.
+3. Alimentos visíveis no jardim superior comunicam o objetivo sem uma caixa de tutorial.
+4. A alavanca **Recuperar caixa** restaura a tentativa.
 
-- **Namespace**: `HealthyRace.Puzzles`;
-- **Gatilho de Contato**: `BoxCollider2D` (`isTrigger = true`), detecta `PlayerController` ou `PlayerMovement`;
-- **Debouncing**: Cooldown configurável (`ToggleCooldown = 0.5s`) para evitar alternâncias rápidas acidentais;
-- **Feedback Visual**:
-  - Rotação angular da alavanca (-35° desativada, +35° ativada);
-  - Mudança de cor do indicador visual (vermelho/desativado para verde/ativado);
-- **Eventos**: `OnToggled(bool)`, `OnActivated`, `OnDeactivated`.
+A sequência usa `requireAll: false` porque existe uma única entrada, a placa.
 
-### 2. PuzzleDoor (`PuzzleDoor.cs`)
+## Z5 — clímax cooperativo
 
-- **Namespace**: `HealthyRace.Puzzles`;
-- **Colisor de Bloqueio**: `BoxCollider2D` em layer 6 (`Ground`), impedindo a passagem de jogadores e objetos enquanto fechada;
-- **Modos de Operação**:
-  - Movimento suave interpolado via `Vector3.MoveTowards` com velocidade parametrizada;
-  - Deslocamento instantâneo com desativação do colisor quando aberta;
-- **Eventos**: `OnStateChanged(bool)`, `OnOpened`, `OnClosed`.
+1. Um jogador empurra `Z5_PushableBox` até `Z5_PressureButton`.
+2. A placa aciona `Z5_CooperationLift`.
+3. O elevador dá acesso a `Z5_UpperLever`.
+4. O controlador final usa `requireAll: true`: o portão abre somente enquanto placa e alavanca estão ativas.
+5. A caixa sustenta a placa e permite que os dois atravessem.
 
-### 3. ActivatedPlatform (`ActivatedPlatform.cs`)
+As antigas plataformas `Z5_Step1`, `Z5_Step2` e `Z5_Step3`, que anulavam o puzzle, foram removidas. Dois degraus de recuperação existem apenas no lado de entrada e não cruzam o portão. A moldura arquitetônica deixa passagem superior a 1,5 m em cada lado do portão móvel.
 
-- **Namespace**: `HealthyRace.Puzzles`;
-- **Física Cinemática**: `Rigidbody2D` (`bodyType = Kinematic`, `Interpolate`), move-se suavemente via `MovePosition` sem deslizar passageiros;
-- **Retorno Automático**: Configuração opcional `_returnWhenDeactivated` para retorno à posição de repouso quando desativada;
-- **Eventos**: `OnStateChanged(bool)`.
+## Anti-deadlock
 
-### 4. PushableBox Aprimorada (`PushableBox.cs`)
+- caixa abaixo do limite: `PushableBox.ResetToSpawn()`;
+- caixa presa: `Z5_ResetSwitch` chama `ResetPuzzle()`;
+- alavanca em estado incorreto: o mesmo reset redefine a alavanca;
+- jogador que cai do poleiro: degraus e elevador permitem nova subida;
+- placa solta: o elevador retorna e o portão fecha de acordo com o estado atual.
 
-- **Namespace**: `HealthyRace.Obstacles`;
-- **Spawn Caching**: Grava a posição inicial de spawn na inicialização;
-- **Anti-Deadlock / Auto-Reset**:
-  - Monitora queda abaixo de limiar (`_fallResetYThreshold = -10f`);
-  - Reposiciona automaticamente na posição inicial (`ResetToSpawn()`);
-  - Notifica ouvintes pelo evento `OnResetToSpawn`.
+## Validação
 
-### 5. CooperativePuzzleController (`CooperativePuzzleController.cs`)
-
-- **Namespace**: `HealthyRace.Puzzles`;
-- **Coordenação Multi-Elemento**: Vincula `PressureButton`, `Lever`, `PushableBox`, `PuzzleDoor`, `ActivatedPlatform` e uma alavanca de emergência (`ResetSwitch`);
-- **Lógica Flexível**: Modos `requireAll = true` (ambos acionados) ou `false` (qualquer um acionado);
-- **Recuperação de Estado Impossível (Anti-Deadlock)**:
-  - Método `ResetPuzzle()` restaura caixa ao spawn original, redefine alavancas e portas;
-  - Acionável por botão/alavanca de reset dedicada no cenário ou por gatilho de código.
-
-## Integração na Fase 1 (Zona 5)
-
-Na Zona 5 (Puzzles e Trabalho em Equipe, X: 155 a 195):
-
-1. Um `PressureButton` está localizado na base do degrau (`x = 169`).
-2. Uma `PushableBox` (`x = 164`) pode ser empurrada sobre o botão.
-3. Uma alavanca (`Z5_Lever`, `x = 166`) permite ativação alternativa.
-4. Uma alavanca de reset (`Z5_ResetSwitch`, `x = 161`) permite restaurar a caixa se ela cair ou for empurrada para um canto sem saída.
-5. O `CooperativePuzzleController` controla uma porta (`Z5_Door`, `x = 172`) e uma plataforma móvel (`Z5_MovingPlatform`, `x = 180`).
-6. **Bypass Anti-Deadlock**: Três plataformas suspensas (`Z5_Step1`, `Z5_Step2`, `Z5_Step3`) continuam presentes para permitir a progressão via parkour mesmo se os jogadores decidirem ignorar o puzzle.
-
-## Testes Automatizados
-
-- **EditMode** (`PhysicsPuzzleTests.cs`):
-  - `Lever_StartsDeactivated_AndTogglesState`
-  - `PuzzleDoor_OpensAndCloses_UpdatingStateAndEvents`
-  - `ActivatedPlatform_ConfiguresTargetAndTogglesActivation`
-  - `PushableBox_CachesSpawnPosition_AndResetsToSpawn`
-  - `CooperativePuzzleController_SolvesAndRecovers_FromImpossibleState`
-- **PlayMode** (`PuzzlePlayModeTests.cs`):
-  - `Player_ContactWithLever_TogglesState`
-  - `PressureButton_PressedByBox_OpensPuzzleDoor`
-  - `ActivatedPlatform_MovesTowardsTarget_WhenActivated`
-  - `CooperativePuzzle_ResetRecoversCratePosition`
+Os testes verificam os estados **só placa**, **só alavanca** e **ambos**, a ausência do bypass, a presença do reset e a largura física da passagem. Os testes do sistema continuam cobrindo eventos, movimento da porta/plataforma e reset da caixa.

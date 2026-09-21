@@ -1,6 +1,10 @@
 using System.Linq;
 using System.Reflection;
+using HealthyRace.Collectibles;
+using HealthyRace.Core;
 using HealthyRace.Level;
+using HealthyRace.UI;
+using HealthyRace.Visuals;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -326,7 +330,307 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
-        public void PlatformingMetrics_ConfirmLevelIsTraversable()
+        public void Phase1Scene_AllPlacedFoodsResolveTheirCatalogData()
+        {
+            var scene = EditorSceneManager.OpenPreviewScene(ScenePath);
+            try
+            {
+                var bootstrap = scene
+                    .GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Phase1Bootstrap>())
+                    .Single();
+                typeof(Phase1Bootstrap)
+                    .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(bootstrap, null);
+
+                var foods = bootstrap.GetComponentsInChildren<FoodCollectible>();
+                Assert.That(foods, Is.Not.Empty);
+                foreach (var food in foods)
+                {
+                    Assert.That(
+                        food.FoodData,
+                        Is.Not.Null,
+                        $"{food.name} has no collectible data."
+                    );
+                    Assert.That(
+                        food.name,
+                        Is.EqualTo($"Food_{food.FoodData.Id}").IgnoreCase,
+                        "The placement must resolve its own food, not a fallback."
+                    );
+                    Assert.That(
+                        food.GetComponent<SpriteRenderer>().sprite,
+                        Is.SameAs(food.FoodData.Sprite)
+                    );
+                }
+                Assert.That(foods.Any(food => food.FoodData.Category == FoodCategory.Healthy));
+                Assert.That(
+                    foods.Any(food => food.FoodData.Category == FoodCategory.UltraProcessed)
+                );
+            }
+            finally
+            {
+                EditorSceneManager.ClosePreviewScene(scene);
+            }
+        }
+
+        [Test]
+        public void Phase1Redesign_HasThreeRoutesVerticalConnectionsAndLandmarks()
+        {
+            var bootstrap = BuildPhase1ForInspection(out var holder);
+            try
+            {
+                var geometry = holder.transform.Find("LevelGeometry");
+                var routes = geometry.Find("Z3_Rotas");
+                Assert.That(routes, Is.Not.Null);
+
+                var blocks = routes.GetComponentsInChildren<BoxCollider2D>();
+                Assert.That(
+                    blocks.Count(c => c.name.StartsWith("Upper_")),
+                    Is.GreaterThanOrEqualTo(7)
+                );
+                Assert.That(
+                    blocks.Count(c => c.name.StartsWith("Central_")),
+                    Is.GreaterThanOrEqualTo(6)
+                );
+                Assert.That(
+                    blocks.Count(c => c.name.StartsWith("Lower_")),
+                    Is.GreaterThanOrEqualTo(7)
+                );
+                Assert.That(
+                    blocks.Count(c => c.name.StartsWith("Z3_Connector")),
+                    Is.GreaterThanOrEqualTo(4)
+                );
+
+                var minY = blocks.Min(c => c.bounds.min.y);
+                var maxY = blocks.Max(c => c.bounds.max.y);
+                Assert.That(maxY - minY, Is.GreaterThan(7f), "The route room must use height.");
+
+                var landmarks = geometry
+                    .GetComponentsInChildren<Transform>()
+                    .Count(t => t.name.StartsWith("Landmark_") || t.name.Contains("Landmark_"));
+                Assert.That(landmarks, Is.GreaterThanOrEqualTo(5));
+                Assert.That(bootstrap.Checkpoints.Count, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(holder);
+            }
+        }
+
+        [Test]
+        public void Phase1Redesign_FinalPuzzleRequiresBothSignalsAndHasNoGateBypass()
+        {
+            var bootstrap = BuildPhase1ForInspection(out var holder);
+            try
+            {
+                Assert.That(bootstrap.FinalPuzzle, Is.Not.Null);
+                Assert.That(bootstrap.FinalPuzzle.RequireAll, Is.True);
+                Assert.That(bootstrap.FinalPuzzle.Button, Is.Not.Null);
+                Assert.That(bootstrap.FinalPuzzle.Lever, Is.Not.Null);
+                Assert.That(bootstrap.FinalPuzzle.Box, Is.Not.Null);
+                Assert.That(bootstrap.FinalPuzzle.Door, Is.Not.Null);
+                Assert.That(bootstrap.FinalPuzzle.ResetSwitch, Is.Not.Null);
+
+                var puzzle = holder.transform.Find("LevelGeometry/Z5_PuzzleFinal");
+                Assert.That(puzzle.Find("Z5_CooperationLift"), Is.Not.Null);
+                Assert.That(puzzle.Find("Z5_RecoveryStepA"), Is.Not.Null);
+                Assert.That(puzzle.Find("Z5_RecoveryStepB"), Is.Not.Null);
+                Assert.That(puzzle.Find("Z5_Step1"), Is.Null, "The old free bypass must be gone.");
+                Assert.That(puzzle.Find("Z5_Step2"), Is.Null, "The old free bypass must be gone.");
+                Assert.That(puzzle.Find("Z5_Step3"), Is.Null, "The old free bypass must be gone.");
+
+                var button = bootstrap.FinalPuzzle.Button;
+                var lever = bootstrap.FinalPuzzle.Lever;
+                var door = bootstrap.FinalPuzzle.Door;
+                button.ForceSetPressed(true);
+                Assert.That(door.IsOpen, Is.False, "The button alone cannot open the final gate.");
+                button.ForceSetPressed(false);
+                lever.SetState(true);
+                Assert.That(door.IsOpen, Is.False, "The lever alone cannot open the final gate.");
+                button.ForceSetPressed(true);
+                Assert.That(door.IsOpen, Is.True, "Both signals must open the final gate.");
+
+                var doorCollider = door.GetComponent<BoxCollider2D>();
+                var leftTower = puzzle.Find("Landmark_BalanceTower/TowerLeft");
+                var rightTower = puzzle.Find("Landmark_BalanceTower/TowerRight");
+                Assert.That(leftTower, Is.Not.Null);
+                Assert.That(rightTower, Is.Not.Null);
+                var leftGap =
+                    doorCollider.bounds.min.x
+                    - leftTower.GetComponent<BoxCollider2D>().bounds.max.x;
+                var rightGap =
+                    rightTower.GetComponent<BoxCollider2D>().bounds.min.x
+                    - doorCollider.bounds.max.x;
+                Assert.That(leftGap, Is.GreaterThan(1.5f), "The left gate passage is too narrow.");
+                Assert.That(
+                    rightGap,
+                    Is.GreaterThan(1.5f),
+                    "The right gate passage is too narrow."
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(holder);
+            }
+        }
+
+        [Test]
+        public void Phase1Redesign_ThreeRoutesRespectThePlayerJumpEnvelope()
+        {
+            BuildPhase1ForInspection(out var holder);
+            try
+            {
+                var routes = holder.transform.Find("LevelGeometry/Z3_Rotas");
+                AssertSurfaceChain(
+                    routes,
+                    collider => collider.name.StartsWith("Upper_") && !collider.isTrigger,
+                    4.67f,
+                    2f,
+                    "upper canopy"
+                );
+                AssertSurfaceChain(
+                    routes,
+                    collider => collider.name.StartsWith("Central_Bridge"),
+                    4.67f,
+                    2f,
+                    "central bridge"
+                );
+                AssertSurfaceChain(
+                    routes,
+                    collider => collider.name.StartsWith("Lower_CreekBank"),
+                    4.67f,
+                    2f,
+                    "lower creek"
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(holder);
+            }
+        }
+
+        [Test]
+        public void Phase1Redesign_GardenLiftIsAccessibleAndConnectsToUpperGarden()
+        {
+            BuildPhase1ForInspection(out var holder);
+            try
+            {
+                var zone = holder.transform.Find("LevelGeometry/Z2_Caixa");
+                var lift = zone.Find("Z2_GardenLift").GetComponent<BoxCollider2D>();
+                var wall = zone.Find("Z2_GardenWall").GetComponent<BoxCollider2D>();
+                var garden = zone.Find("Z2_UpperGarden").GetComponent<BoxCollider2D>();
+
+                Assert.That(
+                    lift.bounds.max.x,
+                    Is.LessThanOrEqualTo(wall.bounds.min.x + 0.01f),
+                    "The lift must start on the accessible side of the garden wall."
+                );
+
+                var raisedTop = lift.bounds.max.y + 2.7f;
+                Assert.That(
+                    Mathf.Abs(raisedTop - garden.bounds.max.y),
+                    Is.LessThanOrEqualTo(0.15f),
+                    "The raised lift must align with the upper garden."
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(holder);
+            }
+        }
+
+        [Test]
+        public void Phase1Redesign_RouteConnectorsRemainInsideSharedCameraEnvelope()
+        {
+            var bootstrap = BuildPhase1ForInspection(out var holder);
+            try
+            {
+                var camera = holder.GetComponentInChildren<SharedCameraController>();
+                Assert.That(camera, Is.Not.Null);
+                var pairs = new[]
+                {
+                    (new Vector2(66f, -2.7f), new Vector2(86f, 4f)),
+                    (new Vector2(86f, -3.4f), new Vector2(111f, 4.2f)),
+                    (new Vector2(111f, -3.4f), new Vector2(138f, 2f)),
+                };
+
+                foreach (var pair in pairs)
+                {
+                    bootstrap.PlayerOne.transform.position = pair.Item1;
+                    bootstrap.PlayerTwo.transform.position = pair.Item2;
+                    Assert.That(
+                        camera.CalculateDesiredOrthographicSize(),
+                        Is.LessThanOrEqualTo(camera.MaximumOrthographicSize),
+                        $"Players at {pair.Item1} and {pair.Item2} exceed the shared camera envelope."
+                    );
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(holder);
+            }
+        }
+
+        [Test]
+        public void MatchResultsPanel_ExposesAWorkingReplayAction()
+        {
+            var canvas = new GameObject("Canvas", typeof(Canvas));
+            var panelObject = new GameObject("Results", typeof(RectTransform));
+            try
+            {
+                var panel = panelObject.AddComponent<MatchResultsPanel>();
+                panel.Initialize(canvas.transform);
+                var requested = false;
+                panel.ReplayRequested += () => requested = true;
+
+                Assert.That(panel.ReplayButton, Is.Not.Null);
+                panel.ReplayButton.onClick.Invoke();
+                Assert.That(requested, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(panelObject);
+                Object.DestroyImmediate(canvas);
+            }
+        }
+
+        [Test]
+        public void Phase1Redesign_BlockVisualsMatchTheirColliderDimensions()
+        {
+            BuildPhase1ForInspection(out var holder);
+            try
+            {
+                var geometry = holder.transform.Find("LevelGeometry");
+                var colliders = geometry.GetComponentsInChildren<BoxCollider2D>();
+                var checkedCount = 0;
+                foreach (var collider in colliders)
+                {
+                    var renderer = collider.GetComponent<SpriteRenderer>();
+                    if (renderer == null || renderer.drawMode == SpriteDrawMode.Simple)
+                        continue;
+
+                    Assert.That(
+                        renderer.size.x,
+                        Is.EqualTo(collider.size.x).Within(0.001f),
+                        $"{collider.name} visual width differs from collision."
+                    );
+                    Assert.That(
+                        renderer.size.y,
+                        Is.EqualTo(collider.size.y).Within(0.001f),
+                        $"{collider.name} visual height differs from collision."
+                    );
+                    checkedCount++;
+                }
+                Assert.That(checkedCount, Is.GreaterThan(35));
+            }
+            finally
+            {
+                Object.DestroyImmediate(holder);
+            }
+        }
+
+        [Test]
+        public void PlatformingMetrics_ConfirmPlayerJumpEnvelope()
         {
             // Physics calculations:
             // jumpVelocity = 12, gravityScale = 2, Physics2D.gravity = (0, -18) -> g = 36 m/s^2
@@ -343,29 +647,73 @@ namespace HealthyRace.Tests.EditMode
 
             Assert.That(maxJumpHeight, Is.EqualTo(2.0f).Within(0.01f));
             Assert.That(maxHorizontalReach, Is.GreaterThan(4.5f));
+        }
 
-            // Zone 1 test platforms: heights 0.8m, gaps 3m -> well within 2.0m height and 4.6m reach
-            const float z1StepHeight = 0.8f;
-            const float z1Gap = 3.5f;
-            Assert.That(z1StepHeight, Is.LessThan(maxJumpHeight));
-            Assert.That(z1Gap, Is.LessThan(maxHorizontalReach));
+        private static void AssertSurfaceChain(
+            Transform routeRoot,
+            System.Func<BoxCollider2D, bool> predicate,
+            float maxGap,
+            float maxRise,
+            string routeName
+        )
+        {
+            var surfaces = routeRoot
+                .GetComponentsInChildren<BoxCollider2D>()
+                .Where(predicate)
+                .OrderBy(collider => collider.bounds.center.x)
+                .ToArray();
+            Assert.That(surfaces.Length, Is.GreaterThanOrEqualTo(5));
 
-            // Zone 2 cliff height: 2.8m (impassable directly: 2.8 > 2.0)
-            // But with pushable box (height 1.2m), effective step is 1.6m -> traversable!
-            const float z2CliffHeight = 2.8f;
-            const float z2BoxHeight = 1.22f;
-            Assert.That(z2CliffHeight, Is.GreaterThan(maxJumpHeight), "Cliff must require box.");
-            Assert.That(
-                z2CliffHeight - z2BoxHeight,
-                Is.LessThan(maxJumpHeight),
-                "Cliff must be climbable with box."
-            );
+            for (var i = 1; i < surfaces.Length; i++)
+            {
+                var previous = surfaces[i - 1].bounds;
+                var current = surfaces[i].bounds;
+                var horizontalGap = Mathf.Max(0f, current.min.x - previous.max.x);
+                var upwardRise = Mathf.Max(0f, current.max.y - previous.max.y);
+                Assert.That(
+                    horizontalGap,
+                    Is.LessThanOrEqualTo(maxGap),
+                    $"{routeName}: gap from {surfaces[i - 1].name} to {surfaces[i].name} is {horizontalGap:0.00}m."
+                );
+                Assert.That(
+                    upwardRise,
+                    Is.LessThanOrEqualTo(maxRise),
+                    $"{routeName}: rise from {surfaces[i - 1].name} to {surfaces[i].name} is {upwardRise:0.00}m."
+                );
+            }
+        }
 
-            // Zone 5 anti-deadlock stepping stones: heights <= 1.0m, gaps <= 3.5m
-            const float z5StepHeight = 1.0f;
-            const float z5StepGap = 3.5f;
-            Assert.That(z5StepHeight, Is.LessThan(maxJumpHeight));
-            Assert.That(z5StepGap, Is.LessThan(maxHorizontalReach));
+        private static Phase1Bootstrap BuildPhase1ForInspection(out GameObject holder)
+        {
+            holder = new GameObject("Phase1Inspection");
+            var bootstrap = holder.AddComponent<Phase1Bootstrap>();
+            var serialized = new SerializedObject(bootstrap);
+            serialized.FindProperty("_playerPrefab").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+            serialized.FindProperty("_collectiblePrefab").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CollectiblePrefabPath);
+            serialized.FindProperty("_pushableBoxPrefab").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<GameObject>(PushableBoxPrefabPath);
+            serialized.FindProperty("_visualCatalog").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<VisualCatalog>(
+                    "Assets/_Game/Art/VisualAtlas/SO_VisualCatalog.asset"
+                );
+
+            var foodAssets = AssetDatabase
+                .FindAssets("t:FoodData", new[] { "Assets/_Game/ScriptableObjects/Food" })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Select(AssetDatabase.LoadAssetAtPath<FoodData>)
+                .ToArray();
+            var foodCatalog = serialized.FindProperty("_foodCatalog");
+            foodCatalog.arraySize = foodAssets.Length;
+            for (var i = 0; i < foodAssets.Length; i++)
+                foodCatalog.GetArrayElementAtIndex(i).objectReferenceValue = foodAssets[i];
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            typeof(Phase1Bootstrap)
+                .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(bootstrap, null);
+            return bootstrap;
         }
     }
 }
