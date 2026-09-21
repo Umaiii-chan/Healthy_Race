@@ -554,8 +554,7 @@ namespace HealthyRace.Tests.EditMode
 
         /// <summary>
         /// Guarda-corpo do labirinto: simula o movimento do jogador célula a célula,
-        /// com as regras do orçamento de pulo (degrau de 1, vão de até 3, ou 4 sob
-        /// teto de 4), e confere que cada jogador chega à saída pelo próprio lado
+        /// com as regras do orçamento de pulo (degrau de 1, vão de até 3), e confere que cada jogador chega à saída pelo próprio lado
         /// usando os mecanismos, que nenhum chega sem eles, que não há bolsão
         /// inalcançável e que os dois caminhos têm o mesmo comprimento.
         /// </summary>
@@ -814,13 +813,12 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(budget.SafeGap, Is.LessThan(budget.Reach));
 
             // As regras do simulador do labirinto cabem no orçamento real: degrau de
-            // 1 ladrilho, vão de 3 sob teto de 3 e vão de 4 sob teto de 4.
+            // 1 ladrilho e vão de 3 sob teto de 3.
             Assert.That(Phase1Bootstrap.TileSize, Is.LessThanOrEqualTo(budget.SafeStep));
             Assert.That(
                 3f * Phase1Bootstrap.TileSize - 0.3f,
                 Is.LessThanOrEqualTo(budget.Reach * 0.8f)
             );
-            Assert.That(4f * Phase1Bootstrap.TileSize - 0.3f, Is.LessThanOrEqualTo(budget.SafeGap));
             Assert.That(
                 Phase1Bootstrap.CorridorClearance,
                 Is.GreaterThan(1.25f + Phase1Bootstrap.TileSize)
@@ -839,7 +837,7 @@ namespace HealthyRace.Tests.EditMode
 
         /// <summary>
         /// Reproduz o alcance do jogador no mapa: andar, subir 1 ladrilho, cair,
-        /// saltar vãos de até 3 ladrilhos (4 sob teto de 4) e usar os mecanismos
+        /// saltar vãos de até 3 ladrilhos e usar os mecanismos
         /// registrados pelo bootstrap. Portões contam como rocha sem mecanismos.
         /// </summary>
         private sealed class MazeSim
@@ -958,9 +956,9 @@ namespace HealthyRace.Tests.EditMode
                         continue;
                     }
 
-                    for (var k = 2; k <= 4; k++)
+                    for (var k = 2; k <= 3; k++)
                     {
-                        var needRows = k == 4 ? 3 : 2;
+                        const int needRows = 2;
                         var headroom = true;
                         for (var h = 2; h <= needRows; h++)
                         {

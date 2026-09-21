@@ -58,12 +58,15 @@ alcança. `IdealApex` fica disponível apenas para comparação.
 
 ### Intenção de projeto
 
-A arena declara o ápice que quer e **deriva** a gravidade do jogador:
+A fase declara o ápice que quer e **deriva** a gravidade do jogador. O ápice é
+1.65 m porque os corredores têm 3 m livres e o jogador 1.25 m: a cabeça passa
+10 cm abaixo do teto e nenhum salto bate. Degraus de 1 m e vãos de até 3
+ladrilhos cabem com folga.
 
 ```text
 PhaseGravityY  = -18
-TargetJumpApex = 2.0 m
-gravityScale   = JumpBudget.GravityScaleForApex(...)  ->  ~1.888
+TargetJumpApex = 1.65 m
+gravityScale   = JumpBudget.GravityScaleForApex(...)  ->  ~2.262
 ```
 
 Se a gravidade global, o passo de física ou a velocidade de pulo mudarem, o ápice
@@ -71,9 +74,9 @@ continua sendo o declarado. Valores resultantes:
 
 | Grandeza | Valor |
 | :-- | :-- |
-| Ápice medido | 2.00 m |
-| Tempo no ar | ~0.70 s |
-| Alcance horizontal | ~4.90 m |
+| Ápice medido | 1.65 m |
+| Tempo no ar | ~0.58 s |
+| Alcance horizontal | ~4.06 m |
 | Degrau seguro (`SafeStep`) | ápice menos 0.2 m |
 | Vão seguro (`SafeGap`) | alcance menos 0.67 m |
 | Altura da caixa empurrável | 1.22 m |
@@ -127,8 +130,23 @@ espelho da esquerda, então as duas rotas têm exatamente a mesma dificuldade.
 ################################
 ```
 
-Cada sequência horizontal de rocha vira um bloco com colisor exato e visual
-ladrilhado. Os túneis são a cor de fundo da câmera.
+Sequências de rocha iguais em linhas vizinhas são fundidas num único colisor
+retangular, para o jogador não enganchar nas emendas. Os túneis são a cor de
+fundo da câmera.
+
+### Visual sem esticar e colisão sem engancho
+
+Nenhum sprite do atlas é quadrado: rocha, chão e plataforma medem 1.65 por
+1.34 e os mecanismos cerca de 1.63 por 1.56. Escalar um sprite ao tamanho do
+colisor deforma a textura, então todo visual é uma faixa em modo `Tiled` do
+`SpriteRenderer`, com escala uniforme, repetindo o sprite no tamanho natural e
+recortando a borda. Bandeira, portal e alavanca, que são imagens e não
+texturas, usam escala uniforme dentro de uma caixa. A caixa empurrável passa
+a ter colisor do tamanho do sprite.
+
+O jogador tem colisor de cantos arredondados (`edgeRadius`) e material de
+física sem atrito, então desliza pela parede em vez de grudar nela no meio do
+salto e não engancha em bordas de ladrilho.
 
 ### Corredores
 
@@ -151,7 +169,7 @@ Validadas pelo simulador de travessia dos testes:
 
 - Andar exige 2 ladrilhos livres, um para os pés e um para a cabeça.
 - Subir 1 ladrilho exige 3 livres acima do piso de partida.
-- Saltar um vão de até 3 ladrilhos sob teto de 3, ou de 4 sob teto de 4.
+- Saltar um vão de até 3 ladrilhos.
 - Subir 2 ladrilhos de uma vez é impossível: é parede.
 - Cair é sempre permitido.
 

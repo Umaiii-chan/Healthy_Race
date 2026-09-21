@@ -102,7 +102,13 @@ namespace HealthyRace.Level
         // sua vez lê a física viva. Ver Assets/_Game/Scripts/Player/JumpBudget.cs.
         // ---------------------------------------------------------------------
         public const float PhaseGravityY = -18f;
-        public const float TargetJumpApex = 2.0f;
+
+        /// <summary>
+        /// Ápice de pulo. Os corredores têm 3 m livres e o jogador 1.25 m: com 1.65 m
+        /// a cabeça passa 10 cm abaixo do teto e nenhum salto bate. Os degraus são de
+        /// 1 m e os vãos de até 3 ladrilhos, ambos dentro deste orçamento.
+        /// </summary>
+        public const float TargetJumpApex = 1.65f;
 
         /// <summary>
         /// Passo de física assumido pelo orçamento em EditMode, onde
@@ -155,9 +161,6 @@ namespace HealthyRace.Level
         /// <summary>Altura livre dos corredores em ladrilhos. O jogador tem 1.25 m.</summary>
         public const float CorridorClearance = 3f;
 
-        /// <summary>Lado dos ladrilhos de rocha usados no visual.</summary>
-        public const float RockTileSize = 1f;
-
         /// <summary>Marcos de progresso: corredores B, C e D alcançados, e saída cruzada.</summary>
         public const int ProgressMilestones = 4;
 
@@ -182,6 +185,16 @@ namespace HealthyRace.Level
         private static readonly Color PlatformColor = new(0.16f, 0.63f, 0.47f);
         private static readonly Color WallColor = new(0.08f, 0.32f, 0.25f);
         private static readonly Color TunnelColor = new(0.05f, 0.08f, 0.12f);
+
+        private static PhysicsMaterial2D _playerPhysicsMaterial;
+
+        /// <summary>Sem atrito e sem quique: o jogador desliza em paredes em vez de grudar.</summary>
+        private static PhysicsMaterial2D PlayerPhysicsMaterial =>
+            _playerPhysicsMaterial ??= new PhysicsMaterial2D("Jogador")
+            {
+                friction = 0f,
+                bounciness = 0f,
+            };
         private static readonly Color LabelColor = new(0.85f, 0.95f, 1f);
         private static readonly Color HintColor = new(0.95f, 0.95f, 0.7f);
 
@@ -503,58 +516,6 @@ namespace HealthyRace.Level
             bgParent.SetParent(transform, false);
         }
 
-        /// <summary>
-        /// Preenche um retângulo com ladrilhos uniformes do sprite, em vez de esticar
-        /// um único sprite. Só o ladrilho da borda é encolhido para caber no resto.
-        /// </summary>
-        private static Transform TileSprite(
-            string name,
-            Transform parent,
-            Sprite sprite,
-            Color color,
-            float minX,
-            float maxX,
-            float minY,
-            float maxY,
-            float tileSize,
-            int sortingOrder
-        )
-        {
-            var holder = new GameObject(name).transform;
-            holder.SetParent(parent, false);
-
-            var natural = sprite.bounds.size;
-            var naturalX = natural.x > 0.0001f ? natural.x : 1f;
-            var naturalY = natural.y > 0.0001f ? natural.y : 1f;
-            var width = maxX - minX;
-            var height = maxY - minY;
-            var cols = Mathf.Max(1, Mathf.CeilToInt(width / tileSize - 0.001f));
-            var rows = Mathf.Max(1, Mathf.CeilToInt(height / tileSize - 0.001f));
-
-            for (var r = 0; r < rows; r++)
-            {
-                var y0 = minY + r * tileSize;
-                var h = Mathf.Min(tileSize, maxY - y0);
-                for (var c = 0; c < cols; c++)
-                {
-                    var x0 = minX + c * tileSize;
-                    var w = Mathf.Min(tileSize, maxX - x0);
-
-                    var tile = new GameObject($"Tile_{r}_{c}");
-                    tile.transform.SetParent(holder, false);
-                    tile.transform.position = new Vector3(x0 + w * 0.5f, y0 + h * 0.5f, 0f);
-                    tile.transform.localScale = new Vector3(w / naturalX, h / naturalY, 1f);
-
-                    var sr = tile.AddComponent<SpriteRenderer>();
-                    sr.sprite = sprite;
-                    sr.color = color;
-                    sr.sortingOrder = sortingOrder;
-                }
-            }
-
-            return holder;
-        }
-
         // =====================================================================
         // COMPOSIÇÃO DO LABIRINTO
         // =====================================================================
@@ -658,39 +619,6 @@ namespace HealthyRace.Level
         // de '#' numa linha vira um bloco com colisor exato e visual ladrilhado.
         // Tudo que não é rocha é túnel: o labirinto é o espaço negativo.
         // ---------------------------------------------------------------------
-        private void CreateMazeRock()
-        {
-            var rock = CreateGroup("Labirinto_Rocha");
-
-            for (var row = 0; row < MazeRowCount; row++)
-            {
-                var column = 0;
-                while (column < MazeColumns)
-                {
-                    if (!IsRock(column, row))
-                    {
-                        column++;
-                        continue;
-                    }
-
-                    var start = column;
-                    while (column < MazeColumns && IsRock(column, row))
-                    {
-                        column++;
-                    }
-
-                    CreateRock(
-                        $"Rocha_L{row}_C{start}-{column - 1}",
-                        rock,
-                        start * TileSize,
-                        column * TileSize,
-                        row * TileSize,
-                        (row + 1) * TileSize
-                    );
-                }
-            }
-        }
-
         // ---------------------------------------------------------------------
         // Mecanismos, um conjunto por metade. Numa corrida nenhum mecanismo pode
         // depender do outro jogador: elevadores com botão na própria plataforma,
@@ -813,15 +741,8 @@ namespace HealthyRace.Level
             var collider = root.AddComponent<BoxCollider2D>();
             collider.size = new Vector2(width, 0.4f);
 
-            var sprite = GetEnvironmentSprite(StaticBlockKind.Platform);
-            var tint = Color.white;
-            if (sprite == null)
-            {
-                sprite = PlaceholderSpriteFactory.Square;
-                tint = PlatformColor;
-            }
-
-            var visual = TileSprite(
+            var sprite = SpriteOrPlaceholder(1, out var tint, PlatformColor);
+            CreateTiledStrip(
                 "Visual",
                 root.transform,
                 sprite,
@@ -830,7 +751,6 @@ namespace HealthyRace.Level
                 maxX,
                 bottomY - 0.4f,
                 bottomY,
-                TileSize,
                 1
             );
 
@@ -840,7 +760,8 @@ namespace HealthyRace.Level
             var button = CreatePressureButtonObject(
                 $"{name}_Botao",
                 root.transform,
-                new Vector2(centerX, bottomY + 0.15f)
+                new Vector2(centerX, bottomY + 0.15f),
+                width
             );
             CreateGateController(
                 $"{name}_Controlador",
@@ -1154,6 +1075,17 @@ namespace HealthyRace.Level
                 rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             }
 
+            // Colisor com cantos arredondados e sem atrito: não engancha nas emendas
+            // da rocha nem gruda na parede em pleno salto.
+            var playerCollider = player.GetComponent<BoxCollider2D>();
+            if (playerCollider != null)
+            {
+                const float rounding = 0.06f;
+                playerCollider.size = new Vector2(1f - 2f * rounding, 1f - 2f * rounding);
+                playerCollider.edgeRadius = rounding;
+                playerCollider.sharedMaterial = PlayerPhysicsMaterial;
+            }
+
             var sr = player.GetComponent<SpriteRenderer>();
             if (sr != null)
             {
@@ -1427,479 +1359,6 @@ namespace HealthyRace.Level
             }
         }
 
-        private PushableBox CreatePushableBox(string name, Transform parent, Vector2 position)
-        {
-            if (_pushableBoxPrefab == null)
-            {
-                return null;
-            }
-
-            var box = Instantiate(_pushableBoxPrefab, position, Quaternion.identity, parent);
-            box.name = name;
-            box.transform.localScale = new Vector3(1.22f, 1.22f, 1f);
-
-            var rb = box.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                rb.mass = 1.2f;
-                rb.gravityScale = 2.4f;
-                rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-                rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            }
-
-            var sr = box.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                if (
-                    _visualCatalog != null
-                    && _visualCatalog.Environment != null
-                    && _visualCatalog.Environment.Length > 7
-                    && _visualCatalog.Environment[7] != null
-                )
-                {
-                    sr.sprite = _visualCatalog.Environment[7];
-                    sr.color = Color.white;
-                }
-                else
-                {
-                    sr.sprite = PlaceholderSpriteFactory.Square;
-                    sr.color = new Color(0.72f, 0.39f, 0.13f);
-                }
-                sr.sortingOrder = 1;
-            }
-
-            CreateWorldLabel("CAIXA", box.transform, new Vector2(0f, 0.72f), Color.white);
-            return box.GetComponent<PushableBox>();
-        }
-
-        private PressureButton CreatePressureButtonObject(
-            string name,
-            Transform parent,
-            Vector2 position
-        )
-        {
-            var btn = new GameObject(name);
-            btn.transform.SetParent(parent, false);
-            btn.transform.position = position;
-
-            var col = btn.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(1.6f, 0.3f);
-            col.isTrigger = true;
-
-            var sr = btn.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 8
-                && _visualCatalog.Environment[8] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[8];
-                sr.color = Color.white;
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(0.9f, 0.25f, 0.25f);
-            }
-            sr.sortingOrder = 1;
-            btn.transform.localScale = new Vector3(1.6f, 0.25f, 1f);
-
-            var button = btn.AddComponent<PressureButton>();
-            CreateWorldLabel("BOTÃO", btn.transform, new Vector2(0f, 0.5f), Color.white);
-            return button;
-        }
-
-        private Lever CreateLeverObject(
-            string name,
-            Transform parent,
-            Vector2 position,
-            string label = "ALAVANCA",
-            bool isToggleable = true
-        )
-        {
-            var leverObj = new GameObject(name);
-            leverObj.transform.SetParent(parent, false);
-            leverObj.transform.position = position;
-
-            var col = leverObj.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(1.2f, 1.5f);
-            col.isTrigger = true;
-
-            var handle = new GameObject("Handle");
-            handle.transform.SetParent(leverObj.transform, false);
-            handle.transform.localPosition = new Vector2(0f, 0.4f);
-            handle.transform.localScale = new Vector3(0.25f, 0.9f, 1f);
-
-            var handleRenderer = handle.AddComponent<SpriteRenderer>();
-            handleRenderer.sprite = PlaceholderSpriteFactory.Square;
-            handleRenderer.color = Color.white;
-            handleRenderer.sortingOrder = 3;
-
-            var baseObj = new GameObject("Base");
-            baseObj.transform.SetParent(leverObj.transform, false);
-            baseObj.transform.localPosition = new Vector2(0f, -0.2f);
-            baseObj.transform.localScale = new Vector3(0.8f, 0.4f, 1f);
-
-            var baseRenderer = baseObj.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 9
-                && _visualCatalog.Environment[9] != null
-            )
-            {
-                baseRenderer.sprite = _visualCatalog.Environment[9];
-                baseRenderer.color = Color.white;
-            }
-            else
-            {
-                baseRenderer.sprite = PlaceholderSpriteFactory.Square;
-                baseRenderer.color = new Color(0.3f, 0.3f, 0.35f);
-            }
-            baseRenderer.sortingOrder = 2;
-
-            var lever = leverObj.AddComponent<Lever>();
-            lever.Configure(handle.transform, baseRenderer, isToggleable);
-
-            CreateWorldLabel(label, leverObj.transform, new Vector2(0f, 1.2f), Color.white);
-            return lever;
-        }
-
-        private PuzzleDoor CreatePuzzleDoorObject(
-            string name,
-            Transform parent,
-            Vector2 position,
-            Vector2 size,
-            bool instantMotion = false,
-            Vector2? openOffset = null
-        )
-        {
-            var doorObj = new GameObject(name);
-            doorObj.transform.SetParent(parent, false);
-            doorObj.transform.position = position;
-            doorObj.layer = GroundLayer;
-
-            var col = doorObj.AddComponent<BoxCollider2D>();
-
-            var sr = doorObj.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 10
-                && _visualCatalog.Environment[10] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[10];
-                sr.color = Color.white;
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(0.2f, 0.45f, 0.6f);
-            }
-            sr.sortingOrder = 1;
-            FitSpriteToSize(doorObj.transform, sr, col, size);
-
-            var door = doorObj.AddComponent<PuzzleDoor>();
-            door.Configure(openOffset ?? new Vector2(0f, size.y + 0.5f), 4f, instantMotion);
-
-            CreateWorldLabel("PORTÃO", doorObj.transform, new Vector2(0f, 0f), Color.cyan);
-            return door;
-        }
-
-        private ActivatedPlatform CreateActivatedPlatformObject(
-            string name,
-            Transform parent,
-            Vector2 position,
-            Vector2 size,
-            Vector2 targetOffset
-        )
-        {
-            var platObj = new GameObject(name);
-            platObj.transform.SetParent(parent, false);
-            platObj.transform.position = position;
-            platObj.layer = GroundLayer;
-
-            var col = platObj.AddComponent<BoxCollider2D>();
-
-            var sr = platObj.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 1
-                && _visualCatalog.Environment[1] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[1];
-                sr.color = Color.white;
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(0.18f, 0.72f, 0.52f);
-            }
-            sr.sortingOrder = 1;
-            FitSpriteToSize(platObj.transform, sr, col, size);
-
-            var platform = platObj.AddComponent<ActivatedPlatform>();
-            platform.Configure(targetOffset, 3f);
-
-            return platform;
-        }
-
-        private SpikeHazard CreateSpikeHazardObject(
-            string name,
-            Transform parent,
-            Vector2 position,
-            Vector2 size,
-            int penalty = 5,
-            Vector2 defaultRespawn = default
-        )
-        {
-            var spikeObj = new GameObject(name);
-            spikeObj.transform.SetParent(parent, false);
-            spikeObj.transform.position = position;
-
-            var col = spikeObj.AddComponent<BoxCollider2D>();
-            col.isTrigger = true;
-
-            var sr = spikeObj.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 11
-                && _visualCatalog.Environment[11] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[11];
-                sr.color = Color.white;
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(0.85f, 0.2f, 0.2f);
-            }
-            sr.sortingOrder = 2;
-            FitSpriteToSize(spikeObj.transform, sr, col, size);
-
-            var spike = spikeObj.AddComponent<SpikeHazard>();
-            spike.Configure(penalty, 1.0f, defaultRespawn);
-            CreateWorldLabel(
-                "ESPINHOS",
-                spikeObj.transform,
-                new Vector2(0f, 0.6f / Mathf.Max(0.1f, size.y)),
-                new Color(1f, 0.4f, 0.4f)
-            );
-
-            return spike;
-        }
-
-        private MudHazard CreateMudHazardObject(
-            string name,
-            Transform parent,
-            Vector2 position,
-            Vector2 size,
-            float speedMultiplier = 0.7f
-        )
-        {
-            var mudObj = new GameObject(name);
-            mudObj.transform.SetParent(parent, false);
-            mudObj.transform.position = position;
-
-            var col = mudObj.AddComponent<BoxCollider2D>();
-            col.isTrigger = true;
-
-            var sr = mudObj.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 12
-                && _visualCatalog.Environment[12] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[12];
-                sr.color = new Color(1f, 1f, 1f, 0.9f);
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(0.42f, 0.28f, 0.15f, 0.75f);
-            }
-            sr.sortingOrder = 2;
-            FitSpriteToSize(mudObj.transform, sr, col, size);
-
-            var mud = mudObj.AddComponent<MudHazard>();
-            mud.Configure(speedMultiplier);
-            CreateWorldLabel(
-                "LAMA (-30%)",
-                mudObj.transform,
-                new Vector2(0f, 0.6f / Mathf.Max(0.1f, size.y)),
-                new Color(0.85f, 0.7f, 0.5f)
-            );
-
-            return mud;
-        }
-
-        private FallingPlatform CreateFallingPlatformObject(
-            string name,
-            Transform parent,
-            Vector2 position,
-            Vector2 size,
-            float anticipation = 0.5f,
-            float respawnDelay = 3.0f
-        )
-        {
-            var platObj = new GameObject(name);
-            platObj.transform.SetParent(parent, false);
-            platObj.transform.position = position;
-            platObj.layer = GroundLayer;
-
-            var col = platObj.AddComponent<BoxCollider2D>();
-
-            var sr = platObj.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 1
-                && _visualCatalog.Environment[1] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[1];
-                sr.color = Color.white;
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = new Color(0.75f, 0.55f, 0.35f);
-            }
-            sr.sortingOrder = 1;
-            FitSpriteToSize(platObj.transform, sr, col, size);
-
-            var platform = platObj.AddComponent<FallingPlatform>();
-            platform.Configure(anticipation, respawnDelay);
-
-            return platform;
-        }
-
-        private Checkpoint CreateCheckpointObject(
-            string name,
-            Transform parent,
-            int index,
-            Vector2 position
-        )
-        {
-            var cp = new GameObject(name);
-            cp.transform.SetParent(parent, false);
-            cp.transform.position = position;
-
-            var col = cp.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(1.5f, 3.5f);
-            col.isTrigger = true;
-
-            var flag = new GameObject("Flag");
-            flag.transform.SetParent(cp.transform, false);
-            flag.transform.localPosition = new Vector2(0f, 0.8f);
-            flag.transform.localScale = new Vector3(0.8f, 1.8f, 1f);
-
-            var sr = flag.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 5
-                && _visualCatalog.Environment[5] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[5];
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-            }
-            sr.color = new Color(0.55f, 0.55f, 0.6f);
-            sr.sortingOrder = 2;
-
-            var checkpoint = cp.AddComponent<Checkpoint>();
-            checkpoint.Configure(index, new Vector2(0f, 0.5f));
-            checkpoint.SetVisualElements(
-                sr,
-                new Color(0.55f, 0.55f, 0.6f),
-                new Color(0.25f, 0.85f, 0.35f)
-            );
-
-            checkpoint.CheckpointReached += (playerIndex) =>
-            {
-                AudioService.Instance.PlaySfx(AudioClipId.Sfx_Checkpoint);
-                if (_visualCatalog != null)
-                {
-                    VisualFeedback.Emit(
-                        _visualCatalog,
-                        FeedbackKind.Checkpoint,
-                        cp.transform.position
-                    );
-                }
-            };
-
-            CreateWorldLabel($"CP {index}", cp.transform, new Vector2(0f, 2.0f), Color.yellow);
-            return checkpoint;
-        }
-
-        private FinishLine CreateFinishLineObject(
-            string name,
-            Transform parent,
-            Vector2 position,
-            int acceptedPlayerIndex = 0,
-            string label = "LINHA DE CHEGADA",
-            Color? bannerColor = null
-        )
-        {
-            var fl = new GameObject(name);
-            fl.transform.SetParent(parent, false);
-            fl.transform.position = position;
-
-            var col = fl.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(1.5f, 3.0f);
-            col.isTrigger = true;
-
-            // Portal visual
-            var banner = new GameObject("ArchBanner");
-            banner.transform.SetParent(fl.transform, false);
-            banner.transform.localPosition = new Vector2(0f, 0.2f);
-            banner.transform.localScale = new Vector3(1.4f, 3.0f, 1f);
-
-            var sr = banner.AddComponent<SpriteRenderer>();
-            if (
-                _visualCatalog != null
-                && _visualCatalog.Environment != null
-                && _visualCatalog.Environment.Length > 6
-                && _visualCatalog.Environment[6] != null
-            )
-            {
-                sr.sprite = _visualCatalog.Environment[6];
-                sr.color = bannerColor ?? Color.white;
-            }
-            else
-            {
-                sr.sprite = PlaceholderSpriteFactory.Square;
-                sr.color = bannerColor ?? new Color(1f, 0.84f, 0f);
-            }
-            sr.sortingOrder = 2;
-
-            var finishLine = fl.AddComponent<FinishLine>();
-            finishLine.ConfigureAcceptedPlayer(acceptedPlayerIndex);
-            finishLine.PlayerCrossedFinish += (playerIndex, finishTime) =>
-            {
-                AudioService.Instance.PlaySfx(AudioClipId.Sfx_Finish);
-                if (_visualCatalog != null)
-                {
-                    VisualFeedback.Emit(_visualCatalog, FeedbackKind.Finish, fl.transform.position);
-                }
-            };
-
-            CreateWorldLabel(label, fl.transform, new Vector2(0f, 2.0f), Color.white);
-            return finishLine;
-        }
-
         private void SpawnFood(string foodId, Vector2 position, Transform parent)
         {
             if (_collectiblePrefab == null)
@@ -1943,6 +1402,120 @@ namespace HealthyRace.Level
             Shrub,
         }
 
+        // =====================================================================
+        // VISUAL SEM ESTICAR
+        //
+        // Nenhum sprite do atlas é quadrado (rocha 1.65 x 1.34, mecanismos
+        // ~1.63 x 1.56). Escalar um sprite para o tamanho do colisor deforma a
+        // textura. Aqui cada visual é uma faixa em modo Tiled: o sprite repete no
+        // tamanho natural, com escala uniforme, e a borda é recortada, nunca
+        // esticada. Os sprites do atlas são FullRect, o que o modo Tiled exige.
+        // =====================================================================
+
+        /// <summary>
+        /// Faixa de sprites repetidos cobrindo exatamente o retângulo dado. A escala
+        /// é uniforme e definida pela altura: a faixa tem sempre um sprite de
+        /// altura, repetido na horizontal quantas vezes couber.
+        /// </summary>
+        private SpriteRenderer CreateTiledStrip(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            Color color,
+            float minX,
+            float maxX,
+            float minY,
+            float maxY,
+            int sortingOrder
+        )
+        {
+            var strip = new GameObject(name);
+            strip.transform.SetParent(parent, false);
+            strip.transform.position = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, 0f);
+
+            var natural = sprite.bounds.size;
+            var naturalY = natural.y > 0.0001f ? natural.y : 1f;
+            var scale = (maxY - minY) / naturalY;
+            strip.transform.localScale = new Vector3(scale, scale, 1f);
+
+            var sr = strip.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.color = color;
+            sr.sortingOrder = sortingOrder;
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.tileMode = SpriteTileMode.Continuous;
+            sr.size = new Vector2((maxX - minX) / scale, naturalY);
+            if (_visualCatalog != null && _visualCatalog.SpriteMaterial != null)
+            {
+                sr.sharedMaterial = _visualCatalog.SpriteMaterial;
+            }
+
+            return sr;
+        }
+
+        /// <summary>
+        /// Sprite único com escala uniforme que cabe dentro da caixa dada, alinhado
+        /// pela base. Para elementos que são uma imagem, não uma textura: bandeira,
+        /// portal, alavanca.
+        /// </summary>
+        private SpriteRenderer CreateFittedSprite(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            Color color,
+            Vector2 bottomCenter,
+            Vector2 maxSize,
+            int sortingOrder
+        )
+        {
+            var natural = sprite.bounds.size;
+            var naturalX = natural.x > 0.0001f ? natural.x : 1f;
+            var naturalY = natural.y > 0.0001f ? natural.y : 1f;
+            var scale = Mathf.Min(maxSize.x / naturalX, maxSize.y / naturalY);
+
+            var obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+            obj.transform.position = new Vector3(
+                bottomCenter.x,
+                bottomCenter.y + naturalY * scale * 0.5f,
+                0f
+            );
+            obj.transform.localScale = new Vector3(scale, scale, 1f);
+
+            var sr = obj.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.color = color;
+            sr.sortingOrder = sortingOrder;
+            if (_visualCatalog != null && _visualCatalog.SpriteMaterial != null)
+            {
+                sr.sharedMaterial = _visualCatalog.SpriteMaterial;
+            }
+
+            return sr;
+        }
+
+        private Sprite SpriteOrPlaceholder(int catalogIndex, out Color tint, Color fallbackTint)
+        {
+            if (
+                _visualCatalog != null
+                && _visualCatalog.Environment != null
+                && _visualCatalog.Environment.Length > catalogIndex
+                && _visualCatalog.Environment[catalogIndex] != null
+            )
+            {
+                tint = Color.white;
+                return _visualCatalog.Environment[catalogIndex];
+            }
+
+            tint = fallbackTint;
+            return PlaceholderSpriteFactory.Square;
+        }
+
+        /// <summary>
+        /// Bloco estático com colisor exato. Sem visual: a rocha do labirinto é
+        /// desenhada por linha em <see cref="CreateMazeRock"/>, e as paredes externas
+        /// ficam fora do enquadramento.
+        /// </summary>
         private void CreateStaticBlock(
             string blockName,
             Transform parent,
@@ -1957,72 +1530,516 @@ namespace HealthyRace.Level
             block.transform.position = position;
             block.layer = GroundLayer;
 
-            // O colisor tem exatamente o tamanho de projeto.
             var collider = block.AddComponent<BoxCollider2D>();
             collider.size = size;
+        }
 
-            // O visual é ladrilhado, nunca esticado: um piso de 25 m recebe 30
-            // ladrilhos iguais em vez de um sprite deformado 30 vezes.
-            var sprite = GetEnvironmentSprite(kind);
-            var tint = Color.white;
-            if (sprite == null)
+        // ---------------------------------------------------------------------
+        // A rocha do labirinto vem do mapa de ladrilhos. Sequências de rocha
+        // idênticas em linhas vizinhas são fundidas num único retângulo de colisor,
+        // para o jogador não enganchar nas emendas. O visual é uma faixa por linha,
+        // com a textura de chão (topo com musgo) onde a face de cima dá para um
+        // túnel e a textura de rocha no resto.
+        // ---------------------------------------------------------------------
+        private void CreateMazeRock()
+        {
+            var rock = CreateGroup("Labirinto_Rocha");
+            var ground = SpriteOrPlaceholder(0, out var groundTint, GroundColor);
+            var wall = SpriteOrPlaceholder(2, out var wallTint, WallColor);
+
+            foreach (var (minColumn, maxColumn, minRow, maxRow) in MergeRockRectangles())
             {
-                sprite = PlaceholderSpriteFactory.Square;
-                tint = color;
-            }
+                var name = $"Rocha_C{minColumn}-{maxColumn}_L{minRow}-{maxRow}";
+                var minX = minColumn * TileSize;
+                var maxX = (maxColumn + 1) * TileSize;
 
-            var half = size * 0.5f;
-            var tiles = TileSprite(
-                "Visual",
-                block.transform,
-                sprite,
-                tint,
-                position.x - half.x,
-                position.x + half.x,
-                position.y - half.y,
-                position.y + half.y,
-                RockTileSize,
-                0
-            );
+                CreateStaticBlock(
+                    name,
+                    rock,
+                    new Vector2((minX + maxX) * 0.5f, (minRow + maxRow + 1) * 0.5f * TileSize),
+                    new Vector2(maxX - minX, (maxRow - minRow + 1) * TileSize),
+                    WallColor,
+                    StaticBlockKind.Wall
+                );
 
-            if (_visualCatalog != null && _visualCatalog.SpriteMaterial != null)
-            {
-                foreach (var sr in tiles.GetComponentsInChildren<SpriteRenderer>())
+                for (var row = minRow; row <= maxRow; row++)
                 {
-                    sr.sharedMaterial = _visualCatalog.SpriteMaterial;
+                    var facesTunnel = false;
+                    for (var c = minColumn; c <= maxColumn && !facesTunnel; c++)
+                    {
+                        facesTunnel = !IsRock(c, row + 1);
+                    }
+
+                    var sprite = facesTunnel ? ground : wall;
+                    var tint = facesTunnel ? groundTint : wallTint;
+                    CreateTiledStrip(
+                        $"{name}_Visual_L{row}",
+                        rock,
+                        sprite,
+                        tint,
+                        minX,
+                        maxX,
+                        row * TileSize,
+                        (row + 1) * TileSize,
+                        0
+                    );
                 }
             }
         }
 
         /// <summary>
-        /// Ajusta escala e colisor para que o visual e a física tenham exatamente
-        /// <paramref name="size"/> em unidades de mundo, independentemente do
-        /// tamanho do sprite do atlas. Sem isso o BoxCollider2D auto-ajustado ao
-        /// sprite ficaria maior que a geometria desenhada no projeto.
+        /// Funde sequências horizontais de rocha iguais em linhas consecutivas num
+        /// retângulo só. Menos colisores, menos emendas.
         /// </summary>
-        private static void FitSpriteToSize(
-            Transform target,
-            SpriteRenderer renderer,
-            BoxCollider2D collider,
-            Vector2 size
-        )
+        public static List<(
+            int MinColumn,
+            int MaxColumn,
+            int MinRow,
+            int MaxRow
+        )> MergeRockRectangles()
         {
-            var spriteSize = Vector2.one;
-            if (renderer != null && renderer.sprite != null)
+            var rectangles = new List<(int, int, int, int)>();
+            var claimed = new bool[MazeColumns, MazeRowCount];
+
+            for (var row = 0; row < MazeRowCount; row++)
             {
-                var bounds = renderer.sprite.bounds.size;
-                if (bounds.x > 0.0001f && bounds.y > 0.0001f)
+                var column = 0;
+                while (column < MazeColumns)
                 {
-                    spriteSize = new Vector2(bounds.x, bounds.y);
+                    if (!IsRock(column, row) || claimed[column, row])
+                    {
+                        column++;
+                        continue;
+                    }
+
+                    var start = column;
+                    while (column < MazeColumns && IsRock(column, row) && !claimed[column, row])
+                    {
+                        column++;
+                    }
+                    var end = column - 1;
+
+                    var top = row;
+                    while (top + 1 < MazeRowCount && RunMatches(start, end, top + 1, claimed))
+                    {
+                        top++;
+                    }
+
+                    for (var r = row; r <= top; r++)
+                    {
+                        for (var c = start; c <= end; c++)
+                        {
+                            claimed[c, r] = true;
+                        }
+                    }
+
+                    rectangles.Add((start, end, row, top));
                 }
             }
 
-            target.localScale = new Vector3(size.x / spriteSize.x, size.y / spriteSize.y, 1f);
+            return rectangles;
+        }
+
+        private static bool RunMatches(int start, int end, int row, bool[,] claimed)
+        {
+            if (start > 0 && IsRock(start - 1, row) && !claimed[start - 1, row])
+            {
+                return false;
+            }
+
+            if (end + 1 < MazeColumns && IsRock(end + 1, row) && !claimed[end + 1, row])
+            {
+                return false;
+            }
+
+            for (var c = start; c <= end; c++)
+            {
+                if (!IsRock(c, row) || claimed[c, row])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private PushableBox CreatePushableBox(string name, Transform parent, Vector2 position)
+        {
+            if (_pushableBoxPrefab == null)
+            {
+                return null;
+            }
+
+            var box = Instantiate(_pushableBoxPrefab, position, Quaternion.identity, parent);
+            box.name = name;
+
+            // O sprite da caixa mede 1.65 x 1.56; o colisor assume o tamanho do
+            // sprite e a escala uniforme dá a altura de projeto. Antes o sprite era
+            // 65% maior que o colisor e a caixa parecia atravessar a rocha.
+            var sprite = SpriteOrPlaceholder(7, out var tint, new Color(0.72f, 0.39f, 0.13f));
+            var natural = sprite.bounds.size;
+            var scale = BoxHeight / Mathf.Max(0.0001f, natural.y);
+            box.transform.localScale = new Vector3(scale, scale, 1f);
+
+            var collider = box.GetComponent<BoxCollider2D>();
             if (collider != null)
             {
+                collider.size = natural;
                 collider.offset = Vector2.zero;
-                collider.size = spriteSize;
             }
+
+            var rb = box.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                rb.mass = 1.2f;
+                rb.gravityScale = 2.4f;
+                rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+                rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            }
+
+            var sr = box.GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.sprite = sprite;
+                sr.color = tint;
+                sr.sortingOrder = 1;
+            }
+
+            CreateWorldLabel(
+                "CAIXA",
+                parent,
+                new Vector2(position.x, position.y + BoxHeight * 0.5f + 0.35f),
+                Color.white
+            );
+            return box.GetComponent<PushableBox>();
+        }
+
+        /// <summary>
+        /// Botão de pressão com gatilho da largura pedida e visual em faixa de
+        /// pinos. Raiz sem escala, para o gatilho não deformar.
+        /// </summary>
+        private PressureButton CreatePressureButtonObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            float width = 1.6f
+        )
+        {
+            var btn = new GameObject(name);
+            btn.transform.SetParent(parent, false);
+            btn.transform.position = position;
+
+            var col = btn.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(width, 0.3f);
+            col.isTrigger = true;
+
+            var sprite = SpriteOrPlaceholder(8, out var tint, new Color(0.9f, 0.25f, 0.25f));
+            var visual = CreateTiledStrip(
+                "Visual",
+                btn.transform,
+                sprite,
+                tint,
+                position.x - width * 0.5f,
+                position.x + width * 0.5f,
+                position.y - 0.15f,
+                position.y + 0.2f,
+                1
+            );
+
+            var button = btn.AddComponent<PressureButton>();
+            button.SetVisualRenderer(visual);
+            return button;
+        }
+
+        private Lever CreateLeverObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            string label = "ALAVANCA",
+            bool isToggleable = true
+        )
+        {
+            var leverObj = new GameObject(name);
+            leverObj.transform.SetParent(parent, false);
+            leverObj.transform.position = position;
+
+            var col = leverObj.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.2f, 1.5f);
+            col.isTrigger = true;
+
+            var handle = new GameObject("Handle");
+            handle.transform.SetParent(leverObj.transform, false);
+            handle.transform.localPosition = new Vector2(0f, 0.4f);
+            handle.transform.localScale = new Vector3(0.12f, 0.7f, 1f);
+
+            var handleRenderer = handle.AddComponent<SpriteRenderer>();
+            handleRenderer.sprite = PlaceholderSpriteFactory.Square;
+            handleRenderer.color = Color.white;
+            handleRenderer.sortingOrder = 3;
+
+            var baseSprite = SpriteOrPlaceholder(9, out var baseTint, new Color(0.3f, 0.3f, 0.35f));
+            var baseRenderer = CreateFittedSprite(
+                "Base",
+                leverObj.transform,
+                baseSprite,
+                baseTint,
+                new Vector2(position.x, position.y - 0.75f),
+                new Vector2(0.9f, 0.7f),
+                2
+            );
+
+            var lever = leverObj.AddComponent<Lever>();
+            lever.Configure(handle.transform, baseRenderer, isToggleable);
+
+            CreateWorldLabel(
+                label,
+                parent,
+                new Vector2(position.x, position.y + 1.05f),
+                Color.white
+            );
+            return lever;
+        }
+
+        /// <summary>
+        /// Portão de coluna inteira: sprite repetido na vertical com escala uniforme,
+        /// colisor exato. O <see cref="PuzzleDoor"/> encontra o renderer na raiz e
+        /// muda a cor ao abrir.
+        /// </summary>
+        private PuzzleDoor CreatePuzzleDoorObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size,
+            bool instantMotion = false,
+            Vector2? openOffset = null
+        )
+        {
+            var sprite = SpriteOrPlaceholder(10, out var tint, new Color(0.2f, 0.45f, 0.6f));
+            var natural = sprite.bounds.size;
+            var scale = size.x / Mathf.Max(0.0001f, natural.x);
+
+            var doorObj = new GameObject(name);
+            doorObj.transform.SetParent(parent, false);
+            doorObj.transform.position = position;
+            doorObj.transform.localScale = new Vector3(scale, scale, 1f);
+            doorObj.layer = GroundLayer;
+
+            var col = doorObj.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(size.x / scale, size.y / scale);
+
+            var sr = doorObj.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.color = tint;
+            sr.sortingOrder = 1;
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.tileMode = SpriteTileMode.Continuous;
+            sr.size = new Vector2(size.x / scale, size.y / scale);
+
+            var door = doorObj.AddComponent<PuzzleDoor>();
+            door.Configure(openOffset ?? new Vector2(0f, size.y + 0.5f), 4f, instantMotion);
+
+            CreateWorldLabel(
+                "PORTÃO",
+                parent,
+                new Vector2(position.x, position.y + size.y * 0.5f + 0.35f),
+                Color.cyan
+            );
+            return door;
+        }
+
+        private SpikeHazard CreateSpikeHazardObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size,
+            int penalty = 5,
+            Vector2 defaultRespawn = default
+        )
+        {
+            var spikeObj = new GameObject(name);
+            spikeObj.transform.SetParent(parent, false);
+            spikeObj.transform.position = position;
+
+            var col = spikeObj.AddComponent<BoxCollider2D>();
+            col.size = size;
+            col.isTrigger = true;
+
+            // Visual mais alto que o gatilho, para os espinhos serem legíveis; o
+            // gatilho continua rente ao chão.
+            var sprite = SpriteOrPlaceholder(11, out var tint, new Color(0.85f, 0.2f, 0.2f));
+            var bottom = position.y - size.y * 0.5f;
+            CreateTiledStrip(
+                "Visual",
+                spikeObj.transform,
+                sprite,
+                tint,
+                position.x - size.x * 0.5f,
+                position.x + size.x * 0.5f,
+                bottom,
+                bottom + 0.55f,
+                2
+            );
+
+            var spike = spikeObj.AddComponent<SpikeHazard>();
+            spike.Configure(penalty, 1.0f, defaultRespawn);
+            CreateWorldLabel(
+                "ESPINHOS",
+                parent,
+                new Vector2(position.x, bottom + 0.95f),
+                new Color(1f, 0.4f, 0.4f)
+            );
+            return spike;
+        }
+
+        private MudHazard CreateMudHazardObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size,
+            float speedMultiplier = 0.7f
+        )
+        {
+            var mudObj = new GameObject(name);
+            mudObj.transform.SetParent(parent, false);
+            mudObj.transform.position = position;
+
+            var col = mudObj.AddComponent<BoxCollider2D>();
+            col.size = size;
+            col.isTrigger = true;
+
+            var sprite = SpriteOrPlaceholder(
+                12,
+                out var tint,
+                new Color(0.42f, 0.28f, 0.15f, 0.75f)
+            );
+            if (sprite != PlaceholderSpriteFactory.Square)
+            {
+                tint = new Color(1f, 1f, 1f, 0.9f);
+            }
+
+            CreateTiledStrip(
+                "Visual",
+                mudObj.transform,
+                sprite,
+                tint,
+                position.x - size.x * 0.5f,
+                position.x + size.x * 0.5f,
+                position.y - size.y * 0.5f,
+                position.y + size.y * 0.5f,
+                2
+            );
+
+            var mud = mudObj.AddComponent<MudHazard>();
+            mud.Configure(speedMultiplier);
+            CreateWorldLabel(
+                "LAMA (-30%)",
+                parent,
+                new Vector2(position.x, position.y + 0.65f),
+                new Color(0.85f, 0.7f, 0.5f)
+            );
+            return mud;
+        }
+
+        private Checkpoint CreateCheckpointObject(
+            string name,
+            Transform parent,
+            int index,
+            Vector2 position
+        )
+        {
+            var cp = new GameObject(name);
+            cp.transform.SetParent(parent, false);
+            cp.transform.position = position;
+
+            var col = cp.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.5f, 3.5f);
+            col.isTrigger = true;
+
+            // A bandeira cabe numa caixa de 1.2 x 1.8 com escala uniforme e apoia no
+            // piso, que fica 1.2 abaixo do centro do gatilho.
+            var sprite = SpriteOrPlaceholder(5, out _, new Color(0.55f, 0.55f, 0.6f));
+            var flag = CreateFittedSprite(
+                "Flag",
+                cp.transform,
+                sprite,
+                new Color(0.55f, 0.55f, 0.6f),
+                new Vector2(position.x, position.y - 1.2f),
+                new Vector2(1.2f, 1.8f),
+                2
+            );
+
+            var checkpoint = cp.AddComponent<Checkpoint>();
+            checkpoint.Configure(index, new Vector2(0f, 0.5f));
+            checkpoint.SetVisualElements(
+                flag,
+                new Color(0.55f, 0.55f, 0.6f),
+                new Color(0.25f, 0.85f, 0.35f)
+            );
+
+            checkpoint.CheckpointReached += (playerIndex) =>
+            {
+                AudioService.Instance.PlaySfx(AudioClipId.Sfx_Checkpoint);
+                if (_visualCatalog != null)
+                {
+                    VisualFeedback.Emit(
+                        _visualCatalog,
+                        FeedbackKind.Checkpoint,
+                        cp.transform.position
+                    );
+                }
+            };
+
+            CreateWorldLabel($"CP {index}", cp.transform, new Vector2(0f, 1.1f), Color.yellow);
+            return checkpoint;
+        }
+
+        private FinishLine CreateFinishLineObject(
+            string name,
+            Transform parent,
+            Vector2 position,
+            int acceptedPlayerIndex = 0,
+            string label = "LINHA DE CHEGADA",
+            Color? bannerColor = null
+        )
+        {
+            var fl = new GameObject(name);
+            fl.transform.SetParent(parent, false);
+            fl.transform.position = position;
+
+            var col = fl.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.5f, 2.4f);
+            col.isTrigger = true;
+
+            // O portal cabe em 1.6 x 2.4 com escala uniforme, apoiado no piso do
+            // corredor, que fica 1.3 abaixo do centro do gatilho.
+            var sprite = SpriteOrPlaceholder(
+                6,
+                out var tint,
+                bannerColor ?? new Color(1f, 0.84f, 0f)
+            );
+            CreateFittedSprite(
+                "Portal",
+                fl.transform,
+                sprite,
+                sprite == PlaceholderSpriteFactory.Square ? tint : (bannerColor ?? Color.white),
+                new Vector2(position.x, position.y - 1.3f),
+                new Vector2(1.6f, 2.4f),
+                2
+            );
+
+            var finishLine = fl.AddComponent<FinishLine>();
+            finishLine.ConfigureAcceptedPlayer(acceptedPlayerIndex);
+            finishLine.PlayerCrossedFinish += (playerIndex, finishTime) =>
+            {
+                AudioService.Instance.PlaySfx(AudioClipId.Sfx_Finish);
+                if (_visualCatalog != null)
+                {
+                    VisualFeedback.Emit(_visualCatalog, FeedbackKind.Finish, fl.transform.position);
+                }
+            };
+
+            CreateWorldLabel(label, fl.transform, new Vector2(0f, 1.45f), Color.white);
+            return finishLine;
         }
 
         private Sprite GetEnvironmentSprite(StaticBlockKind kind)

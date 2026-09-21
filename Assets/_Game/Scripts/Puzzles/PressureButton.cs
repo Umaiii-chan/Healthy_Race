@@ -146,6 +146,13 @@ namespace HealthyRace.Puzzles
             }
         }
 
+        /// <summary>Define o renderer que recebe a cor de pressionado e solto.</summary>
+        public void SetVisualRenderer(SpriteRenderer renderer)
+        {
+            _visualRenderer = renderer;
+            UpdateVisuals();
+        }
+
         private void UpdateVisuals()
         {
             if (_visualRenderer != null)
