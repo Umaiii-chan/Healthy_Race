@@ -57,6 +57,7 @@ namespace HealthyRace.Visuals
         public Sprite[] Characters = new Sprite[5];
         public Sprite[] Foods = new Sprite[18];
         public Sprite[] Environment = new Sprite[13];
+        public Sprite Background;
         public RuntimeAnimatorController PlayerAnimator;
         public Sprite Particle;
         public Sprite Heart;

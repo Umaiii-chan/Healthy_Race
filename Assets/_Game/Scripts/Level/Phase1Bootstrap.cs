@@ -9,6 +9,7 @@ using HealthyRace.UI;
 using HealthyRace.Visuals;
 using HealthyRace.WellBeing;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace HealthyRace.Level
@@ -19,7 +20,7 @@ namespace HealthyRace.Level
     /// puzzles, and educational food distribution.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class Phase1Bootstrap : MonoBehaviour
+    public sealed partial class Phase1Bootstrap : MonoBehaviour
     {
         private const int GroundLayer = 6;
         public const float StartX = 0f;
@@ -198,17 +199,24 @@ namespace HealthyRace.Level
             var bgParent = new GameObject("Background").transform;
             bgParent.SetParent(transform, false);
 
-            for (var x = -10f; x <= 240f; x += 30f)
+            var backgroundSprite = _visualCatalog != null ? _visualCatalog.Background : null;
+            var tileIndex = 0;
+            for (var x = 0f; x <= 224f; x += 32f, tileIndex++)
             {
-                var bg = new GameObject($"SkySegment_{x}");
+                var bg = new GameObject($"Landscape_{x:000}");
                 bg.transform.SetParent(bgParent, false);
-                bg.transform.position = new Vector3(x, 2f, 5f);
-                bg.transform.localScale = new Vector3(32f, 22f, 1f);
-
                 var renderer = bg.AddComponent<SpriteRenderer>();
-                renderer.sprite = PlaceholderSpriteFactory.Square;
-                renderer.color = new Color(0.08f, 0.16f, 0.28f);
-                renderer.sortingOrder = -10;
+                renderer.sprite = backgroundSprite ?? PlaceholderSpriteFactory.Square;
+                renderer.color =
+                    backgroundSprite != null ? Color.white : new Color(0.55f, 0.82f, 0.94f);
+                renderer.sortingOrder = -50;
+                renderer.flipX = backgroundSprite != null && tileIndex % 2 == 1;
+
+                var bounds = renderer.sprite.bounds;
+                var scale = new Vector3(32f / bounds.size.x, 18f / bounds.size.y, 1f);
+                bg.transform.localScale = scale;
+                var scaledCenter = Vector3.Scale(bounds.center, scale);
+                bg.transform.position = new Vector3(x, 1.5f, 5f) - scaledCenter;
             }
         }
 
@@ -228,7 +236,7 @@ namespace HealthyRace.Level
         // =========================================================================
         // ZONE 1: SPAWN (X: -5 to 32)
         // =========================================================================
-        private void CreateZone1_Spawn(Transform parent)
+        private void CreateZone1_Spawn_Legacy(Transform parent)
         {
             var zone = new GameObject("Z1_Spawn").transform;
             zone.SetParent(parent, false);
@@ -340,7 +348,7 @@ namespace HealthyRace.Level
         // =========================================================================
         // ZONE 2: CAIXA (X: 32 to 65)
         // =========================================================================
-        private void CreateZone2_Caixa(Transform parent)
+        private void CreateZone2_Caixa_Legacy(Transform parent)
         {
             var zone = new GameObject("Z2_Caixa").transform;
             zone.SetParent(parent, false);
@@ -428,7 +436,7 @@ namespace HealthyRace.Level
         // =========================================================================
         // ZONE 3: ROTAS (X: 65 to 125) - Split routes & Checkpoint 1
         // =========================================================================
-        private void CreateZone3_Rotas(Transform parent)
+        private void CreateZone3_Rotas_Legacy(Transform parent)
         {
             var zone = new GameObject("Z3_Rotas").transform;
             zone.SetParent(parent, false);
@@ -609,7 +617,7 @@ namespace HealthyRace.Level
         // =========================================================================
         // ZONE 4: REENCONTRO (X: 125 to 160) - Reunion & Checkpoint 2
         // =========================================================================
-        private void CreateZone4_Reencontro(Transform parent)
+        private void CreateZone4_Reencontro_Legacy(Transform parent)
         {
             var zone = new GameObject("Z4_Reencontro").transform;
             zone.SetParent(parent, false);
@@ -688,7 +696,7 @@ namespace HealthyRace.Level
         // =========================================================================
         // ZONE 5: PUZZLE FINAL (X: 160 to 195) - Cooperative Challenge & Anti-Deadlock
         // =========================================================================
-        private void CreateZone5_PuzzleFinal(Transform parent)
+        private void CreateZone5_PuzzleFinal_Legacy(Transform parent)
         {
             var zone = new GameObject("Z5_PuzzleFinal").transform;
             zone.SetParent(parent, false);
@@ -837,7 +845,7 @@ namespace HealthyRace.Level
         // =========================================================================
         // ZONE 6: CHEGADA (X: 195 to 230) - Finish Line & Podium
         // =========================================================================
-        private void CreateZone6_Chegada(Transform parent)
+        private void CreateZone6_Chegada_Legacy(Transform parent)
         {
             var zone = new GameObject("Z6_Chegada").transform;
             zone.SetParent(parent, false);
@@ -1105,6 +1113,7 @@ namespace HealthyRace.Level
             var resultsPanelObj = new GameObject("Match Results Panel", typeof(RectTransform));
             _resultsPanel = resultsPanelObj.AddComponent<MatchResultsPanel>();
             _resultsPanel.Initialize(canvasObject.transform);
+            _resultsPanel.ReplayRequested += ReloadCurrentScene;
 
             var matchControllerObj = new GameObject("MatchCompletionController");
             matchControllerObj.transform.SetParent(transform, false);
@@ -1138,7 +1147,20 @@ namespace HealthyRace.Level
 
         private void OnDestroy()
         {
+            if (_resultsPanel != null)
+            {
+                _resultsPanel.ReplayRequested -= ReloadCurrentScene;
+            }
             Checkpoint.ResetRegistry();
+        }
+
+        private static void ReloadCurrentScene()
+        {
+            var scene = SceneManager.GetActiveScene();
+            if (scene.IsValid())
+            {
+                SceneManager.LoadScene(scene.buildIndex);
+            }
         }
 
         private void HandleFoodCollected(FoodCollectible collectible, WellbeingComponent collector)
@@ -1219,7 +1241,6 @@ namespace HealthyRace.Level
                 sr.sortingOrder = 1;
             }
 
-            CreateWorldLabel("CAIXA", box.transform, new Vector2(0f, 0.72f), Color.white);
             return box.GetComponent<PushableBox>();
         }
 
@@ -1254,10 +1275,10 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.9f, 0.25f, 0.25f);
             }
             sr.sortingOrder = 1;
-            btn.transform.localScale = new Vector3(1.6f, 0.25f, 1f);
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = new Vector2(1.6f, 0.3f);
 
             var button = btn.AddComponent<PressureButton>();
-            CreateWorldLabel("BOTÃO", btn.transform, new Vector2(0f, 0.5f), Color.white);
             return button;
         }
 
@@ -1327,11 +1348,10 @@ namespace HealthyRace.Level
             var doorObj = new GameObject(name);
             doorObj.transform.SetParent(parent, false);
             doorObj.transform.position = position;
-            doorObj.transform.localScale = new Vector3(size.x, size.y, 1f);
             doorObj.layer = GroundLayer;
 
             var col = doorObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = size;
 
             var sr = doorObj.AddComponent<SpriteRenderer>();
             if (
@@ -1350,11 +1370,12 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.2f, 0.45f, 0.6f);
             }
             sr.sortingOrder = 1;
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = size;
 
             var door = doorObj.AddComponent<PuzzleDoor>();
             door.Configure(new Vector2(0f, size.y + 0.5f), 4f);
 
-            CreateWorldLabel("PORTÃO", doorObj.transform, new Vector2(0f, 0f), Color.cyan);
             return door;
         }
 
@@ -1369,11 +1390,10 @@ namespace HealthyRace.Level
             var platObj = new GameObject(name);
             platObj.transform.SetParent(parent, false);
             platObj.transform.position = position;
-            platObj.transform.localScale = new Vector3(size.x, size.y, 1f);
             platObj.layer = GroundLayer;
 
             var col = platObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = size;
 
             var sr = platObj.AddComponent<SpriteRenderer>();
             if (
@@ -1392,6 +1412,8 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.18f, 0.72f, 0.52f);
             }
             sr.sortingOrder = 1;
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = size;
 
             var platform = platObj.AddComponent<ActivatedPlatform>();
             platform.Configure(targetOffset, 3f);
@@ -1411,10 +1433,9 @@ namespace HealthyRace.Level
             var spikeObj = new GameObject(name);
             spikeObj.transform.SetParent(parent, false);
             spikeObj.transform.position = position;
-            spikeObj.transform.localScale = new Vector3(size.x, size.y, 1f);
 
             var col = spikeObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = size;
             col.isTrigger = true;
 
             var sr = spikeObj.AddComponent<SpriteRenderer>();
@@ -1434,15 +1455,11 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.85f, 0.2f, 0.2f);
             }
             sr.sortingOrder = 2;
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = size;
 
             var spike = spikeObj.AddComponent<SpikeHazard>();
             spike.Configure(penalty, 1.0f, defaultRespawn);
-            CreateWorldLabel(
-                "ESPINHOS",
-                spikeObj.transform,
-                new Vector2(0f, 0.6f / Mathf.Max(0.1f, size.y)),
-                new Color(1f, 0.4f, 0.4f)
-            );
 
             return spike;
         }
@@ -1458,10 +1475,9 @@ namespace HealthyRace.Level
             var mudObj = new GameObject(name);
             mudObj.transform.SetParent(parent, false);
             mudObj.transform.position = position;
-            mudObj.transform.localScale = new Vector3(size.x, size.y, 1f);
 
             var col = mudObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = size;
             col.isTrigger = true;
 
             var sr = mudObj.AddComponent<SpriteRenderer>();
@@ -1481,15 +1497,11 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.42f, 0.28f, 0.15f, 0.75f);
             }
             sr.sortingOrder = 2;
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = size;
 
             var mud = mudObj.AddComponent<MudHazard>();
             mud.Configure(speedMultiplier);
-            CreateWorldLabel(
-                "LAMA (-30%)",
-                mudObj.transform,
-                new Vector2(0f, 0.6f / Mathf.Max(0.1f, size.y)),
-                new Color(0.85f, 0.7f, 0.5f)
-            );
 
             return mud;
         }
@@ -1506,11 +1518,10 @@ namespace HealthyRace.Level
             var platObj = new GameObject(name);
             platObj.transform.SetParent(parent, false);
             platObj.transform.position = position;
-            platObj.transform.localScale = new Vector3(size.x, size.y, 1f);
             platObj.layer = GroundLayer;
 
             var col = platObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = size;
 
             var sr = platObj.AddComponent<SpriteRenderer>();
             if (
@@ -1529,6 +1540,8 @@ namespace HealthyRace.Level
                 sr.color = new Color(0.75f, 0.55f, 0.35f);
             }
             sr.sortingOrder = 1;
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = size;
 
             var platform = platObj.AddComponent<FallingPlatform>();
             platform.Configure(anticipation, respawnDelay);
@@ -1693,7 +1706,6 @@ namespace HealthyRace.Level
             var block = new GameObject(blockName);
             block.transform.SetParent(parent, false);
             block.transform.position = position;
-            block.transform.localScale = new Vector3(size.x, size.y, 1f);
             block.layer = GroundLayer;
 
             var sr = block.AddComponent<SpriteRenderer>();
@@ -1714,7 +1726,11 @@ namespace HealthyRace.Level
             }
 
             sr.sortingOrder = 0;
-            block.AddComponent<BoxCollider2D>();
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.tileMode = SpriteTileMode.Adaptive;
+            sr.size = size;
+            var collider = block.AddComponent<BoxCollider2D>();
+            collider.size = size;
         }
 
         private Sprite GetEnvironmentSprite(StaticBlockKind kind)
