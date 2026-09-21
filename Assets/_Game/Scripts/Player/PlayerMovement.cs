@@ -34,6 +34,8 @@ namespace HealthyRace.Player
 
         public Vector2 Velocity => _rigidbody != null ? _rigidbody.linearVelocity : Vector2.zero;
 
+        public event System.Action Jumped;
+
         private void Awake()
         {
             _groundCheck = GetComponent<PlayerGroundCheck>();
@@ -57,6 +59,7 @@ namespace HealthyRace.Player
                 if (_jumpRequested && isGrounded)
                 {
                     velocity.y = _jumpVelocity * _jumpMultiplier;
+                    Jumped?.Invoke();
                 }
             }
             else

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HealthyRace.Audio;
 using HealthyRace.Collectibles;
 using HealthyRace.Core;
 using HealthyRace.Obstacles;
@@ -131,6 +132,11 @@ namespace HealthyRace.Level
 
             CreateSharedCamera(_playerOne.transform, _playerTwo.transform);
             CreateHud(_playerOneWellbeing, p1Fatigue, _playerTwoWellbeing, p2Fatigue);
+        }
+
+        private void Start()
+        {
+            AudioService.Instance.PlayMusic(AudioClipId.Music_Level01);
         }
 
         private void Update()
@@ -772,6 +778,30 @@ namespace HealthyRace.Level
             _finalPuzzle = puzzleControllerObj.AddComponent<CooperativePuzzleController>();
             _finalPuzzle.Bind(button, lever, box, door, platform, resetSwitch, requireAll: false);
 
+            if (button != null)
+            {
+                button.OnPressedStateChanged += (pressed) =>
+                {
+                    if (pressed)
+                    {
+                        AudioService.Instance.PlaySfx(AudioClipId.Sfx_Button);
+                    }
+                };
+            }
+            if (lever != null)
+            {
+                lever.OnToggled += (active) => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
+            }
+            if (door != null)
+            {
+                door.OnOpened += () => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Door);
+            }
+            if (_finalPuzzle != null)
+            {
+                _finalPuzzle.OnPuzzleSolved += () =>
+                    AudioService.Instance.PlaySfx(AudioClipId.Sfx_PuzzleSolved);
+            }
+
             // Anti-deadlock bypass stepping stones (allows jump-clearing even if puzzle is skipped)
             CreateStaticBlock(
                 "Z5_Step1",
@@ -937,6 +967,40 @@ namespace HealthyRace.Level
                 CreateWorldLabel(playerName, player.transform, new Vector2(0f, 0.86f), Color.white);
             }
 
+            var movement = player.GetComponent<PlayerMovement>();
+            if (movement != null)
+            {
+                movement.Jumped += () => AudioService.Instance.PlaySfx(AudioClipId.Sfx_Jump);
+            }
+
+            var playerFatigue = player.GetComponent<FatigueComponent>();
+            if (playerFatigue != null)
+            {
+                playerFatigue.StateChanged += (state) =>
+                {
+                    if (state == FatigueState.Fatigued)
+                    {
+                        AudioService.Instance.PlaySfx(AudioClipId.Sfx_Fatigue);
+                    }
+                };
+            }
+
+            var playerWellbeing = player.GetComponent<WellbeingComponent>();
+            if (playerWellbeing != null)
+            {
+                playerWellbeing.WellbeingChanged += (prev, current) =>
+                {
+                    if (current > prev)
+                    {
+                        AudioService.Instance.PlaySfx(AudioClipId.Sfx_WellbeingUp);
+                    }
+                    else if (current < prev)
+                    {
+                        AudioService.Instance.PlaySfx(AudioClipId.Sfx_WellbeingDown);
+                    }
+                };
+            }
+
             return player;
         }
 
@@ -1057,6 +1121,17 @@ namespace HealthyRace.Level
                 _playerTwoHud,
                 _finalPuzzle
             );
+            _matchController.MatchConcluded += (results) =>
+            {
+                if (results.WinnerPlayerIndex == 0)
+                {
+                    AudioService.Instance.PlaySfx(AudioClipId.Sfx_Tie);
+                }
+                else
+                {
+                    AudioService.Instance.PlaySfx(AudioClipId.Sfx_Victory);
+                }
+            };
         }
 
         private void OnDestroy()
@@ -1069,6 +1144,15 @@ namespace HealthyRace.Level
             if (collectible == null || collectible.FoodData == null)
             {
                 return;
+            }
+
+            if (collectible.FoodData.Category == FoodCategory.Healthy)
+            {
+                AudioService.Instance.PlaySfx(AudioClipId.Sfx_PickupHealthy);
+            }
+            else
+            {
+                AudioService.Instance.PlaySfx(AudioClipId.Sfx_PickupUltra);
             }
 
             if (collector == _playerOneWellbeing && _playerOneHud != null)
@@ -1497,6 +1581,7 @@ namespace HealthyRace.Level
 
             checkpoint.CheckpointReached += (playerIndex) =>
             {
+                AudioService.Instance.PlaySfx(AudioClipId.Sfx_Checkpoint);
                 if (_visualCatalog != null)
                 {
                     VisualFeedback.Emit(
@@ -1548,6 +1633,7 @@ namespace HealthyRace.Level
             var finishLine = fl.AddComponent<FinishLine>();
             finishLine.PlayerCrossedFinish += (playerIndex, finishTime) =>
             {
+                AudioService.Instance.PlaySfx(AudioClipId.Sfx_Finish);
                 if (_visualCatalog != null)
                 {
                     VisualFeedback.Emit(_visualCatalog, FeedbackKind.Finish, fl.transform.position);
