@@ -6,10 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_Game/Scenes/VerticalSlice_Core.unity
-    guid: 1fae40dfc1f54ee49dcc6f3fde7532f4
-  - enabled: 1
     path: Assets/_Game/Scenes/Phase1_CorridaDoEquilibrio.unity
     guid: 74473806230b42a1a36e2565b3db382f
+  - enabled: 1
+    path: Assets/_Game/Scenes/VerticalSlice_Core.unity
+    guid: 1fae40dfc1f54ee49dcc6f3fde7532f4
   m_configObjects: {}
 
