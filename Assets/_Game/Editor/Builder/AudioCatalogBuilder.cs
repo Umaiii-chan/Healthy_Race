@@ -23,13 +23,6 @@ namespace HealthyRace.Editor.Build
             Directory.CreateDirectory(Path.GetDirectoryName(CatalogPath));
             AssetDatabase.Refresh();
 
-            var catalog = AssetDatabase.LoadAssetAtPath<AudioCatalog>(CatalogPath);
-            if (catalog == null)
-            {
-                catalog = ScriptableObject.CreateInstance<AudioCatalog>();
-                AssetDatabase.CreateAsset(catalog, CatalogPath);
-            }
-
             var entries = Enum.GetValues(typeof(AudioClipId))
                 .Cast<AudioClipId>()
                 .Select(id => new AudioCatalog.Entry
@@ -45,6 +38,15 @@ namespace HealthyRace.Editor.Build
                 throw new FileNotFoundException(
                     "Clipes de áudio ausentes: " + string.Join(", ", missing)
                 );
+            }
+
+            // Só agora, com todos os clipes conferidos: uma geração que falha não
+            // pode deixar para trás um catálogo vazio que a build carregaria.
+            var catalog = AssetDatabase.LoadAssetAtPath<AudioCatalog>(CatalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<AudioCatalog>();
+                AssetDatabase.CreateAsset(catalog, CatalogPath);
             }
 
             catalog.SetEntries(entries);
