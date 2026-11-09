@@ -153,12 +153,12 @@ teste do executável** — itens marcados `IMPLEMENTED` dependem disso para vira
 | ID | Item | Critério de aceite |
 | --- | --- | --- |
 | B-01 | **Fluxo de cenas mínimo:** cena `MainMenu` (Jogar, Como jogar, Configurações, Créditos, Sair) como cena 0 da build; reaproveitar `RaceScreenView`/`VisualUiData` em vez de criar UI nova. | Executável abre no menu; "Jogar" carrega a Fase 1; "Sair" fecha. |
-| B-02 | **Reiniciar e voltar ao menu** no painel de resultados: `EventSystem` + `InputSystemUIInputModule` na cena, assinatura de `ReplayRequested` recarregando a cena, botão "Menu". | Duas partidas seguidas sem fechar o jogo; estado inicial restaurado (bem-estar 100, alimentos de volta, checkpoints limpos). |
+| B-02 | **Reiniciar e voltar ao menu** no painel de resultados: `EventSystem` + `InputSystemUIInputModule` na cena **com as ações de UI atribuídas** (`AssignDefaultActions()` ou ações serializadas; sem isso o módulo existe mas não entrega clique), assinatura de `ReplayRequested` recarregando a cena, botão "Menu". | Duas partidas seguidas sem fechar o jogo; estado inicial restaurado (bem-estar 100, alimentos de volta, checkpoints limpos). |
 | B-03 | **Pausa** com Esc (ação `UI/Pause` já existe): continuar, reiniciar, menu, sair. | Esc congela a partida (`timeScale`) e retoma sem perder estado. |
 | B-04 | **Fim de partida garantido** no modo portas duplas: janela final após a primeira chegada (o controlador já tem `FinalCountdown` e DNF para o modo de porta única) ou tempo-limite. Decisão de design — ver §8. | Nenhuma partida dura indefinidamente. |
 | B-05 | **Áudio real na build:** referências serializadas (catálogo de áudio em SO) em vez de `AssetDatabase`; manter o sintético só como fallback com aviso no log. | Build toca os `.wav`; teste EditMode garante que todo `AudioClipId` tem clip atribuído. |
 | B-06 | Fadiga não reativa movimento após `ConcludeMatch` (cancelar coroutine ou consultar estado da partida). | Teste PlayMode: fadiga em curso + conclusão → jogador continua parado e bem-estar igual ao do painel. |
-| B-07 | **Build Windows x64** pelo `BuildScript`, `bundleVersion 1.0.0`, só cenas alcançáveis, testada fora do Editor. | `.exe` abre em máquina sem Unity, joga do menu ao resultado e reinicia. |
+| B-07 | **Build Windows x64** pelo `BuildScript`, `bundleVersion 1.0.0`, menu como cena inicial, testada fora do Editor. Tirar da build as cenas que nenhum fluxo alcança é o item B-18 e não bloqueia este. | `.exe` abre em máquina sem Unity, joga do menu ao resultado e reinicia. |
 | B-08 | **Validar R1 (soft-lock por bem-estar baixo)**: teste de geometria com o pior multiplicador alcançável em cada trecho + partida manual "pegando tudo de ruim". Corrigir geometria, faixas ou fluxo conforme o resultado. | Fase percorrível do spawn às portas em qualquer faixa de bem-estar, ou partida encerra por tempo. |
 
 ### P1 — Mecânica principal
@@ -184,7 +184,7 @@ teste do executável** — itens marcados `IMPLEMENTED` dependem disso para vira
 | ID | Item |
 | --- | --- |
 | B-17 | CI: licença Unity nos segredos, ou documentar execução local obrigatória antes de merge. |
-| B-18 | Remover `VerticalSlice_Core` da build (manter no repositório se ainda servir de referência). |
+| B-18 | Remover `VerticalSlice_Core` da build (manter no repositório se ainda servir de referência). Depende de trocar o teste PlayMode que a carrega por `SceneManager`, que exige a cena na lista. |
 | B-19 | Documentação: corrigir `qa-report.md`; criar `GAMEPLAY.md`, `CONTROLS.md`, `TEST_REPORT.md`, `RELEASE_NOTES.md`; ajustar README (Mono vs IL2CPP). |
 | B-20 | Release `v1.0.0`: tag, zip do executável, notas de versão. |
 | B-21 | Versionar uma vez os assets do URP reescritos pelo Editor (R6), para acabar com o diff espúrio. |
