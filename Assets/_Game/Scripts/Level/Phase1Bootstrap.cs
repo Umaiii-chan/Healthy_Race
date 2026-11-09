@@ -1476,7 +1476,7 @@ namespace HealthyRace.Level
                 var resultsPanelObj = new GameObject("Match Results Panel", typeof(RectTransform));
                 _resultsPanel = resultsPanelObj.AddComponent<MatchResultsPanel>();
                 _resultsPanel.Initialize(canvasObject.transform);
-                _resultsPanel.ReplayRequested += GameFlow.RestartLevel;
+                _resultsPanel.ReplayRequested += () => GameFlow.RestartLevel();
             }
 
             var matchControllerObj = new GameObject("MatchCompletionController");
