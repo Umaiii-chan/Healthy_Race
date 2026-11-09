@@ -22,6 +22,7 @@ namespace HealthyRace.WellBeing
 
         private PlayerController _playerController;
         private Coroutine _fatigueRoutine;
+        private bool _halted;
         private FatigueStateMachine _stateMachine;
         private WellbeingComponent _wellbeing;
 
@@ -54,6 +55,25 @@ namespace HealthyRace.WellBeing
         public int RearmThreshold => _rearmThreshold;
 
         public FatigueStateMachine StateMachine => _stateMachine;
+
+        /// <summary>Verdadeiro depois de <see cref="Halt"/>: a fadiga não age mais.</summary>
+        public bool IsHalted => _halted;
+
+        /// <summary>
+        /// Fim de partida: cancela o episódio em curso sem devolver o movimento nem
+        /// aplicar a recuperação, e para de reagir ao Bem-Estar.
+        /// </summary>
+        public void Halt()
+        {
+            _halted = true;
+            Unsubscribe();
+
+            if (_fatigueRoutine != null)
+            {
+                StopCoroutine(_fatigueRoutine);
+                _fatigueRoutine = null;
+            }
+        }
 
         public void Configure(
             float fatigueDurationSeconds,
@@ -128,11 +148,19 @@ namespace HealthyRace.WellBeing
                 _fatigueRoutine = null;
             }
 
-            _playerController?.SetMovementEnabled(true);
+            if (!_halted)
+            {
+                _playerController?.SetMovementEnabled(true);
+            }
         }
 
         private void OnEnable()
         {
+            if (_halted)
+            {
+                return;
+            }
+
             EnsureInitialized();
 
             if (_wellbeing != null)
@@ -144,7 +172,7 @@ namespace HealthyRace.WellBeing
 
         private void Update()
         {
-            if (State != FatigueState.FatiguePending)
+            if (_halted || State != FatigueState.FatiguePending)
             {
                 return;
             }

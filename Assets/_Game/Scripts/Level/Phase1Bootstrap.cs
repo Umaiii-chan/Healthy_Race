@@ -88,6 +88,12 @@ namespace HealthyRace.Level
         /// <see cref="Time.fixedDeltaTime"/> pode não refletir o runtime.
         /// </summary>
         public const float FixedDeltaTime = 0.02f;
+
+        /// <summary>Prazo do parceiro depois que o primeiro jogador chega à sua porta.</summary>
+        public const float PartnerWindowSeconds = 45f;
+
+        /// <summary>Duração máxima de uma partida; evita partida sem fim.</summary>
+        public const float MatchTimeLimitSeconds = 300f;
         public const float BoxHeight = 1.22f;
 
         // ---------------------------------------------------------------------
@@ -1484,13 +1490,14 @@ namespace HealthyRace.Level
                 p1Wb,
                 p2Wb,
                 _resultsPanel,
-                20f,
+                PartnerWindowSeconds,
                 20,
                 _playerOneHud,
                 _playerTwoHud,
                 _gateTwo,
                 secondFinishLine: _playerTwoDoor,
-                requireBothAtDoors: true
+                requireBothAtDoors: true,
+                timeLimitSeconds: MatchTimeLimitSeconds
             );
             _matchController.MatchConcluded += (results) =>
             {

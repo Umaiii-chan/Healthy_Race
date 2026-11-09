@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be9257f740ef4c047a832a828ab9fe96, type: 3}
+  m_Name: SO_AudioCatalog
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Audio.AudioCatalog
+  _entries:
+  - Id: 0
+    Clip: {fileID: 8300000, guid: 2ed473c8fe7da6846b9386ee49260a01, type: 3}
+  - Id: 1
+    Clip: {fileID: 8300000, guid: 4b89769c00c111843978e4d81f3773ca, type: 3}
+  - Id: 2
+    Clip: {fileID: 8300000, guid: b16961fd5e76c2d47b08d2c53e64cc88, type: 3}
+  - Id: 3
+    Clip: {fileID: 8300000, guid: 852770880d1056c42a25d688257fac4b, type: 3}
+  - Id: 4
+    Clip: {fileID: 8300000, guid: 0689dc51099e7c6468f48ccdb39aff46, type: 3}
+  - Id: 5
+    Clip: {fileID: 8300000, guid: 59fb4b63d78879746980327d8d8174cd, type: 3}
+  - Id: 6
+    Clip: {fileID: 8300000, guid: ec1bffa41c3b16449b95d8177c2505c2, type: 3}
+  - Id: 7
+    Clip: {fileID: 8300000, guid: 2274b43f79df7a54e8ec484d054a8345, type: 3}
+  - Id: 8
+    Clip: {fileID: 8300000, guid: 8b9f1558212a5ad4cbc043c3d366cbb9, type: 3}
+  - Id: 9
+    Clip: {fileID: 8300000, guid: 0c9eefbd73f3aec49a384423c4b6e990, type: 3}
+  - Id: 10
+    Clip: {fileID: 8300000, guid: 18e1ce63fd889b04fa3ce096ef97d395, type: 3}
+  - Id: 11
+    Clip: {fileID: 8300000, guid: 17324c78cfb1a094e91d8ff7ac34d62e, type: 3}
+  - Id: 12
+    Clip: {fileID: 8300000, guid: 443cf8172381f2d44b3e15e2dd950736, type: 3}
+  - Id: 13
+    Clip: {fileID: 8300000, guid: 3c35bf29effec274cb7711897e330928, type: 3}
+  - Id: 14
+    Clip: {fileID: 8300000, guid: 4633dd3784d10d24eb05d143251a2975, type: 3}
+  - Id: 15
+    Clip: {fileID: 8300000, guid: 9ae754fcfe57d2d46b370b1b8b41ea60, type: 3}
+  - Id: 16
+    Clip: {fileID: 8300000, guid: 9c80e7c3e58958b4187750ac26506498, type: 3}
+  - Id: 17
+    Clip: {fileID: 8300000, guid: 930fd4de6ee10dd41baf4a5167421a39, type: 3}
