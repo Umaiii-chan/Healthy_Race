@@ -1,0 +1,1247 @@
+fileFormatVersion: 2
+guid: 207e94bd4759ef841bafc0b92bc1ef87
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3520719910142683917
+    second: SP_CharacterRig_0
+  - first:
+      213: 2791741754485842138
+    second: SP_CharacterRig_1
+  - first:
+      213: -2618789941575651686
+    second: SP_CharacterRig_2
+  - first:
+      213: -8610968508784236890
+    second: SP_CharacterRig_3
+  - first:
+      213: -4481879369141797334
+    second: SP_CharacterRig_4
+  - first:
+      213: -2965436844535708164
+    second: SP_CharacterRig_5
+  - first:
+      213: -4669527618084897395
+    second: SP_CharacterRig_6
+  - first:
+      213: 3993406050096936407
+    second: SP_CharacterRig_7
+  - first:
+      213: 996173700359123058
+    second: SP_CharacterRig_8
+  - first:
+      213: 8783278830384279647
+    second: SP_CharacterRig_9
+  - first:
+      213: -5266785497745686009
+    second: SP_CharacterRig_10
+  - first:
+      213: -1503154225004780006
+    second: SP_CharacterRig_11
+  - first:
+      213: -6847742159449996385
+    second: SP_CharacterRig_12
+  - first:
+      213: 5873493650995949829
+    second: SP_CharacterRig_13
+  - first:
+      213: -3761815336454485363
+    second: SP_CharacterRig_14
+  - first:
+      213: -4736333479929540074
+    second: SP_CharacterRig_15
+  - first:
+      213: 706652686422897281
+    second: SP_CharacterRig_16
+  - first:
+      213: -8921148946888404820
+    second: SP_CharacterRig_17
+  - first:
+      213: -3182768733507837064
+    second: SP_CharacterRig_18
+  - first:
+      213: 1134535675888792493
+    second: SP_CharacterRig_19
+  - first:
+      213: 2184159498684193359
+    second: SP_CharacterRig_20
+  - first:
+      213: 3881598120309122445
+    second: SP_CharacterRig_21
+  - first:
+      213: -4498516895616650542
+    second: SP_CharacterRig_22
+  - first:
+      213: -297929781675610024
+    second: SP_CharacterRig_23
+  - first:
+      213: -6705805935924265646
+    second: SP_CharacterRig_24
+  - first:
+      213: 539946436031980432
+    second: SP_CharacterRig_25
+  - first:
+      213: -7646516880746025876
+    second: SP_CharacterRig_26
+  - first:
+      213: 9186096046080876594
+    second: SP_CharacterRig_27
+  - first:
+      213: 3854433824892652981
+    second: SP_CharacterRig_28
+  - first:
+      213: -6531164527146917162
+    second: SP_CharacterRig_29
+  - first:
+      213: 8147967864698499674
+    second: SP_CharacterRig_30
+  - first:
+      213: -6990057980993893807
+    second: SP_CharacterRig_31
+  - first:
+      213: 8283114427500937823
+    second: SP_CharacterRig_32
+  - first:
+      213: 561592046525708398
+    second: SP_CharacterRig_33
+  - first:
+      213: -5442703052661712745
+    second: SP_CharacterRig_34
+  - first:
+      213: 5471576743112604295
+    second: SP_CharacterRig_35
+  - first:
+      213: 4212400126265025082
+    second: SP_CharacterRig_36
+  - first:
+      213: 6016616310052499783
+    second: SP_CharacterRig_37
+  - first:
+      213: -4920500201966452576
+    second: SP_CharacterRig_38
+  - first:
+      213: 3471782238341403279
+    second: SP_CharacterRig_39
+  - first:
+      213: -841618114289924514
+    second: SP_CharacterRig_40
+  - first:
+      213: -5873895645630728496
+    second: SP_CharacterRig_41
+  - first:
+      213: 9216661251361443962
+    second: SP_CharacterRig_42
+  - first:
+      213: -3745933063118958152
+    second: SP_CharacterRig_43
+  - first:
+      213: 9144064831959090687
+    second: SP_CharacterRig_44
+  - first:
+      213: 7431504752827590525
+    second: SP_CharacterRig_45
+  - first:
+      213: 4978861923068004896
+    second: SP_CharacterRig_46
+  - first:
+      213: 4832096220128620251
+    second: SP_CharacterRig_47
+  - first:
+      213: 6371494742180461742
+    second: SP_CharacterRig_48
+  - first:
+      213: -7056251788883860746
+    second: SP_CharacterRig_49
+  - first:
+      213: 5600311152638340071
+    second: SP_CharacterRig_50
+  - first:
+      213: -9096176389308882076
+    second: SP_CharacterRig_51
+  - first:
+      213: -3396813658184246574
+    second: SP_CharacterRig_52
+  - first:
+      213: -9100892215832109578
+    second: SP_CharacterRig_53
+  - first:
+      213: 6921959186657920289
+    second: SP_CharacterRig_54
+  - first:
+      213: -8609442254643199771
+    second: SP_CharacterRig_55
+  - first:
+      213: -7144093735310177444
+    second: SP_CharacterRig_56
+  - first:
+      213: 405664075348012629
+    second: SP_CharacterRig_57
+  - first:
+      213: 6017358293075230716
+    second: SP_CharacterRig_58
+  - first:
+      213: 5248634853208686276
+    second: SP_CharacterRig_59
+  - first:
+      213: 5265849647295936685
+    second: SP_CharacterRig_60
+  - first:
+      213: 8637874872665073488
+    second: SP_CharacterRig_61
+  - first:
+      213: 7538841713585261703
+    second: SP_CharacterRig_62
+  - first:
+      213: 8791289397719498855
+    second: SP_CharacterRig_63
+  - first:
+      213: 5974828408826567542
+    second: SP_CharacterRig_64
+  - first:
+      213: 8481564394888826382
+    second: SP_CharacterRig_65
+  - first:
+      213: -8780263635457937287
+    second: SP_CharacterRig_66
+  - first:
+      213: -1328376928192280056
+    second: SP_CharacterRig_67
+  - first:
+      213: -5121971437813748084
+    second: SP_CharacterRig_68
+  - first:
+      213: 5075103939558793921
+    second: SP_CharacterRig_69
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Rig_healthy_head
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3cb9c6d1afc6c8b48a2c584cee1a1e43
+      internalID: -1042718733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_healthy_face
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b5a0e332546f15d46b2e89298c881560
+      internalID: 1529997596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_healthy_face_blink
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1161b6d71b29d1b4a90220880036de65
+      internalID: -525737426
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_healthy_face_effort
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: efc100330b7741a43b8024f318f4a922
+      internalID: -1675668216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_healthy_leaf
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.078125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c0730bd38504e6b488bdb45877616347
+      internalID: -132021957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_healthy_torso
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 792b5bfaa2f7ee14c9386f0e3f25b202
+      internalID: -1712929874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_healthy_arm
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9114e08f9746524dad80f0f76f3341e
+      internalID: -503643729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_healthy_leg
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 1024
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4be3bdc53b1a8e1458a22f6f6b369d0c
+      internalID: 418822752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_head
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cf57482bdfe7797488157f1cbd6e28f7
+      internalID: -177113942
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_face
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c6ae15bc3d2b94b40b8e498863e2ec82
+      internalID: -747218175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_face_blink
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9518754108ed09148bbd2266ca79ae31
+      internalID: 1682304393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_face_effort
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d647a3ac267b97442adc9954c6d9b0e3
+      internalID: -54815739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_leaf
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.078125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3f33061d12e9f9841a04f0ae0018f2da
+      internalID: -234706221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_torso
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 086566b2cef271e44b1af53850bd22c8
+      internalID: -44221907
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_arm
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b95676b6a4082841b98f87d90720f7e
+      internalID: -465777963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_stable_leg
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f6e744b77c678746a363f1673d80a4b
+      internalID: -1840512214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_head
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0872acdb5ff0bce47b376ef95179e381
+      internalID: 875674651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_face
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6a95ff2a5f465864da823221e49d06f9
+      internalID: -2039314428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_face_blink
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1e1e4af931fd81f4e970591238bd1553
+      internalID: -1280933477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_face_effort
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7dcb19d52d1a3414ab6221790e47678e
+      internalID: 1216485299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_leaf
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.078125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce9c368746384d149bf305a3ef273c7f
+      internalID: -1659138445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_torso
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 95c70de5df0c74342becf4e60617cb73
+      internalID: 1614094402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_arm
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb4df3a812f1bd24badcc3f2e93fb294
+      internalID: 667698350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_tired_leg
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b4eafd767bc77248b30d2ee8df918cc
+      internalID: 998108198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_head
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3f1c764430e0ea34a81303989342a7a5
+      internalID: 1936868047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_face
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d126b30c396115e4cbfb19289dd13858
+      internalID: -248407393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_face_blink
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef9c9e6a25c5c1b4e862f038f7e20312
+      internalID: 918715613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_face_effort
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 29af3074179545b42b46981c0d5be7f1
+      internalID: 1819349721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_leaf
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.078125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9d0a61a1ee8faf4bb8cfe0e1a14502c
+      internalID: 1158311201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_torso
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 53fff21d895959c42b0942c0060ddce4
+      internalID: -1975189349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_arm
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 41d701db1fccb294fb5a8b3bd7caeb9c
+      internalID: -187545973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_critical_leg
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f75a440b9c3085f4f88634b12d67ee21
+      internalID: -1080536565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_head
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 31363b3a6d067e84884eff903573da2b
+      internalID: 1267669298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_face
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47eee2f58d35e9047a0ddb121da36590
+      internalID: -745060610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_face_blink
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4cc87744a8f3c674d8c0d2be6048160a
+      internalID: -1931534487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_face_effort
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c21b89a86b6aa40408359e742fd6ac5c
+      internalID: -1893151128
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_leaf
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.078125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15e85bd650a25ce4397169a114d7f4a8
+      internalID: -193740562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_torso
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 22a15d7c88199db4a8df6cc329774335
+      internalID: 1266464402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_arm
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 486f42e62d5448b4398f32d53f11ffb4
+      internalID: -839189526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rig_salo_leg
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.8125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 919a6318fbf65bc4b96a13b83d6b48ed
+      internalID: -1824147514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5eb3964291c435640bc20ef3615c7829
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Rig_critical_arm: -187545973
+      Rig_critical_face: -248407393
+      Rig_critical_face_blink: 918715613
+      Rig_critical_face_effort: 1819349721
+      Rig_critical_head: 1936868047
+      Rig_critical_leaf: 1158311201
+      Rig_critical_leg: -1080536565
+      Rig_critical_torso: -1975189349
+      Rig_healthy_arm: -503643729
+      Rig_healthy_face: 1529997596
+      Rig_healthy_face_blink: -525737426
+      Rig_healthy_face_effort: -1675668216
+      Rig_healthy_head: -1042718733
+      Rig_healthy_leaf: -132021957
+      Rig_healthy_leg: 418822752
+      Rig_healthy_torso: -1712929874
+      Rig_salo_arm: -839189526
+      Rig_salo_face: -745060610
+      Rig_salo_face_blink: -1931534487
+      Rig_salo_face_effort: -1893151128
+      Rig_salo_head: 1267669298
+      Rig_salo_leaf: -193740562
+      Rig_salo_leg: -1824147514
+      Rig_salo_torso: 1266464402
+      Rig_stable_arm: -465777963
+      Rig_stable_face: -747218175
+      Rig_stable_face_blink: 1682304393
+      Rig_stable_face_effort: -54815739
+      Rig_stable_head: -177113942
+      Rig_stable_leaf: -234706221
+      Rig_stable_leg: -1840512214
+      Rig_stable_torso: -44221907
+      Rig_tired_arm: 667698350
+      Rig_tired_face: -2039314428
+      Rig_tired_face_blink: -1280933477
+      Rig_tired_face_effort: 1216485299
+      Rig_tired_head: 875674651
+      Rig_tired_leaf: -1659138445
+      Rig_tired_leg: 998108198
+      Rig_tired_torso: 1614094402
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

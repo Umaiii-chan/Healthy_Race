@@ -15,9 +15,23 @@ namespace HealthyRace.Player
         [SerializeField, Min(0f)]
         private float _moveSpeed = 7f;
 
+        [Tooltip("Aceleração horizontal no chão (unidades/s²). No ar a resposta é imediata.")]
+        [SerializeField, Min(0f)]
+        private float _groundAcceleration = 90f;
+
+        [Tooltip("Tempo após sair de uma borda em que o pulo ainda é aceito.")]
+        [SerializeField, Min(0f)]
+        private float _coyoteTime = 0.1f;
+
+        [Tooltip("Tempo em que um pulo apertado antes de tocar o chão fica guardado.")]
+        [SerializeField, Min(0f)]
+        private float _jumpBufferTime = 0.12f;
+
         private PlayerGroundCheck _groundCheck;
         private bool _isMovementEnabled = true;
-        private bool _jumpRequested;
+        private float _coyoteTimer;
+        private float _jumpBufferTimer;
+        private bool _risingFromJump;
         private float _jumpMultiplier = 1f;
         private float _movementMultiplier = 1f;
         private Rigidbody2D _rigidbody;
@@ -31,6 +45,12 @@ namespace HealthyRace.Player
         public float MoveSpeed => _moveSpeed;
 
         public bool IsMovementEnabled => _isMovementEnabled;
+
+        public float CoyoteTime => _coyoteTime;
+
+        public float JumpBufferTime => _jumpBufferTime;
+
+        public float GroundAcceleration => _groundAcceleration;
 
         public float JumpMultiplier => _jumpMultiplier;
 
@@ -57,29 +77,56 @@ namespace HealthyRace.Player
 
             var isGrounded = _groundCheck.Refresh();
             var velocity = _rigidbody.linearVelocity;
+            var deltaTime = Time.fixedDeltaTime;
+
+            // Logo depois de pular o sensor de chão ainda enxerga o piso por um ou
+            // dois passos; sem esta trava a tolerância de borda viraria pulo duplo.
+            if (_risingFromJump && (velocity.y <= 0.01f || !isGrounded))
+            {
+                _risingFromJump = false;
+            }
+
+            _coyoteTimer =
+                isGrounded && !_risingFromJump
+                    ? _coyoteTime
+                    : Mathf.Max(0f, _coyoteTimer - deltaTime);
+            _jumpBufferTimer = Mathf.Max(0f, _jumpBufferTimer - deltaTime);
 
             if (_isMovementEnabled)
             {
-                velocity.x = MoveInput * _moveSpeed * _movementMultiplier;
+                var targetSpeed = MoveInput * _moveSpeed * _movementMultiplier;
+                velocity.x =
+                    isGrounded && _groundAcceleration > 0f
+                        ? Mathf.MoveTowards(
+                            velocity.x,
+                            targetSpeed,
+                            _groundAcceleration * deltaTime
+                        )
+                        : targetSpeed;
 
-                if (_jumpRequested && isGrounded)
+                var canJump = (isGrounded && !_risingFromJump) || _coyoteTimer > 0f;
+                if (_jumpBufferTimer > 0f && canJump)
                 {
                     velocity.y = _jumpVelocity * _jumpMultiplier;
+                    _jumpBufferTimer = 0f;
+                    _coyoteTimer = 0f;
+                    _risingFromJump = true;
                     Jumped?.Invoke();
                 }
             }
             else
             {
                 velocity.x = 0f;
+                _jumpBufferTimer = 0f;
             }
 
             _rigidbody.linearVelocity = velocity;
-            _jumpRequested = false;
         }
 
         public void RequestJump()
         {
-            _jumpRequested = true;
+            // Guarda o pedido por pelo menos um passo de física, mesmo com buffer zero.
+            _jumpBufferTimer = Mathf.Max(_jumpBufferTime, Time.fixedDeltaTime * 1.5f);
         }
 
         public void SetHorizontalInput(float horizontalInput)
@@ -93,7 +140,7 @@ namespace HealthyRace.Player
 
             if (!_isMovementEnabled)
             {
-                _jumpRequested = false;
+                _jumpBufferTimer = 0f;
             }
         }
 
