@@ -86,11 +86,13 @@ namespace HealthyRace.Player
                 _risingFromJump = false;
             }
 
-            _coyoteTimer =
-                isGrounded && !_risingFromJump
-                    ? _coyoteTime
-                    : Mathf.Max(0f, _coyoteTimer - deltaTime);
-            _jumpBufferTimer = Mathf.Max(0f, _jumpBufferTimer - deltaTime);
+            // As duas janelas só são consumidas no fim do passo, depois de o pulo
+            // ter tido a sua chance; descontar antes encurtaria cada uma em um passo.
+            var supported = isGrounded && !_risingFromJump;
+            if (supported)
+            {
+                _coyoteTimer = _coyoteTime;
+            }
 
             if (_isMovementEnabled)
             {
@@ -104,7 +106,7 @@ namespace HealthyRace.Player
                         )
                         : targetSpeed;
 
-                var canJump = (isGrounded && !_risingFromJump) || _coyoteTimer > 0f;
+                var canJump = supported || _coyoteTimer > 0f;
                 if (_jumpBufferTimer > 0f && canJump)
                 {
                     velocity.y = _jumpVelocity * _jumpMultiplier;
@@ -120,13 +122,19 @@ namespace HealthyRace.Player
                 _jumpBufferTimer = 0f;
             }
 
+            if (!supported)
+            {
+                _coyoteTimer = Mathf.Max(0f, _coyoteTimer - deltaTime);
+            }
+
+            _jumpBufferTimer = Mathf.Max(0f, _jumpBufferTimer - deltaTime);
             _rigidbody.linearVelocity = velocity;
         }
 
         public void RequestJump()
         {
-            // Guarda o pedido por pelo menos um passo de física, mesmo com buffer zero.
-            _jumpBufferTimer = Mathf.Max(_jumpBufferTime, Time.fixedDeltaTime * 1.5f);
+            // Mesmo com buffer zero o pedido sobrevive até o próximo passo de física.
+            _jumpBufferTimer = Mathf.Max(_jumpBufferTime, 0.0001f);
         }
 
         public void SetHorizontalInput(float horizontalInput)

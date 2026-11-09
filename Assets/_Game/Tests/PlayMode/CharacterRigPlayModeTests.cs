@@ -120,11 +120,59 @@ namespace HealthyRace.Tests.PlayMode
             var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
             var rig = bootstrap.PlayerOne.GetComponentInChildren<CharacterRig>();
 
+            Assert.That(rig.FaceSprite, Is.SameAs(rig.Skin.Face));
+
             rig.Blink();
             Assert.That(rig.IsBlinking, Is.True);
+            Assert.That(
+                rig.FaceSprite,
+                Is.SameAs(rig.Skin.FaceBlink),
+                "Olhos fechados na piscada."
+            );
 
             yield return new WaitForSeconds(0.3f);
             Assert.That(rig.IsBlinking, Is.False);
+            Assert.That(rig.FaceSprite, Is.SameAs(rig.Skin.Face), "Olhos abertos de novo.");
+        }
+
+        [UnityTest]
+        public IEnumerator Rig_ReduceMotionDuringABlink_ReopensTheEyes()
+        {
+            yield return LoadArena();
+            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var presentation = bootstrap.PlayerOne.GetComponentInChildren<PlayerPresentation>();
+            var rig = presentation.Rig;
+
+            rig.Blink();
+            Assert.That(rig.FaceSprite, Is.SameAs(rig.Skin.FaceBlink));
+
+            presentation.ReduceFlashes = true;
+            yield return null;
+            yield return null;
+
+            Assert.That(rig.ReduceMotion, Is.True);
+            Assert.That(
+                rig.FaceSprite,
+                Is.SameAs(rig.Skin.Face),
+                "Com movimento reduzido o personagem não pode ficar de olhos fechados."
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator Rig_WithoutAPlayer_StillHonoursReduceMotion()
+        {
+            yield return LoadArena();
+            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+
+            // rig solto, como na galeria: sem jogador nem movimento ligados
+            var loose = Object.Instantiate(bootstrap.PlayerOneVisualPrefab);
+            var presentation = loose.GetComponent<PlayerPresentation>();
+            presentation.ReduceFlashes = true;
+            yield return null;
+            yield return null;
+
+            Assert.That(presentation.Rig.ReduceMotion, Is.True);
+            Object.Destroy(loose);
         }
 
         [UnityTest]

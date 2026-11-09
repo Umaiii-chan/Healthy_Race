@@ -285,6 +285,12 @@ namespace HealthyRace.Visuals
         /// </summary>
         private bool UpdateRig()
         {
+            // antes de qualquer retorno: vale também para rigs soltos (galeria, menu)
+            if (_rig != null)
+            {
+                _rig.ReduceMotion = ReduceFlashes;
+            }
+
             if (_movement == null)
             {
                 _blockedFor = 0f;
@@ -296,7 +302,6 @@ namespace HealthyRace.Visuals
             var velocity = _movement.Velocity;
             if (_rig != null)
             {
-                _rig.ReduceMotion = ReduceFlashes;
                 _rig.Velocity = velocity;
                 _rig.SetFacing(input);
             }
