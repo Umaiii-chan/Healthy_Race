@@ -18,6 +18,47 @@ MonoBehaviour:
   - {fileID: -470792436, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -1653200035, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -850898946, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  Skins:
+  - Head: {fileID: -1042718733, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Face: {fileID: 1529997596, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceBlink: {fileID: -525737426, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceEffort: {fileID: -1675668216, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leaf: {fileID: -132021957, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Torso: {fileID: -1712929874, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Arm: {fileID: -503643729, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leg: {fileID: 418822752, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+  - Head: {fileID: -177113942, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Face: {fileID: -747218175, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceBlink: {fileID: 1682304393, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceEffort: {fileID: -54815739, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leaf: {fileID: -234706221, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Torso: {fileID: -44221907, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Arm: {fileID: -465777963, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leg: {fileID: -1840512214, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+  - Head: {fileID: 875674651, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Face: {fileID: -2039314428, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceBlink: {fileID: -1280933477, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceEffort: {fileID: 1216485299, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leaf: {fileID: -1659138445, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Torso: {fileID: 1614094402, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Arm: {fileID: 667698350, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leg: {fileID: 998108198, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+  - Head: {fileID: 1936868047, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Face: {fileID: -248407393, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceBlink: {fileID: 918715613, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceEffort: {fileID: 1819349721, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leaf: {fileID: 1158311201, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Torso: {fileID: -1975189349, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Arm: {fileID: -187545973, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leg: {fileID: -1080536565, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+  - Head: {fileID: 1267669298, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Face: {fileID: -745060610, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceBlink: {fileID: -1931534487, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    FaceEffort: {fileID: -1893151128, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leaf: {fileID: -193740562, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Torso: {fileID: 1266464402, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Arm: {fileID: -839189526, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+    Leg: {fileID: -1824147514, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
   Foods:
   - {fileID: 1721945217, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: 711178196, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}

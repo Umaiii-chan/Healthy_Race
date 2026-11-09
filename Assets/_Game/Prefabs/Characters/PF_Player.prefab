@@ -137,7 +137,7 @@ BoxCollider2D:
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 3e11e8e0d0bdc4449b03febe75205a75, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -279,3 +279,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Player.PlayerMovement
   _jumpVelocity: 12
   _moveSpeed: 7
+  _groundAcceleration: 90
+  _coyoteTime: 0.1
+  _jumpBufferTime: 0.12
