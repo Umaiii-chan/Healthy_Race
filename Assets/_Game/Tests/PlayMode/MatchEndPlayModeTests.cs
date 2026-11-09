@@ -79,9 +79,22 @@ namespace HealthyRace.Tests.PlayMode
                 "A primeira chegada deve abrir um prazo para o parceiro."
             );
 
-            controller.Tick(Phase1Bootstrap.PartnerWindowSeconds + 1f);
+            Assert.That(controller.FinalWindowDuration, Is.EqualTo(45f), "Prazo prometido: 45 s.");
 
+            controller.Tick(44f);
+            Assert.That(
+                controller.State,
+                Is.EqualTo(MatchCompletionState.WaitingForPartner),
+                "Antes dos 45 s a partida não pode encerrar."
+            );
+
+            controller.Tick(2f);
             Assert.That(controller.State, Is.EqualTo(MatchCompletionState.Concluded));
+            Assert.That(
+                controller.FinalResults.TotalDuration,
+                Is.GreaterThanOrEqualTo(46f),
+                "A duração inclui a espera pelo parceiro."
+            );
             Assert.That(controller.FinalResults.Player1.IsDnf, Is.False);
             Assert.That(controller.FinalResults.Player2.IsDnf, Is.True);
             Assert.That(
@@ -97,14 +110,77 @@ namespace HealthyRace.Tests.PlayMode
             yield return LoadArena();
             var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
             var controller = bootstrap.MatchController;
-            Assert.That(controller.TimeLimitSeconds, Is.GreaterThan(0f));
+            Assert.That(controller.TimeLimitSeconds, Is.EqualTo(300f), "Limite prometido: 5 min.");
 
-            controller.Tick(controller.TimeLimitSeconds + 1f);
+            controller.Tick(299f);
+            Assert.That(
+                controller.State,
+                Is.EqualTo(MatchCompletionState.Running),
+                "Antes dos 5 min a partida não pode encerrar."
+            );
 
+            controller.Tick(2f);
             Assert.That(controller.State, Is.EqualTo(MatchCompletionState.Concluded));
+            Assert.That(
+                controller.FinalResults.TotalDuration,
+                Is.GreaterThanOrEqualTo(300f),
+                "Sem nenhuma chegada a duração é o tempo de partida, não -1."
+            );
             Assert.That(controller.FinalResults.Player1.IsDnf, Is.True);
             Assert.That(controller.FinalResults.Player2.IsDnf, Is.True);
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator BothArrivedSeparately_WindowExpires_NobodyIsPenalized()
+        {
+            yield return LoadArena();
+            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var controller = bootstrap.MatchController;
+
+            // P1 chega, sai para ajudar; só então P2 chega. Nunca estão juntos.
+            Teleport(bootstrap.PlayerOne, bootstrap.PlayerOneDoor.transform.position);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Teleport(bootstrap.PlayerOne, new Vector2(8f, Phase1Bootstrap.Tier4Top + 0.7f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Teleport(bootstrap.PlayerTwo, bootstrap.PlayerTwoDoor.transform.position);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.WaitingForPartner));
+
+            controller.Tick(Phase1Bootstrap.PartnerWindowSeconds + 1f);
+
+            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.Concluded));
+            Assert.That(
+                controller.FinalResults.HasDnf,
+                Is.False,
+                "Quem já registrou chegada não é punido por ter saído da porta."
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator ResetMatch_RearmsFatigue()
+        {
+            yield return LoadArena();
+            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var wellbeing = bootstrap.PlayerOne.GetComponent<WellbeingComponent>();
+            var fatigue = bootstrap.PlayerOne.GetComponent<FatigueComponent>();
+
+            bootstrap.MatchController.ConcludeMatch();
+            Assert.That(fatigue.IsHalted, Is.True);
+
+            bootstrap.MatchController.ResetMatch();
+            Assert.That(fatigue.IsHalted, Is.False, "Partida nova: a fadiga volta a agir.");
+
+            wellbeing.SetValue(fatigue.TriggerThreshold + 1);
+            wellbeing.ApplyDelta(-5);
+            Assert.That(
+                fatigue.FatigueEpisodeCount,
+                Is.EqualTo(1),
+                "Cruzar o limiar depois do reinício dispara um episódio."
+            );
         }
 
         [UnityTest]

@@ -33,26 +33,36 @@ namespace HealthyRace.Core
             Time.timeScale = paused ? 0f : 1f;
         }
 
-        public static void LoadMenu()
+        public static bool LoadMenu()
         {
-            Load(MenuScene);
+            return TryLoad(MenuScene);
         }
 
-        public static void LoadLevel(int level)
+        /// <summary>
+        /// Carrega a fase pedida. <see cref="CurrentLevel"/> só muda se a cena existir
+        /// na build: uma carga recusada não deixa o jogo apontando para outra fase.
+        /// </summary>
+        public static bool LoadLevel(int level)
         {
-            CurrentLevel = Mathf.Clamp(level, 1, LevelCount);
-            Load(SceneForLevel(CurrentLevel));
+            var target = Mathf.Clamp(level, 1, LevelCount);
+            if (!TryLoad(SceneForLevel(target)))
+            {
+                return false;
+            }
+
+            CurrentLevel = target;
+            return true;
         }
 
-        public static void LoadNextLevel()
+        public static bool LoadNextLevel()
         {
-            LoadLevel(HasNextLevel ? CurrentLevel + 1 : CurrentLevel);
+            return LoadLevel(HasNextLevel ? CurrentLevel + 1 : CurrentLevel);
         }
 
         /// <summary>Recarrega a cena ativa: é o que garante estado inicial limpo.</summary>
-        public static void RestartLevel()
+        public static bool RestartLevel()
         {
-            Load(SceneManager.GetActiveScene().name);
+            return TryLoad(SceneManager.GetActiveScene().name);
         }
 
         public static void Quit()
@@ -65,11 +75,24 @@ namespace HealthyRace.Core
 #endif
         }
 
-        private static void Load(string sceneName)
+        /// <summary>
+        /// Carrega uma cena pelo nome. Se ela não estiver na build, registra o erro e
+        /// não mexe em nada: nem pausa, nem cena ativa.
+        /// </summary>
+        public static bool TryLoad(string sceneName)
         {
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                Debug.LogError(
+                    $"GameFlow: a cena '{sceneName}' não está na build; nada foi carregado."
+                );
+                return false;
+            }
+
             // Uma cena carregada com a partida pausada nasceria congelada.
             SetPaused(false);
             SceneManager.LoadScene(sceneName);
+            return true;
         }
     }
 }

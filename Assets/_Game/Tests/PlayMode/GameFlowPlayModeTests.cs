@@ -1,4 +1,8 @@
 using System.Collections;
+using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using HealthyRace.Audio;
 using HealthyRace.Core;
 using HealthyRace.Level;
 using HealthyRace.UI;
@@ -9,6 +13,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace HealthyRace.Tests.PlayMode
 {
@@ -86,12 +91,95 @@ namespace HealthyRace.Tests.PlayMode
             yield return Load(GameFlow.MenuScene);
             var menu = Object.FindFirstObjectByType<MainMenuBootstrap>();
 
-            menu.Screens.View.Request(VisualCommand.Play);
+            // clica no botão de verdade: um botão sem ouvinte tem de quebrar este teste
+            var play = menu
+                .Screens.View.ScreenRoot(VisualScreen.MainMenu)
+                .GetComponentsInChildren<Button>()
+                .Single(button => button.name == "JOGAR");
+            play.onClick.Invoke();
             yield return WaitForScene(GameFlow.SceneForLevel(1));
 
             Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(GameFlow.SceneForLevel(1)));
             Assert.That(Object.FindFirstObjectByType<Phase1Bootstrap>(), Is.Not.Null);
             Assert.That(GameFlow.CurrentLevel, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator EveryButton_EmitsItsSerializedCommand()
+        {
+            yield return Load(GameFlow.MenuScene);
+            var menu = Object.FindFirstObjectByType<MainMenuBootstrap>();
+
+            // Cópia das telas: tem os próprios ouvintes, mas ninguém do fluxo a
+            // escuta, então clicar em "Sair" ou "Jogar" aqui não troca de cena.
+            var copy = Object.Instantiate(menu.Screens.View.gameObject);
+            var view = copy.GetComponent<RaceScreenView>();
+            const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            var buttons = (Button[])
+                typeof(RaceScreenView).GetField("_buttons", flags).GetValue(view);
+            var commands = (VisualCommand[])
+                typeof(RaceScreenView).GetField("_commands", flags).GetValue(view);
+            Assert.That(buttons, Is.Not.Empty);
+            Assert.That(commands.Length, Is.EqualTo(buttons.Length));
+
+            VisualCommand? received = null;
+            view.CommandRequested += command => received = command;
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                Assert.That(buttons[i], Is.Not.Null, $"Botão {i} sem referência.");
+                received = null;
+                buttons[i].onClick.Invoke();
+                Assert.That(
+                    received,
+                    Is.EqualTo(commands[i]),
+                    $"O botão '{buttons[i].name}' deveria emitir {commands[i]}."
+                );
+            }
+
+            Object.Destroy(copy);
+        }
+
+        [UnityTest]
+        public IEnumerator SceneChange_KeepsTheAudioServiceAndSwitchesMusic()
+        {
+            yield return Load(GameFlow.MenuScene);
+            var service = AudioService.Instance;
+            Assert.That(
+                service.CurrentMusicClip,
+                Is.SameAs(service.GetClip(AudioClipId.Music_Menu))
+            );
+
+            Assert.That(GameFlow.LoadLevel(1), Is.True);
+            yield return WaitForScene(GameFlow.SceneForLevel(1));
+
+            Assert.That(
+                AudioService.Instance,
+                Is.SameAs(service),
+                "O serviço de áudio não pode ser destruído com a cena."
+            );
+            Assert.That(
+                service.CurrentMusicClip,
+                Is.SameAs(service.GetClip(AudioClipId.Music_Level01))
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator LoadingAMissingScene_ChangesNothing()
+        {
+            yield return Load(GameFlow.SceneForLevel(1));
+            GameFlow.LoadLevel(1);
+            yield return WaitForScene(GameFlow.SceneForLevel(1));
+            var screens = Object.FindFirstObjectByType<Phase1Bootstrap>().Screens;
+            screens.Pause();
+            var level = GameFlow.CurrentLevel;
+
+            LogAssert.Expect(LogType.Error, new Regex("não está na build"));
+            Assert.That(GameFlow.TryLoad("Cena_Que_Nao_Existe"), Is.False);
+            yield return null;
+
+            Assert.That(GameFlow.CurrentLevel, Is.EqualTo(level));
+            Assert.That(GameFlow.IsPaused, Is.True, "Carga recusada não mexe na pausa.");
+            Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(GameFlow.SceneForLevel(1)));
         }
 
         [UnityTest]
