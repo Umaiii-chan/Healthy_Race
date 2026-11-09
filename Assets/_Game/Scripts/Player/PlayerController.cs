@@ -98,6 +98,13 @@ namespace HealthyRace.Player
                 return;
             }
 
+            // Pausado não há FixedUpdate para consumir o pedido: um pulo apertado
+            // durante a pausa dispararia sozinho ao retomar.
+            if (Time.timeScale <= 0f)
+            {
+                return;
+            }
+
             _playerMovement.SetHorizontalInput(_playerInputReader.MoveInput.x);
 
             if (_playerInputReader.JumpPressed)

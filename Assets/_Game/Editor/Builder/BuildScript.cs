@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -22,11 +23,11 @@ namespace HealthyRace.Editor.Build
             }
 
             var buildPath = Path.Combine(buildFolder, "HealthyRace.exe");
-            var scenes = new[]
-            {
-                "Assets/_Game/Scenes/Phase1_CorridaDoEquilibrio.unity",
-                "Assets/_Game/Scenes/VerticalSlice_Core.unity",
-            };
+            // A lista de cenas tem uma fonte só: a Build Settings do projeto.
+            var scenes = EditorBuildSettings
+                .scenes.Where(scene => scene.enabled)
+                .Select(scene => scene.path)
+                .ToArray();
 
             var buildPlayerOptions = new BuildPlayerOptions
             {
