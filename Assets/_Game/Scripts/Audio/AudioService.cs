@@ -91,6 +91,14 @@ namespace HealthyRace.Audio
 
             _instance = this;
 
+            // Sobrevive à troca de cena: a música não recomeça a cada fase e o
+            // clique do botão que carregou a cena toca até o fim.
+            if (Application.isPlaying)
+            {
+                transform.SetParent(null);
+                DontDestroyOnLoad(gameObject);
+            }
+
             LoadSettings();
             EnsureSources();
             LoadClips();
