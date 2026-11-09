@@ -269,6 +269,8 @@ namespace HealthyRace.UI
         private static void ApplyReduceFlashes(bool reduce)
         {
             UiFloat.ReduceMotion = reduce;
+            ParallaxLayer.ReduceMotion = reduce;
+            MudBubbles.ReduceMotion = reduce;
             foreach (var p in FindObjectsByType<PlayerPresentation>(FindObjectsSortMode.None))
             {
                 p.ReduceFlashes = reduce;

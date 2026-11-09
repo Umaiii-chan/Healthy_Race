@@ -69,8 +69,13 @@ namespace HealthyRace.Level
         public const float ArenaMaxX = 32f;
         public const float ArenaMinY = 0f;
         public const float ArenaMaxY = 18f;
-        public const float CameraOrthographicSize = 9f;
-        public static readonly Vector3 CameraPosition = new(16f, 9f, -10f);
+
+        /// <summary>
+        /// A câmera enxerga um pouco além da arena: a faixa acima do teto (y &gt; 18)
+        /// é onde o HUD fica, sem cobrir nada jogável.
+        /// </summary>
+        public const float CameraOrthographicSize = 10.2f;
+        public static readonly Vector3 CameraPosition = new(16f, 9.9f, -10f);
 
         // ---------------------------------------------------------------------
         // Física da arena e intenção de projeto.
@@ -117,6 +122,12 @@ namespace HealthyRace.Level
         public const int ProgressMilestones = 5;
 
         private const float LedgeThickness = 0.6f;
+
+        /// <summary>Altura de linha das placas: 0,48 unidade, ~25 px em 1080p.</summary>
+        public const float SignCharacterSize = 0.075f;
+
+        /// <summary>Altura da bandeira de checkpoint; menor que o vão entre andares.</summary>
+        public const float CheckpointFlagHeight = 1.9f;
         private const float PlayerHalfHeight = 0.625f;
         private static readonly Vector2 PlayerOneSpawn = new(3.5f, Tier0Top + 0.7f);
         private static readonly Vector2 PlayerTwoSpawn = new(5.0f, Tier0Top + 0.7f);
@@ -167,6 +178,9 @@ namespace HealthyRace.Level
         private readonly List<ArenaSurface> _surfaces = new();
         private readonly List<ArenaLink> _cooperativeLinks = new();
         private readonly List<CooperativePuzzleController> _gates = new();
+        private readonly List<ParallaxLayer> _parallaxLayers = new();
+        private readonly List<GameObject> _debugLabels = new();
+        private bool _debugLabelsVisible;
         private readonly int[] _milestoneReached = new int[3];
 
         private FinishLine _playerOneDoor;
@@ -264,6 +278,7 @@ namespace HealthyRace.Level
 
             CreateBackground();
             CreateZones();
+            CreateSigns();
 
             _playerOne = CreatePlayer("P1", PlayerOneSpawn, 1);
             _playerTwo = CreatePlayer("P2", PlayerTwoSpawn, 2);
@@ -277,6 +292,41 @@ namespace HealthyRace.Level
 
             CreateSharedCamera(_playerOne.transform, _playerTwo.transform);
             CreateHud(_playerOneWellbeing, p1Fatigue, _playerTwoWellbeing, p2Fatigue);
+
+            foreach (var layer in _parallaxLayers)
+            {
+                layer.Bind(_cameraController.transform);
+            }
+
+            CollectDebugLabels();
+        }
+
+        /// <summary>Rótulos de depuração visíveis? Alterna com F1.</summary>
+        public bool DebugLabelsVisible => _debugLabelsVisible;
+
+        public int DebugLabelCount => _debugLabels.Count;
+
+        public void SetDebugLabelsVisible(bool visible)
+        {
+            _debugLabelsVisible = visible;
+            foreach (var label in _debugLabels)
+            {
+                if (label != null)
+                {
+                    label.SetActive(visible);
+                }
+            }
+        }
+
+        private void CollectDebugLabels()
+        {
+            _debugLabels.Clear();
+            foreach (var label in GetComponentsInChildren<DebugLabel>(true))
+            {
+                _debugLabels.Add(label.gameObject);
+            }
+
+            SetDebugLabelsVisible(false);
         }
 
         private void Start()
@@ -289,6 +339,12 @@ namespace HealthyRace.Level
             if (_matchHud != null)
             {
                 _matchHud.UpdateTimer(Time.timeSinceLevelLoad);
+            }
+
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard != null && keyboard.f1Key.wasPressedThisFrame)
+            {
+                SetDebugLabelsVisible(!_debugLabelsVisible);
             }
 
             UpdateProgress(1, _playerOne, _playerOneMovement, _playerOneHud, _playerOneDoor);
@@ -446,6 +502,12 @@ namespace HealthyRace.Level
             var bgParent = new GameObject("Background").transform;
             bgParent.SetParent(transform, false);
 
+            if (_visualCatalog != null && _visualCatalog.Arena.HasBackground)
+            {
+                CreateLayeredBackground(bgParent, _visualCatalog.Arena);
+                return;
+            }
+
             var bg = new GameObject("Sky");
             bg.transform.SetParent(bgParent, false);
             bg.transform.position = new Vector3(
@@ -463,6 +525,132 @@ namespace HealthyRace.Level
             renderer.sprite = PlaceholderSpriteFactory.Square;
             renderer.color = new Color(0.08f, 0.16f, 0.28f);
             renderer.sortingOrder = -10;
+        }
+
+        /// <summary>
+        /// Céu, nuvens, morros distantes, morros próximos e vegetação. Cada camada é
+        /// um <see cref="ParallaxLayer"/>: as nuvens deslizam sozinhas e, em fases
+        /// com rolagem, as camadas se separam em profundidade.
+        /// </summary>
+        private void CreateLayeredBackground(Transform parent, ArenaArt art)
+        {
+            var center = new Vector2((ArenaMinX + ArenaMaxX) * 0.5f, CameraPosition.y);
+            const float span = 52f;
+            const float CloudStartX = -8f;
+
+            var sky = BackgroundSprite("Ceu", parent, art.Sky, center, -30);
+            var skySize = art.Sky.bounds.size;
+            sky.transform.localScale = new Vector3(span / skySize.x, 24f / skySize.y, 1f);
+            AddLayer(sky, 1f, 0f, 0f);
+
+            var cloudSpots = new[]
+            {
+                new Vector3(3f, 16.6f, 1.5f),
+                new Vector3(13f, 13.4f, 1.1f),
+                new Vector3(24f, 17.2f, 1.3f),
+                new Vector3(33f, 14.6f, 1.6f),
+            };
+            for (var i = 0; i < cloudSpots.Length; i++)
+            {
+                var spot = cloudSpots[i];
+                var cloud = BackgroundSprite(
+                    "Nuvem" + (i + 1),
+                    parent,
+                    art.Clouds[i % art.Clouds.Length],
+                    // nasce fora da tela à esquerda e some fora à direita: nunca "pisca"
+                    new Vector2(CloudStartX, spot.y),
+                    -28
+                );
+                cloud.transform.localScale = Vector3.one * spot.z;
+                cloud.color = new Color(1f, 1f, 1f, 0.92f);
+                AddLayer(cloud, 0.95f, 0.12f + 0.05f * i, span, spot.x - CloudStartX);
+            }
+
+            TiledStrip(
+                "MorrosDistantes",
+                parent,
+                art.HillsFar,
+                center.x,
+                3.4f,
+                3.2f,
+                span,
+                -26,
+                0.85f
+            );
+            TiledStrip(
+                "MorrosProximos",
+                parent,
+                art.HillsNear,
+                center.x,
+                0.2f,
+                2.6f,
+                span,
+                -24,
+                0.7f
+            );
+            TiledStrip("Vegetacao", parent, art.Bushes, center.x, -0.6f, 2.2f, span, -22, 0.55f);
+        }
+
+        private SpriteRenderer BackgroundSprite(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            Vector2 position,
+            int order
+        )
+        {
+            var layer = new GameObject(name);
+            layer.transform.SetParent(parent, false);
+            layer.transform.position = new Vector3(position.x, position.y, 5f);
+            var renderer = layer.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sortingOrder = order;
+            if (_visualCatalog.SpriteMaterial != null)
+            {
+                renderer.sharedMaterial = _visualCatalog.SpriteMaterial;
+            }
+
+            return renderer;
+        }
+
+        /// <summary>Faixa repetida na horizontal, apoiada em <paramref name="bottomY"/>.</summary>
+        private void TiledStrip(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            float centerX,
+            float bottomY,
+            float scale,
+            float span,
+            int order,
+            float followFactor
+        )
+        {
+            var height = sprite.bounds.size.y;
+            var renderer = BackgroundSprite(
+                name,
+                parent,
+                sprite,
+                new Vector2(centerX, bottomY + height * scale * 0.5f),
+                order
+            );
+            renderer.drawMode = SpriteDrawMode.Tiled;
+            renderer.size = new Vector2(span / scale, height);
+            renderer.transform.localScale = new Vector3(scale, scale, 1f);
+            AddLayer(renderer, followFactor, 0f, 0f);
+        }
+
+        private void AddLayer(
+            SpriteRenderer renderer,
+            float followFactor,
+            float drift,
+            float wrap,
+            float phase = 0f
+        )
+        {
+            var layer = renderer.gameObject.AddComponent<ParallaxLayer>();
+            layer.Configure(null, followFactor, drift, wrap, phase);
+            _parallaxLayers.Add(layer);
         }
 
         // =====================================================================
@@ -838,7 +1026,7 @@ namespace HealthyRace.Level
                 new Vector2(26.5f, Tier4Top + 1.6f),
                 1,
                 "PORTA P1",
-                new Color(0.15f, 0.67f, 1f)
+                PlayerColor(1)
             );
             _playerTwoDoor = CreateFinishLineObject(
                 "Porta_P2",
@@ -846,7 +1034,7 @@ namespace HealthyRace.Level
                 new Vector2(30f, Tier4Top + 1.6f),
                 2,
                 "PORTA P2",
-                new Color(0.35f, 1f, 0.55f)
+                PlayerColor(2)
             );
 
             CreateWorldLabel(
@@ -1424,18 +1612,18 @@ namespace HealthyRace.Level
                 "PhaseTitle",
                 canvasObject.transform,
                 "CORRIDA DO EQUILÍBRIO — FASE 1",
-                24,
+                22,
                 FontStyle.Bold,
                 Color.white,
                 new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f),
-                new Vector2(0f, -18f),
-                new Vector2(560f, 32f),
+                new Vector2(0f, -8f),
+                new Vector2(560f, 28f),
                 TextAnchor.UpperCenter
             );
 
             _matchHud = new GameObject("Match HUD", typeof(RectTransform)).AddComponent<MatchHUD>();
-            _matchHud.Initialize(canvasObject.transform, new Vector2(0f, -54f));
+            _matchHud.Initialize(canvasObject.transform, new Vector2(0f, -38f));
 
             _playerOneHud = new GameObject(
                 "P1 HUD",
@@ -1444,12 +1632,12 @@ namespace HealthyRace.Level
             _playerOneHud.Initialize(
                 canvasObject.transform,
                 "P1",
-                new Color(0.15f, 0.67f, 1f),
+                PlayerColor(1),
                 p1Wb,
                 p1Fat,
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(22f, -20f)
+                new Vector2(16f, -10f)
             );
 
             _playerTwoHud = new GameObject(
@@ -1459,12 +1647,12 @@ namespace HealthyRace.Level
             _playerTwoHud.Initialize(
                 canvasObject.transform,
                 "P2",
-                new Color(0.35f, 1f, 0.55f),
+                PlayerColor(2),
                 p2Wb,
                 p2Fat,
                 new Vector2(1f, 1f),
                 new Vector2(1f, 1f),
-                new Vector2(-22f, -20f)
+                new Vector2(-16f, -10f)
             );
 
             // Com o prefab de telas, pausa e resultados vêm dele. Sem ele (cenas de
@@ -1887,6 +2075,10 @@ namespace HealthyRace.Level
 
             var mud = mudObj.AddComponent<MudHazard>();
             mud.Configure(speedMultiplier);
+            if (_visualCatalog != null && _visualCatalog.Ring != null)
+            {
+                mudObj.AddComponent<MudBubbles>().Configure(_visualCatalog.Ring, size.x, 0.1f);
+            }
             CreateWorldLabel(
                 "LAMA (-30%)",
                 mudObj.transform,
@@ -1955,8 +2147,6 @@ namespace HealthyRace.Level
 
             var flag = new GameObject("Flag");
             flag.transform.SetParent(cp.transform, false);
-            flag.transform.localPosition = new Vector2(0f, 0.8f);
-            flag.transform.localScale = new Vector3(0.8f, 1.8f, 1f);
 
             var sr = flag.AddComponent<SpriteRenderer>();
             if (
@@ -1974,6 +2164,8 @@ namespace HealthyRace.Level
             }
             sr.color = new Color(0.55f, 0.55f, 0.6f);
             sr.sortingOrder = 2;
+            // o gatilho fica centrado 1,2 acima do piso
+            StandOnSurface(flag.transform, sr.sprite, -1.2f, CheckpointFlagHeight);
 
             var checkpoint = cp.AddComponent<Checkpoint>();
             checkpoint.Configure(index, new Vector2(0f, 0.5f));
@@ -2134,13 +2326,18 @@ namespace HealthyRace.Level
         /// tamanho do sprite do atlas. Sem isso o BoxCollider2D auto-ajustado ao
         /// sprite ficaria maior que a geometria desenhada no projeto.
         /// </summary>
-        private static void FitSpriteToSize(
+        private void FitSpriteToSize(
             Transform target,
             SpriteRenderer renderer,
             BoxCollider2D collider,
             Vector2 size
         )
         {
+            if (TryFitTiled(target, renderer, collider, size))
+            {
+                return;
+            }
+
             var spriteSize = Vector2.one;
             if (renderer != null && renderer.sprite != null)
             {
@@ -2157,6 +2354,124 @@ namespace HealthyRace.Level
                 collider.offset = Vector2.zero;
                 collider.size = spriteSize;
             }
+        }
+
+        /// <summary>
+        /// Arte da arena é desenhada repetida, não esticada: chão e tábua mantêm as
+        /// pontas (começo, meio e fim), pedra repete nos dois eixos, espinhos e lama
+        /// repetem na largura e mantêm a própria altura.
+        /// </summary>
+        private bool TryFitTiled(
+            Transform target,
+            SpriteRenderer renderer,
+            BoxCollider2D collider,
+            Vector2 size
+        )
+        {
+            if (_visualCatalog == null || renderer == null || renderer.sprite == null)
+            {
+                return false;
+            }
+
+            var art = _visualCatalog.Arena;
+            var sprite = renderer.sprite;
+            var keepsHeight = sprite == art.Spikes || sprite == art.Mud;
+            if (!keepsHeight && sprite != art.Ground && sprite != art.Plank && sprite != art.Stone)
+            {
+                return false;
+            }
+
+            target.localScale = Vector3.one;
+            renderer.drawMode = SpriteDrawMode.Tiled;
+            renderer.size = keepsHeight ? new Vector2(size.x, sprite.bounds.size.y) : size;
+            if (collider != null)
+            {
+                collider.offset = Vector2.zero;
+                collider.size = size;
+            }
+
+            return true;
+        }
+
+        // ---------------------------------------------------------------------
+        // Placas: instruções curtas no mundo, com fundo de contraste. Tudo o que
+        // era texto solto virou rótulo de depuração (F1).
+        // ---------------------------------------------------------------------
+        private void CreateSigns()
+        {
+            var signs = CreateGroup("Placas");
+            CreateSign("ATALHO\nARRISCADO", signs, 8.6f, Tier0Top);
+            CreateSign("UM SEGURA\nOUTRO SOBE", signs, 20.5f, Tier0Top);
+            CreateSign("PUXE A\nALAVANCA", signs, 8.6f, Tier1Top);
+            CreateSign("CAIXA NO\nBOTÃO", signs, 14.5f, Tier2Top);
+            CreateSign("OS DOIS\nNAS PORTAS", signs, 22.5f, Tier4Top);
+        }
+
+        private void CreateSign(string text, Transform parent, float x, float surfaceY)
+        {
+            const float postHeight = 0.7f;
+            const float lineHeight = 0.5f;
+            const float characterWidth = 0.27f;
+
+            var lines = text.Split('\n');
+            var longest = 0;
+            foreach (var line in lines)
+            {
+                longest = Mathf.Max(longest, line.Length);
+            }
+
+            var boardSize = new Vector2(
+                longest * characterWidth + 0.7f,
+                lines.Length * lineHeight + 0.45f
+            );
+            var sign = new GameObject("Placa");
+            sign.transform.SetParent(parent, false);
+            sign.transform.position = new Vector3(x, surfaceY, 0f);
+
+            var post = new GameObject("Poste");
+            post.transform.SetParent(sign.transform, false);
+            post.transform.localPosition = new Vector3(0f, postHeight * 0.5f, 0f);
+            post.transform.localScale = new Vector3(0.16f, postHeight + 0.2f, 1f);
+            var postRenderer = post.AddComponent<SpriteRenderer>();
+            postRenderer.sprite = PlaceholderSpriteFactory.Square;
+            postRenderer.color = new Color(0.24f, 0.16f, 0.11f);
+            postRenderer.sortingOrder = -6;
+
+            var board = new GameObject("Tabua");
+            board.transform.SetParent(sign.transform, false);
+            board.transform.localPosition = new Vector3(0f, postHeight + boardSize.y * 0.5f, 0f);
+            var boardRenderer = board.AddComponent<SpriteRenderer>();
+            boardRenderer.sortingOrder = -5;
+            var art = _visualCatalog != null ? _visualCatalog.Arena.Sign : null;
+            if (art != null)
+            {
+                boardRenderer.sprite = art;
+                boardRenderer.drawMode = SpriteDrawMode.Sliced;
+                boardRenderer.size = boardSize;
+            }
+            else
+            {
+                boardRenderer.sprite = PlaceholderSpriteFactory.Square;
+                boardRenderer.color = new Color(0.29f, 0.2f, 0.14f);
+                board.transform.localScale = new Vector3(boardSize.x, boardSize.y, 1f);
+            }
+
+            var label = new GameObject("Texto", typeof(MeshRenderer));
+            label.transform.SetParent(sign.transform, false);
+            label.transform.localPosition = new Vector3(0f, postHeight + boardSize.y * 0.5f, 0f);
+            var textMesh = label.AddComponent<TextMesh>();
+            textMesh.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            textMesh.text = text;
+            textMesh.fontStyle = FontStyle.Bold;
+            // fonte grande com escala pequena: nítida, e ~24 px de altura em 1080p
+            textMesh.fontSize = 64;
+            textMesh.characterSize = SignCharacterSize;
+            textMesh.color = new Color(0.98f, 0.96f, 0.86f);
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            var renderer = label.GetComponent<MeshRenderer>();
+            renderer.material = textMesh.font.material;
+            renderer.sortingOrder = -4;
         }
 
         private Sprite GetEnvironmentSprite(StaticBlockKind kind)
@@ -2177,6 +2492,40 @@ namespace HealthyRace.Level
             return index < _visualCatalog.Environment.Length
                 ? _visualCatalog.Environment[index]
                 : null;
+        }
+
+        /// <summary>
+        /// Coloca um desenho de pé sobre um piso: escala uniforme para a altura
+        /// pedida e base encostada em <paramref name="surfaceLocalY"/>. Os desenhos
+        /// do atlas têm uma folga transparente embaixo, descontada aqui.
+        /// </summary>
+        private static void StandOnSurface(
+            Transform target,
+            Sprite sprite,
+            float surfaceLocalY,
+            float height
+        )
+        {
+            const float bottomPadding = 0.07f;
+            var spriteHeight = sprite != null ? sprite.bounds.size.y : 1f;
+            var scale = height / Mathf.Max(0.0001f, spriteHeight);
+            target.localScale = new Vector3(scale, scale, 1f);
+            var position = target.localPosition;
+            position.y = surfaceLocalY + height * 0.5f - height * bottomPadding;
+            target.localPosition = position;
+        }
+
+        /// <summary>Cor de identidade do jogador: a mesma no HUD, na porta e na etiqueta.</summary>
+        private Color PlayerColor(int playerIndex)
+        {
+            if (_visualCatalog != null)
+            {
+                return _visualCatalog.IdentityColor(playerIndex);
+            }
+
+            return playerIndex == 2
+                ? new Color(0.75f, 0.42f, 0.92f)
+                : new Color(0.19f, 0.56f, 0.94f);
         }
 
         private Sprite GetScenerySprite(SceneryKind kind)
@@ -2212,10 +2561,12 @@ namespace HealthyRace.Level
                 return;
             }
 
+            // `position` é o centro pretendido e `scale.y` a altura: o enfeite fica
+            // de pé sobre o piso, com a proporção original do desenho.
             var prop = new GameObject(propName);
             prop.transform.SetParent(parent, false);
-            prop.transform.position = position;
-            prop.transform.localScale = new Vector3(scale.x, scale.y, 1f);
+            prop.transform.position = new Vector3(position.x, 0f, 0f);
+            StandOnSurface(prop.transform, sprite, position.y - scale.y * 0.5f, scale.y);
 
             var sr = prop.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
@@ -2261,6 +2612,10 @@ namespace HealthyRace.Level
             return text;
         }
 
+        /// <summary>
+        /// Rótulo de depuração: nome de patamar, checkpoint, mecanismo. Nasce
+        /// escondido e aparece com F1. Instrução para o jogador é placa (CreateSign).
+        /// </summary>
         private static void CreateWorldLabel(
             string text,
             Transform parent,
@@ -2268,7 +2623,11 @@ namespace HealthyRace.Level
             Color color
         )
         {
-            var labelObject = new GameObject("WorldLabel", typeof(MeshRenderer));
+            var labelObject = new GameObject(
+                "WorldLabel",
+                typeof(MeshRenderer),
+                typeof(DebugLabel)
+            );
             labelObject.transform.SetParent(parent, false);
             labelObject.transform.localPosition = new Vector3(localPosition.x, localPosition.y, 0f);
             labelObject.transform.localScale = new Vector3(0.08f, 0.08f, 1f);

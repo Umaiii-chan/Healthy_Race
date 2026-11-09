@@ -166,7 +166,10 @@ namespace HealthyRace.Tests.PlayMode
         [UnityTest]
         public IEnumerator HUD_Layout_At1280x720_HasNoOverlapBetweenP1AndP2()
         {
-            var canvasGo = CreateCanvas(new Vector2(1280f, 720f));
+            // A fase usa CanvasScaler com referência 1920x1080 (ver Phase1Bootstrap.CreateHud);
+            // numa tela 1280x720 o canvas inteiro é escalado, então a conta que vale é
+            // a do espaço de referência.
+            var canvasGo = CreateCanvas(new Vector2(1920f, 1080f));
 
             var p1HudGo = new GameObject("P1 HUD", typeof(RectTransform));
             var p1Hud = p1HudGo.AddComponent<PlayerHUD>();
@@ -207,17 +210,15 @@ namespace HealthyRace.Tests.PlayMode
             var matchRect = (RectTransform)matchHudGo.transform;
             var p2Rect = (RectTransform)p2HudGo.transform;
 
-            // In 1280x720 reference space:
-            // P1: anchored (0, 1), pos (20, -20), size (280, 175) -> x spans 20 to 300
-            // Match: anchored (0.5, 1), pos (0, -20), size (280, 64) -> x spans (640-140)=500 to (640+140)=780
-            // P2: anchored (1, 1), pos (-20, -20), size (280, 175) -> x spans (1280-20-280)=980 to 1260
+            // No espaço de referência 1920x1080: P1 encostado à esquerda, relógio no
+            // centro (960) e P2 encostado à direita, cada um com a sua largura real.
 
             float p1Right = p1Rect.anchoredPosition.x + p1Rect.rect.width;
             float matchLeft =
-                640f + matchRect.anchoredPosition.x - (matchRect.rect.width * matchRect.pivot.x);
+                960f + matchRect.anchoredPosition.x - (matchRect.rect.width * matchRect.pivot.x);
             float matchRight = matchLeft + matchRect.rect.width;
             float p2Left =
-                1280f + p2Rect.anchoredPosition.x - (p2Rect.rect.width * (1f - p2Rect.pivot.x));
+                1920f + p2Rect.anchoredPosition.x - (p2Rect.rect.width * (1f - p2Rect.pivot.x));
 
             Assert.That(p1Right, Is.LessThan(matchLeft), "P1 HUD must not overlap with Match HUD.");
             Assert.That(matchRight, Is.LessThan(p2Left), "Match HUD must not overlap with P2 HUD.");

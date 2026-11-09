@@ -13,8 +13,8 @@ namespace HealthyRace.UI
     /// </summary>
     public sealed class PlayerHUD : MonoBehaviour
     {
-        private const float PanelWidth = 280f;
-        private const float PanelHeight = 175f;
+        private const float PanelWidth = 440f;
+        private const float PanelHeight = 98f;
 
         private string _playerLabel = "P1";
         private Color _accentColor = Color.white;
@@ -87,11 +87,11 @@ namespace HealthyRace.UI
                 "PlayerLabel",
                 transform,
                 _playerLabel,
-                22,
+                24,
                 FontStyle.Bold,
                 _accentColor,
-                new Vector2(14f, -8f),
-                new Vector2(120f, 26f),
+                new Vector2(14f, -6f),
+                new Vector2(70f, 30f),
                 TextAnchor.UpperLeft
             );
 
@@ -99,11 +99,11 @@ namespace HealthyRace.UI
                 "ScoreText",
                 transform,
                 "Pontos: 0",
-                16,
+                20,
                 FontStyle.Bold,
                 new Color(1f, 0.86f, 0.2f),
-                new Vector2(136f, -12f),
-                new Vector2(130f, 22f),
+                new Vector2(264f, -8f),
+                new Vector2(162f, 26f),
                 TextAnchor.UpperRight
             );
 
@@ -112,11 +112,11 @@ namespace HealthyRace.UI
                 "WellbeingValue",
                 transform,
                 string.Empty,
-                16,
+                17,
                 FontStyle.Normal,
                 Color.white,
-                new Vector2(14f, -34f),
-                new Vector2(252f, 22f),
+                new Vector2(88f, -11f),
+                new Vector2(176f, 24f),
                 TextAnchor.UpperLeft
             );
 
@@ -128,8 +128,8 @@ namespace HealthyRace.UI
                 14,
                 FontStyle.Normal,
                 new Color(0.85f, 0.92f, 1f),
-                new Vector2(14f, -54f),
-                new Vector2(252f, 20f),
+                new Vector2(14f, -58f),
+                new Vector2(134f, 20f),
                 TextAnchor.UpperLeft
             );
 
@@ -141,8 +141,8 @@ namespace HealthyRace.UI
             );
             ConfigureRect(
                 (RectTransform)barBackground.transform,
-                new Vector2(14f, -76f),
-                new Vector2(252f, 12f)
+                new Vector2(14f, -40f),
+                new Vector2(412f, 14f)
             );
 
             _fillImage = CreateImage("WellbeingFill", barBackground.transform, _accentColor);
@@ -157,11 +157,11 @@ namespace HealthyRace.UI
                 "FatigueState",
                 transform,
                 "Fadiga: Normal",
-                13,
+                14,
                 FontStyle.Normal,
                 new Color(0.82f, 0.9f, 1f),
-                new Vector2(14f, -94f),
-                new Vector2(130f, 20f),
+                new Vector2(150f, -58f),
+                new Vector2(142f, 20f),
                 TextAnchor.UpperLeft
             );
 
@@ -169,11 +169,11 @@ namespace HealthyRace.UI
                 "FatigueEpisodes",
                 transform,
                 "Episódios: 0",
-                13,
+                14,
                 FontStyle.Normal,
                 new Color(0.82f, 0.9f, 1f),
-                new Vector2(146f, -94f),
-                new Vector2(120f, 20f),
+                new Vector2(294f, -58f),
+                new Vector2(132f, 20f),
                 TextAnchor.UpperRight
             );
 
@@ -182,11 +182,11 @@ namespace HealthyRace.UI
                 "FoodCount",
                 transform,
                 "Alimentos: 0 (0 🥗 | 0 🍔)",
-                13,
+                14,
                 FontStyle.Normal,
                 new Color(0.9f, 0.95f, 0.85f),
-                new Vector2(14f, -116f),
-                new Vector2(252f, 20f),
+                new Vector2(14f, -76f),
+                new Vector2(250f, 18f),
                 TextAnchor.UpperLeft
             );
 
@@ -195,12 +195,12 @@ namespace HealthyRace.UI
                 "ProgressText",
                 transform,
                 "Progresso: 0%",
-                13,
+                14,
                 FontStyle.Normal,
                 new Color(0.75f, 0.85f, 0.95f),
-                new Vector2(14f, -138f),
-                new Vector2(252f, 20f),
-                TextAnchor.UpperLeft
+                new Vector2(270f, -76f),
+                new Vector2(156f, 18f),
+                TextAnchor.UpperRight
             );
 
             Bind(wellbeing, fatigue);

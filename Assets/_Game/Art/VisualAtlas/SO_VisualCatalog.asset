@@ -59,6 +59,21 @@ MonoBehaviour:
     Torso: {fileID: 1266464402, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
     Arm: {fileID: -839189526, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
     Leg: {fileID: -1824147514, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
+  Arena:
+    Sky: {fileID: 21300000, guid: 7e51ded1c687c1246ac3a40d2774aa47, type: 3}
+    Clouds:
+    - {fileID: 9079112485513640962, guid: 3881897e06277d944a2c103bd901b06a, type: 3}
+    - {fileID: 6138426472507333998, guid: 3881897e06277d944a2c103bd901b06a, type: 3}
+    - {fileID: -2300093071170549689, guid: 3881897e06277d944a2c103bd901b06a, type: 3}
+    HillsFar: {fileID: 21300000, guid: b588014d66d9a5d45ba8d28746ef8a85, type: 3}
+    HillsNear: {fileID: 21300000, guid: 398bc6d072d2a3946b60193e10ef3c04, type: 3}
+    Bushes: {fileID: 21300000, guid: c3d094e1bb656f147b5b1bd3b2539629, type: 3}
+    Ground: {fileID: 21300000, guid: 106e20b0d2b25484dbb9c1027040c90c, type: 3}
+    Plank: {fileID: 21300000, guid: e9e35e4b917725a4bb52fc3b35bf0b72, type: 3}
+    Stone: {fileID: 21300000, guid: df84d51bcee6cca44bcf80ebb5e7066b, type: 3}
+    Spikes: {fileID: 21300000, guid: 4af7ab137ae910243a9a8ff6995d4fda, type: 3}
+    Mud: {fileID: 21300000, guid: 5e13bde8478e3014faca382808cd58cf, type: 3}
+    Sign: {fileID: 21300000, guid: 66c7fddd6bae5bd40b74c713e00986e1, type: 3}
   Foods:
   - {fileID: 1721945217, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: 711178196, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
@@ -79,9 +94,9 @@ MonoBehaviour:
   - {fileID: -1703344869, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -635556594, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   Environment:
-  - {fileID: -1569562552, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
-  - {fileID: 1289057505, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
-  - {fileID: 231986610, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 21300000, guid: 106e20b0d2b25484dbb9c1027040c90c, type: 3}
+  - {fileID: 21300000, guid: e9e35e4b917725a4bb52fc3b35bf0b72, type: 3}
+  - {fileID: 21300000, guid: df84d51bcee6cca44bcf80ebb5e7066b, type: 3}
   - {fileID: -2078887954, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -961036084, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -1322321593, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
@@ -90,8 +105,8 @@ MonoBehaviour:
   - {fileID: 711173106, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: 1475173772, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -1142339061, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
-  - {fileID: 224527991, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
-  - {fileID: 2057899880, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  - {fileID: 21300000, guid: 4af7ab137ae910243a9a8ff6995d4fda, type: 3}
+  - {fileID: 21300000, guid: 5e13bde8478e3014faca382808cd58cf, type: 3}
   Background: {fileID: -4597459666837265003, guid: 8875450d6adf3b94fb4bb9795fcd6202, type: 3}
   PlayerAnimator: {fileID: 9100000, guid: fe6517c1337f1ef44be0adf64de060ea, type: 2}
   Particle: {fileID: 21300000, guid: b410977cd9255614e8d0e08aff44dc8e, type: 2}
