@@ -146,6 +146,13 @@ namespace HealthyRace.Level
         [SerializeField]
         private GameObject _playerTwoVisualPrefab;
 
+        [Header("Game Flow")]
+        [SerializeField]
+        private GameObject _screensPrefab;
+
+        [SerializeField]
+        private UnityEngine.InputSystem.InputActionAsset _inputActions;
+
         private readonly Dictionary<string, FoodData> _foodLookup = new();
         private readonly List<Checkpoint> _checkpoints = new();
         private readonly List<SpikeHazard> _spikes = new();
@@ -176,6 +183,7 @@ namespace HealthyRace.Level
         private PushableBox _gateThreeBox;
         private MatchCompletionController _matchController;
         private MatchResultsPanel _resultsPanel;
+        private GameScreens _screens;
         private Transform _levelParent;
 
         public IReadOnlyList<Checkpoint> Checkpoints => _checkpoints;
@@ -206,6 +214,9 @@ namespace HealthyRace.Level
         public CooperativePuzzleController FinalPuzzle => _gateTwo;
         public MatchCompletionController MatchController => _matchController;
         public MatchResultsPanel ResultsPanel => _resultsPanel;
+
+        /// <summary>Telas de pausa/resultados; nulo quando a cena não tem o prefab de telas.</summary>
+        public GameScreens Screens => _screens;
         public VisualCatalog VisualCatalog => _visualCatalog;
         public GameObject PlayerOneVisualPrefab => _playerOneVisualPrefab;
         public GameObject PlayerTwoVisualPrefab => _playerTwoVisualPrefab;
@@ -1450,9 +1461,17 @@ namespace HealthyRace.Level
                 new Vector2(-22f, -20f)
             );
 
-            var resultsPanelObj = new GameObject("Match Results Panel", typeof(RectTransform));
-            _resultsPanel = resultsPanelObj.AddComponent<MatchResultsPanel>();
-            _resultsPanel.Initialize(canvasObject.transform);
+            // Com o prefab de telas, pausa e resultados vêm dele. Sem ele (cenas de
+            // teste montadas à mão) fica o painel simples, agora com replay ligado.
+            _screens = GameScreens.Create(_screensPrefab, _inputActions, true, transform);
+            if (_screens == null)
+            {
+                GameScreens.EnsureEventSystem();
+                var resultsPanelObj = new GameObject("Match Results Panel", typeof(RectTransform));
+                _resultsPanel = resultsPanelObj.AddComponent<MatchResultsPanel>();
+                _resultsPanel.Initialize(canvasObject.transform);
+                _resultsPanel.ReplayRequested += GameFlow.RestartLevel;
+            }
 
             var matchControllerObj = new GameObject("MatchCompletionController");
             matchControllerObj.transform.SetParent(transform, false);
@@ -1483,7 +1502,37 @@ namespace HealthyRace.Level
                 {
                     AudioService.Instance.PlaySfx(AudioClipId.Sfx_Victory);
                 }
+
+                if (_screens != null)
+                {
+                    _screens.ShowResults(
+                        results.WinnerPlayerIndex == 0
+                            ? "EMPATE!"
+                            : $"P{results.WinnerPlayerIndex} VENCEU!",
+                        ToResultData(results.Player1, _playerOneHud, p1Fat),
+                        ToResultData(results.Player2, _playerTwoHud, p2Fat)
+                    );
+                }
             };
+        }
+
+        private static PlayerResultData ToResultData(
+            PlayerMatchResult result,
+            PlayerHUD hud,
+            FatigueComponent fatigue
+        )
+        {
+            var hudData = new PlayerHudData
+            {
+                Player = result.PlayerIndex,
+                Wellbeing = result.FinalWellbeing,
+                Score = result.Score.FinalScore,
+                HealthyFoods = hud != null ? hud.HealthyFoodCount : 0,
+                UltraProcessedFoods = hud != null ? hud.UltraProcessedFoodCount : 0,
+                FatigueEpisodes = fatigue != null ? fatigue.FatigueEpisodeCount : 0,
+                Progress = result.IsDnf ? 0f : 1f,
+            };
+            return result.Score.ToVisualResultData(hudData, result.FinishTime, !result.IsDnf);
         }
 
         private void OnDestroy()

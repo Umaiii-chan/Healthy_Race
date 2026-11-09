@@ -46,6 +46,7 @@ namespace HealthyRace.Visuals
         public event Action<float, float> AudioRequested;
         public event Action<bool> ReduceFlashesRequested;
         public VisualScreen Screen { get; private set; }
+        public bool IsHidden { get; private set; }
         public PlayerHudView[] Players => _players;
 
         public void Configure(
@@ -100,8 +101,39 @@ namespace HealthyRace.Visuals
         public void Show(VisualScreen screen)
         {
             Screen = screen;
+            IsHidden = false;
             for (var i = 0; i < _screens.Length; i++)
                 _screens[i].SetActive(i == (int)screen);
+        }
+
+        /// <summary>Esconde todas as telas (partida em andamento com HUD própria).</summary>
+        public void Hide()
+        {
+            IsHidden = true;
+            foreach (var screen in _screens)
+                screen.SetActive(false);
+        }
+
+        public GameObject ScreenRoot(VisualScreen screen)
+        {
+            var index = (int)screen;
+            return index >= 0 && index < _screens.Length ? _screens[index] : null;
+        }
+
+        /// <summary>Posiciona os controles de áudio sem disparar <see cref="AudioRequested"/>.</summary>
+        public void SetAudio(float music, float effects, bool reduceFlashes)
+        {
+            _music.SetValueWithoutNotify(music);
+            _effects.SetValueWithoutNotify(effects);
+            _reduceFlashes.SetIsOnWithoutNotify(reduceFlashes);
+        }
+
+        /// <summary>Mostra ou esconde todo botão que emite o comando informado.</summary>
+        public void SetCommandVisible(VisualCommand command, bool visible)
+        {
+            for (var i = 0; i < _buttons.Length; i++)
+                if (_commands[i] == command)
+                    _buttons[i].gameObject.SetActive(visible);
         }
 
         public void RenderRace(float elapsed, float progress, float? finalWindowRemaining)
