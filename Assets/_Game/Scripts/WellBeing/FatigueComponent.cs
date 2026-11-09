@@ -128,6 +128,22 @@ namespace HealthyRace.WellBeing
             );
         }
 
+        /// <summary>
+        /// Desfaz <see cref="Halt"/> para uma partida nova na mesma cena: a máquina
+        /// de fadiga recomeça do zero (sem episódio em curso nem contagem antiga).
+        /// </summary>
+        public void Resume()
+        {
+            if (!_halted)
+            {
+                return;
+            }
+
+            _halted = false;
+            _stateMachine = new FatigueStateMachine(_triggerThreshold, _rearmThreshold);
+            EnsureInitialized();
+        }
+
         private void Awake()
         {
             EnsureInitialized();

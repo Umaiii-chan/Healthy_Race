@@ -385,7 +385,9 @@ namespace HealthyRace.Level
 
         /// <summary>
         /// Encerra por tempo (janela das portas ou limite da partida): quem não
-        /// registrou chegada perde Bem-Estar e sai como DNF.
+        /// registrou chegada perde Bem-Estar e sai como DNF. Vale a chegada
+        /// registrada, não a presença na porta no instante do prazo: quem chegou e
+        /// saiu para ajudar o parceiro não é punido por ter ajudado.
         /// </summary>
         public void ConcludeWithPenalties()
         {
@@ -564,10 +566,25 @@ namespace HealthyRace.Level
                 Player1 = r1,
                 Player2 = r2,
                 WinnerPlayerIndex = winner,
-                TotalDuration = Mathf.Max(p1Time, p2Time),
+                // tempo de partida, não a última chegada: encerrar por prazo também conta
+                TotalDuration = Mathf.Max(_elapsed, Mathf.Max(p1Time, p2Time)),
                 HasDnf = r1.IsDnf || r2.IsDnf,
                 ScoreResult = scoreResult,
             };
+        }
+
+        private static void ResumeFatigue(GameObject player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            var fatigue = player.GetComponent<FatigueComponent>();
+            if (fatigue != null)
+            {
+                fatigue.Resume();
+            }
         }
 
         private static void HaltFatigue(GameObject player)
@@ -620,6 +637,8 @@ namespace HealthyRace.Level
         {
             _state = MatchCompletionState.Running;
             _elapsed = 0f;
+            ResumeFatigue(_playerOne);
+            ResumeFatigue(_playerTwo);
             _finalWindowTimeRemaining = 0f;
             _firstFinisherIndex = 0;
             _finalResults = default;
