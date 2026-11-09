@@ -52,6 +52,31 @@ namespace HealthyRace.Visuals
         Dust,
     }
 
+    /// <summary>Arte de cenário da arena: fundo em camadas, terreno, perigos e placa.</summary>
+    [Serializable]
+    public struct ArenaArt
+    {
+        public Sprite Sky;
+        public Sprite[] Clouds;
+        public Sprite HillsFar;
+        public Sprite HillsNear;
+        public Sprite Bushes;
+        public Sprite Ground;
+        public Sprite Plank;
+        public Sprite Stone;
+        public Sprite Spikes;
+        public Sprite Mud;
+        public Sprite Sign;
+
+        public bool HasBackground =>
+            Sky != null
+            && Clouds != null
+            && Clouds.Length > 0
+            && HillsFar != null
+            && HillsNear != null
+            && Bushes != null;
+    }
+
     [CreateAssetMenu(menuName = "Healthy Race/Visual Catalog")]
     public sealed class VisualCatalog : ScriptableObject
     {
@@ -59,6 +84,8 @@ namespace HealthyRace.Visuals
 
         /// <summary>Partes do personagem articulado, uma pele por estado de Bem-Estar.</summary>
         public CharacterSkin[] Skins = new CharacterSkin[5];
+
+        public ArenaArt Arena;
         public Sprite[] Foods = new Sprite[18];
         public Sprite[] Environment = new Sprite[13];
         public Sprite Background;

@@ -144,6 +144,8 @@ namespace HealthyRace.Editor.Visuals
             _catalog.Background = AssetDatabase.LoadAssetAtPath<Sprite>(
                 Root + "Art/Environment/Visual/SP_Background.png"
             );
+            // o terreno e os perigos da arena vêm da arte nova, quando ela existe
+            ApplyArenaArt();
             _catalog.Particle = CreateShape("SP_Spark", true);
             _catalog.Heart = CreateShape("SP_Heart", true);
             _catalog.Droplet = CreateShape("SP_Droplet", true);
