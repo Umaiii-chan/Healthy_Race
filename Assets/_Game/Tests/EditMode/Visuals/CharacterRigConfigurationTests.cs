@@ -95,11 +95,21 @@ namespace HealthyRace.Tests.Visuals
         public void RunClip_MovesLegsAndArmsNotJustTheWholeBody()
         {
             var move = Catalog().PlayerAnimator.animationClips.Single(c => c.name == "AN_VIS_Move");
-            var paths = AnimationUtility.GetCurveBindings(move).Select(b => b.path).Distinct();
-            Assert.That(paths, Has.Some.EndsWith("LegFront"));
-            Assert.That(paths, Has.Some.EndsWith("LegBack"));
-            Assert.That(paths, Has.Some.EndsWith("ArmFront"));
-            Assert.That(paths, Has.Some.EndsWith("ArmBack"));
+            var bindings = AnimationUtility.GetCurveBindings(move);
+            foreach (var limb in new[] { "LegFront", "LegBack", "ArmFront", "ArmBack" })
+            {
+                var rotation = bindings
+                    .Where(b =>
+                        b.path.EndsWith(limb) && b.propertyName.Contains("localEulerAngles")
+                    )
+                    .ToArray();
+                Assert.That(rotation, Is.Not.Empty, $"{limb} sem curva de rotação na corrida.");
+
+                // uma curva constante passaria num teste que só olha os caminhos
+                var keys = AnimationUtility.GetEditorCurve(move, rotation[0]).keys;
+                var swing = keys.Max(k => k.value) - keys.Min(k => k.value);
+                Assert.That(swing, Is.GreaterThan(30f), $"{limb} quase não se mexe na corrida.");
+            }
         }
 
         [Test]

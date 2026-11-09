@@ -95,6 +95,9 @@ namespace HealthyRace.Visuals
 
         public bool IsBlinking => Time.time < _blinkUntil;
 
+        /// <summary>Rosto desenhado agora (aberto, piscando ou de esforço).</summary>
+        public Sprite FaceSprite => _face != null ? _face.sprite : null;
+
         public float LeafAngle => _leafAngle;
 
         /// <summary>Desliga piscar e balanço (opção "reduzir flashes e tremores").</summary>
@@ -192,6 +195,13 @@ namespace HealthyRace.Visuals
         {
             if (ReduceMotion)
             {
+                // sem piscar: se a opção entrou no meio de uma piscada, reabre já
+                if (_blinkUntil > 0f)
+                {
+                    _blinkUntil = 0f;
+                    RefreshFace();
+                }
+
                 return;
             }
 
