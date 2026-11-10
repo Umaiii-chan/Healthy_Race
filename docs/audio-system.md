@@ -64,21 +64,23 @@ Para garantir execução robusta em pipelines de integração contínua (GitHub 
 
 ## Integração no Gameplay
 
-No `Phase1Bootstrap`:
+No `LevelBootstrap` (fases montadas a partir do mapa em texto):
 
 1. `Start()`: inicia `AudioClipId.Music_Level01`.
 2. Locomoção do jogador (`PlayerMovement.Jumped`): reproduz `Sfx_Jump`.
 3. Sistema de fadiga (`FatigueComponent.StateChanged`): reproduz `Sfx_Fatigue` ao fadigar.
 4. Bem-Estar (`WellbeingComponent.WellbeingChanged`): reproduz `Sfx_WellbeingUp` ou `Sfx_WellbeingDown`.
 5. Coleta de comida (`HandleFoodCollected`): reproduz `Sfx_PickupHealthy` ou `Sfx_PickupUltra`.
-6. Quebra-cabeça da Zona 5:
-   - Botão: `Sfx_Button`
-   - Alavanca: `Sfx_Lever`
-   - Porta: `Sfx_Door`
-   - Resolução: `Sfx_PuzzleSolved`
+6. Alavanca e portão: `Sfx_Lever` ao puxar e `Sfx_Door` quando o portão abre.
 7. Checkpoint: `Sfx_Checkpoint`.
 8. Chegada: `Sfx_Finish`.
 9. Encerramento de partida (`MatchCompletionController.MatchConcluded`): `Sfx_Victory` ou `Sfx_Tie`.
+
+---
+
+Em modo batch (testes automáticos, CI, build por linha de comando) a saída de som é
+zerada por `BatchModeMute` (`AudioListener.volume = 0`). Volumes, fontes e clipes continuam
+configurados, então os testes de áudio valem do mesmo jeito.
 
 ---
 

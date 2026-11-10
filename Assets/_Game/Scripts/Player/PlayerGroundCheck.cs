@@ -29,6 +29,12 @@ namespace HealthyRace.Player
 
         public bool IsGrounded { get; private set; }
 
+        /// <summary>Normal do piso sob o jogador; para cima quando não há piso.</summary>
+        public Vector2 GroundNormal { get; private set; } = Vector2.up;
+
+        /// <summary>Verdadeiro sobre rampa (piso inclinado, mas ainda caminhável).</summary>
+        public bool IsOnSlope => IsGrounded && GroundNormal.y < 0.98f && GroundNormal.y > 0.4f;
+
         private void Awake()
         {
             _collider = GetComponent<Collider2D>();
@@ -65,8 +71,9 @@ namespace HealthyRace.Player
                 return false;
             }
 
-            GetCheckBox(_collider.bounds, out var origin, out var size);
-            IsGrounded = Physics2D.BoxCast(
+            var bounds = _collider.bounds;
+            GetCheckBox(bounds, out var origin, out var size);
+            var hit = Physics2D.BoxCast(
                 origin,
                 size,
                 0f,
@@ -74,7 +81,47 @@ namespace HealthyRace.Player
                 _checkDistance,
                 _groundMask
             );
+            if (hit.collider == null)
+            {
+                // Na rampa de 45° só a quina do corpo toca o piso: sob a borda do
+                // sensor (mais estreito que o corpo) o piso fica mais longe que a
+                // distância de checagem. A folga extra vale só para piso inclinado.
+                var allowance = (bounds.size.x - size.x) * 0.5f + 0.02f;
+                var slopeHit = Physics2D.BoxCast(
+                    origin,
+                    size,
+                    0f,
+                    Vector2.down,
+                    _checkDistance + allowance,
+                    _groundMask
+                );
+                if (slopeHit.collider != null && IsWalkableSlope(slopeHit.normal))
+                {
+                    hit = slopeHit;
+                }
+            }
+
+            IsGrounded = hit.collider != null;
+            GroundNormal = IsGrounded ? hit.normal : Vector2.up;
             return IsGrounded;
+        }
+
+        private static bool IsWalkableSlope(Vector2 normal) => normal.y < 0.98f && normal.y > 0.4f;
+
+        /// <summary>
+        /// Distância até o piso logo abaixo, até <paramref name="maxDistance"/>; negativo
+        /// quando não há piso. Usado para manter o jogador colado na rampa.
+        /// </summary>
+        public float DistanceToGround(float maxDistance)
+        {
+            if (_collider == null)
+            {
+                return -1f;
+            }
+
+            GetCheckBox(_collider.bounds, out var origin, out var size);
+            var hit = Physics2D.BoxCast(origin, size, 0f, Vector2.down, maxDistance, _groundMask);
+            return hit.collider != null ? hit.distance : -1f;
         }
 
         private void GetCheckBox(Bounds bounds, out Vector2 origin, out Vector2 size)

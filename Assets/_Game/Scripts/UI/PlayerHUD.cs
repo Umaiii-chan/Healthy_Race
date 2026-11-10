@@ -13,8 +13,8 @@ namespace HealthyRace.UI
     /// </summary>
     public sealed class PlayerHUD : MonoBehaviour
     {
-        private const float PanelWidth = 440f;
-        private const float PanelHeight = 98f;
+        private const float PanelWidth = 560f;
+        private const float PanelHeight = 56f;
 
         private string _playerLabel = "P1";
         private Color _accentColor = Color.white;
@@ -90,20 +90,20 @@ namespace HealthyRace.UI
                 24,
                 FontStyle.Bold,
                 _accentColor,
-                new Vector2(14f, -6f),
-                new Vector2(70f, 30f),
+                new Vector2(12f, -2f),
+                new Vector2(52f, 30f),
                 TextAnchor.UpperLeft
             );
 
             _scoreText = CreateText(
                 "ScoreText",
                 transform,
-                "Pontos: 0",
+                "0 pts",
                 20,
                 FontStyle.Bold,
                 new Color(1f, 0.86f, 0.2f),
-                new Vector2(264f, -8f),
-                new Vector2(162f, 26f),
+                new Vector2(446f, -5f),
+                new Vector2(102f, 26f),
                 TextAnchor.UpperRight
             );
 
@@ -112,11 +112,11 @@ namespace HealthyRace.UI
                 "WellbeingValue",
                 transform,
                 string.Empty,
-                17,
+                16,
                 FontStyle.Normal,
                 Color.white,
-                new Vector2(88f, -11f),
-                new Vector2(176f, 24f),
+                new Vector2(66f, -7f),
+                new Vector2(110f, 22f),
                 TextAnchor.UpperLeft
             );
 
@@ -125,11 +125,11 @@ namespace HealthyRace.UI
                 "WellbeingBand",
                 transform,
                 string.Empty,
-                14,
+                13,
                 FontStyle.Normal,
                 new Color(0.85f, 0.92f, 1f),
-                new Vector2(14f, -58f),
-                new Vector2(134f, 20f),
+                new Vector2(12f, -34f),
+                new Vector2(150f, 18f),
                 TextAnchor.UpperLeft
             );
 
@@ -141,8 +141,8 @@ namespace HealthyRace.UI
             );
             ConfigureRect(
                 (RectTransform)barBackground.transform,
-                new Vector2(14f, -40f),
-                new Vector2(412f, 14f)
+                new Vector2(180f, -10f),
+                new Vector2(200f, 14f)
             );
 
             _fillImage = CreateImage("WellbeingFill", barBackground.transform, _accentColor);
@@ -157,23 +157,23 @@ namespace HealthyRace.UI
                 "FatigueState",
                 transform,
                 "Fadiga: Normal",
-                14,
+                13,
                 FontStyle.Normal,
                 new Color(0.82f, 0.9f, 1f),
-                new Vector2(150f, -58f),
-                new Vector2(142f, 20f),
+                new Vector2(166f, -34f),
+                new Vector2(150f, 18f),
                 TextAnchor.UpperLeft
             );
 
             _episodeText = CreateText(
                 "FatigueEpisodes",
                 transform,
-                "Episódios: 0",
-                14,
+                "Ep. 0",
+                13,
                 FontStyle.Normal,
                 new Color(0.82f, 0.9f, 1f),
-                new Vector2(294f, -58f),
-                new Vector2(132f, 20f),
+                new Vector2(320f, -34f),
+                new Vector2(70f, 18f),
                 TextAnchor.UpperRight
             );
 
@@ -181,25 +181,25 @@ namespace HealthyRace.UI
             _foodText = CreateText(
                 "FoodCount",
                 transform,
-                "Alimentos: 0 (0 🥗 | 0 🍔)",
-                14,
+                "Saud. 0 · Ultra 0",
+                13,
                 FontStyle.Normal,
                 new Color(0.9f, 0.95f, 0.85f),
-                new Vector2(14f, -76f),
-                new Vector2(250f, 18f),
-                TextAnchor.UpperLeft
+                new Vector2(394f, -34f),
+                new Vector2(154f, 18f),
+                TextAnchor.UpperRight
             );
 
             // Row 7: Race progress
             _progressText = CreateText(
                 "ProgressText",
                 transform,
-                "Progresso: 0%",
-                14,
+                "0%",
+                15,
                 FontStyle.Normal,
                 new Color(0.75f, 0.85f, 0.95f),
-                new Vector2(270f, -76f),
-                new Vector2(156f, 18f),
+                new Vector2(390f, -8f),
+                new Vector2(52f, 20f),
                 TextAnchor.UpperRight
             );
 
@@ -252,7 +252,7 @@ namespace HealthyRace.UI
             _score = score;
             if (_scoreText != null)
             {
-                _scoreText.text = $"Pontos: {_score}";
+                _scoreText.text = $"{_score} pts";
             }
         }
 
@@ -292,7 +292,7 @@ namespace HealthyRace.UI
             _progress = Mathf.Clamp01(progress01);
             if (_progressText != null)
             {
-                _progressText.text = $"Progresso: {Mathf.RoundToInt(_progress * 100f)}%";
+                _progressText.text = $"{Mathf.RoundToInt(_progress * 100f)}%";
             }
         }
 
@@ -389,7 +389,7 @@ namespace HealthyRace.UI
         {
             if (_bandText != null)
             {
-                _bandText.text = $"Faixa: {band?.DisplayName ?? "Sem faixa"}";
+                _bandText.text = band?.DisplayName ?? "Sem faixa";
             }
 
             if (band != null && _fillImage != null)
@@ -402,7 +402,7 @@ namespace HealthyRace.UI
         {
             if (_episodeText != null)
             {
-                _episodeText.text = $"Episódios: {episodeCount}";
+                _episodeText.text = $"Ep. {episodeCount}";
             }
         }
 
@@ -431,7 +431,7 @@ namespace HealthyRace.UI
         {
             if (_valueText != null)
             {
-                _valueText.text = $"Bem-estar: {currentValue} / {WellbeingComponent.MaximumValue}";
+                _valueText.text = $"{currentValue} / {WellbeingComponent.MaximumValue}";
             }
 
             if (_fillImage != null)
@@ -444,8 +444,7 @@ namespace HealthyRace.UI
         {
             if (_foodText != null)
             {
-                _foodText.text =
-                    $"Alimentos: {TotalFoodCount} ({_healthyFoodCount} 🥗 | {_ultraProcessedFoodCount} 🍔)";
+                _foodText.text = $"Saud. {_healthyFoodCount} · Ultra {_ultraProcessedFoodCount}";
             }
         }
     }

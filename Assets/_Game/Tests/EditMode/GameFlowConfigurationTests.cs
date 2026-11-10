@@ -98,7 +98,7 @@ namespace HealthyRace.Tests.EditMode
                 .path;
             EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
 
-            var bootstrap = UnityEngine.Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = UnityEngine.Object.FindFirstObjectByType<LevelBootstrap>();
             Assert.That(bootstrap, Is.Not.Null);
             var serialized = new SerializedObject(bootstrap);
             Assert.That(

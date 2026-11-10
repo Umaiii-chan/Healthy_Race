@@ -101,7 +101,7 @@ namespace HealthyRace.Tests.PlayMode
             var player = CreatePlayer(new Vector2(0f, 0.5f), 1);
             var movement = player.GetComponent<PlayerMovement>();
 
-            Assert.That(movement.MovementMultiplier, Is.EqualTo(1f).Within(0.01f));
+            Assert.That(movement.TerrainMultiplier, Is.EqualTo(1f).Within(0.01f));
 
             // Walk into mud
             movement.SetHorizontalInput(1f);
@@ -121,7 +121,7 @@ namespace HealthyRace.Tests.PlayMode
                 "Player should be recognized as affected by mud."
             );
             Assert.That(
-                movement.MovementMultiplier,
+                movement.TerrainMultiplier,
                 Is.EqualTo(0.7f).Within(0.01f),
                 "Speed multiplier should be 0.7 while in mud."
             );
@@ -142,7 +142,7 @@ namespace HealthyRace.Tests.PlayMode
                 "Player should no longer be in mud."
             );
             Assert.That(
-                movement.MovementMultiplier,
+                movement.TerrainMultiplier,
                 Is.EqualTo(1f).Within(0.01f),
                 "Speed multiplier should be restored to 1.0 after exiting mud."
             );

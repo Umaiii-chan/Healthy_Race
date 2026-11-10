@@ -105,7 +105,8 @@ namespace HealthyRace.Level
         public ScoreConfig ScoreConfig => _scoreConfig;
         public bool RequireBothAtDoors => _requireBothAtDoors;
         public FinishLine PlayerOneDoor => _finishLine;
-        public FinishLine PlayerTwoDoor => _requireBothAtDoors ? _secondFinishLine : _finishLine;
+        public FinishLine PlayerTwoDoor =>
+            _secondFinishLine != null ? _secondFinishLine : _finishLine;
 
         public event Action<int, float> PlayerFinished;
         public event Action<float> FinalWindowStarted;
@@ -191,9 +192,13 @@ namespace HealthyRace.Level
             }
         }
 
+        /// <summary>
+        /// Porta de cada jogador. Com duas portas, a segunda é sempre do P2 — exija
+        /// ou não os dois juntos nela.
+        /// </summary>
         private FinishLine GetDoor(int playerIndex)
         {
-            if (_requireBothAtDoors && playerIndex == 2)
+            if (playerIndex == 2 && _secondFinishLine != null)
             {
                 return _secondFinishLine;
             }

@@ -237,7 +237,8 @@ namespace HealthyRace.Tests.EditMode
                 var progressText = System.Array.Find(texts, t => t.name == "ProgressText");
 
                 Assert.That(scoreText.text, Does.Contain("200"));
-                Assert.That(foodText.text, Does.Contain("2"));
+                Assert.That(foodText.text, Does.Contain("Saud. 1"));
+                Assert.That(foodText.text, Does.Contain("Ultra 1"));
                 Assert.That(progressText.text, Does.Contain("65%"));
             }
             finally

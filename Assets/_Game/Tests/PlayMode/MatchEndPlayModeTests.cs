@@ -65,18 +65,19 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator PartnerWindow_Expires_ConcludesWithDnfForTheMissingPlayer()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var controller = bootstrap.MatchController;
             var p2Wellbeing = bootstrap.PlayerTwo.GetComponent<WellbeingComponent>();
 
             Teleport(bootstrap.PlayerOne, bootstrap.PlayerOneDoor.transform.position);
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
-            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.WaitingForPartner));
+            // corrida: a primeira chegada abre a contagem final para o outro
+            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.FinalCountdown));
             Assert.That(
                 controller.FinalWindowTimeRemaining,
                 Is.GreaterThan(0f),
-                "A primeira chegada deve abrir um prazo para o parceiro."
+                "A primeira chegada deve abrir um prazo para o outro jogador."
             );
 
             Assert.That(controller.FinalWindowDuration, Is.EqualTo(45f), "Prazo prometido: 45 s.");
@@ -84,7 +85,7 @@ namespace HealthyRace.Tests.PlayMode
             controller.Tick(44f);
             Assert.That(
                 controller.State,
-                Is.EqualTo(MatchCompletionState.WaitingForPartner),
+                Is.EqualTo(MatchCompletionState.FinalCountdown),
                 "Antes dos 45 s a partida não pode encerrar."
             );
 
@@ -108,7 +109,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator TimeLimit_WithNobodyAtTheDoors_ConcludesTheMatch()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var controller = bootstrap.MatchController;
             Assert.That(controller.TimeLimitSeconds, Is.EqualTo(300f), "Limite prometido: 5 min.");
 
@@ -132,25 +133,24 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator BothArrivedSeparately_WindowExpires_NobodyIsPenalized()
+        public IEnumerator BothArriveSeparately_SecondArrivalConcludes_NobodyIsPenalized()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var controller = bootstrap.MatchController;
 
-            // P1 chega, sai para ajudar; só então P2 chega. Nunca estão juntos.
+            // P1 chega e sai da porta; só então P2 chega. Nunca estão juntos, e na
+            // corrida não precisam: cada um termina sozinho.
             Teleport(bootstrap.PlayerOne, bootstrap.PlayerOneDoor.transform.position);
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
-            Teleport(bootstrap.PlayerOne, new Vector2(8f, Phase1Bootstrap.Tier4Top + 0.7f));
+            Teleport(bootstrap.PlayerOne, bootstrap.SpawnOne);
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
+            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.FinalCountdown));
             Teleport(bootstrap.PlayerTwo, bootstrap.PlayerTwoDoor.transform.position);
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
-            Assert.That(controller.State, Is.EqualTo(MatchCompletionState.WaitingForPartner));
-
-            controller.Tick(Phase1Bootstrap.PartnerWindowSeconds + 1f);
 
             Assert.That(controller.State, Is.EqualTo(MatchCompletionState.Concluded));
             Assert.That(
@@ -164,7 +164,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator ResetMatch_RearmsFatigue()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var wellbeing = bootstrap.PlayerOne.GetComponent<WellbeingComponent>();
             var fatigue = bootstrap.PlayerOne.GetComponent<FatigueComponent>();
 
@@ -187,7 +187,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Fatigue_InProgressWhenMatchConcludes_NeverUnfreezesThePlayer()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var player = bootstrap.PlayerOne;
             var wellbeing = player.GetComponent<WellbeingComponent>();
             var fatigue = player.GetComponent<FatigueComponent>();
