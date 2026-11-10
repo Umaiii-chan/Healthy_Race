@@ -35,6 +35,18 @@ namespace HealthyRace.Visuals
 
         [SerializeField]
         private PlayerController _controller;
+
+        [SerializeField]
+        private CharacterRig _rig;
+
+        private const float BlockedSecondsToPush = 0.08f;
+        private const float FeetOffset = 0.6f;
+        private const float ProbeDistance = 0.54f;
+        private static readonly Vector2 ProbeSize = new(0.14f, 0.6f);
+        private static readonly Collider2D[] ProbeHits = new Collider2D[8];
+
+        private PlayerMovement _movement;
+        private float _blockedFor;
         private float _actionUntil;
         private bool _terminal;
         private bool _subscribed;
@@ -46,6 +58,17 @@ namespace HealthyRace.Visuals
         public VisualAction Action => _action;
         public int PlayerIndex => _player;
         public int PresentationUpdates { get; private set; }
+        public CharacterRig Rig => _rig;
+
+        /// <summary>Verdadeiro enquanto o jogador anda contra algo sólido (caixa, parede).</summary>
+        public bool IsBlocked { get; private set; }
+
+        /// <summary>Liga o personagem articulado; sem ele vale o desenho único antigo.</summary>
+        public void ConfigureRig(CharacterRig rig)
+        {
+            _rig = rig;
+            PresentWellbeing(_lastWellbeing ?? 100);
+        }
 
         public void Configure(
             VisualCatalog catalog,
@@ -75,6 +98,7 @@ namespace HealthyRace.Visuals
             _wellbeing = wellbeing;
             _fatigue = fatigue;
             _controller = controller;
+            _movement = controller != null ? controller.GetComponent<PlayerMovement>() : null;
             if (isActiveAndEnabled)
                 Subscribe();
         }
@@ -124,7 +148,7 @@ namespace HealthyRace.Visuals
         public void PresentWellbeing(int value)
         {
             var next = VisualCatalog.AppearanceFor(value);
-            if (_catalog != null && _body != null)
+            if (_catalog != null && (_body != null || _rig != null))
             {
                 if (Application.isPlaying && Appearance != next)
                     VisualFeedback.Emit(
@@ -144,7 +168,10 @@ namespace HealthyRace.Visuals
                         transform.position,
                         ReduceFlashes
                     );
-                _body.sprite = _catalog.Character(next);
+                if (_rig != null && _catalog.TryGetSkin(next, out var skin))
+                    _rig.Apply(skin);
+                if (_body != null)
+                    _body.sprite = _catalog.Character(next);
             }
             Appearance = next;
             _lastWellbeing = value;
@@ -197,9 +224,30 @@ namespace HealthyRace.Visuals
                         ReduceFlashes
                     );
             }
+            var previous = _action;
             _action = action;
             if (_animator != null && _animator.runtimeAnimatorController != null)
                 _animator.SetInteger("Action", (int)action);
+            if (_rig != null)
+                _rig.SetExpression(
+                    action == VisualAction.Push
+                    || action == VisualAction.Jump
+                    || action == VisualAction.Interact
+                        ? CharacterExpression.Effort
+                        : CharacterExpression.Normal
+                );
+            // poeira nos dois contatos com o chão: a saída do pulo e a aterrissagem
+            if (
+                Application.isPlaying
+                && previous != action
+                && (action == VisualAction.Jump || action == VisualAction.Land)
+            )
+                VisualFeedback.Emit(
+                    _catalog,
+                    FeedbackKind.Dust,
+                    transform.position + Vector3.down * FeetOffset,
+                    ReduceFlashes
+                );
         }
 
         public void ResetPresentation()
@@ -212,6 +260,7 @@ namespace HealthyRace.Visuals
 
         private void LateUpdate()
         {
+            var blocked = UpdateRig();
             if (_controller == null || _terminal || _fatigued || Time.time < _actionUntil)
                 return;
             var state = _controller.CurrentState;
@@ -223,8 +272,64 @@ namespace HealthyRace.Visuals
                 PlayerState.Land => VisualAction.Land,
                 _ => VisualAction.Idle,
             };
+            // andando contra algo que não cede (caixa, parede): pose de empurrar
+            if (action == VisualAction.Move && blocked)
+                action = VisualAction.Push;
             if (_action != action)
                 Play(action, action == VisualAction.Land ? 0.12f : 0f);
+        }
+
+        /// <summary>
+        /// Repassa ao rig o que ele precisa do jogador (lado e velocidade) e diz se o
+        /// jogador está há algum tempo andando sem sair do lugar.
+        /// </summary>
+        private bool UpdateRig()
+        {
+            // antes de qualquer retorno: vale também para rigs soltos (galeria, menu)
+            if (_rig != null)
+            {
+                _rig.ReduceMotion = ReduceFlashes;
+            }
+
+            if (_movement == null)
+            {
+                _blockedFor = 0f;
+                IsBlocked = false;
+                return false;
+            }
+
+            var input = _movement.IsMovementEnabled ? _movement.MoveInput : 0f;
+            var velocity = _movement.Velocity;
+            if (_rig != null)
+            {
+                _rig.Velocity = velocity;
+                _rig.SetFacing(input);
+            }
+
+            var pushing = Mathf.Abs(input) > 0.5f && _movement.IsGrounded && HasSolidAhead(input);
+            _blockedFor = pushing ? _blockedFor + Time.deltaTime : 0f;
+            IsBlocked = _blockedFor >= BlockedSecondsToPush;
+            return IsBlocked;
+        }
+
+        /// <summary>Consulta (só leitura) se há algo sólido encostado na frente do jogador.</summary>
+        private bool HasSolidAhead(float direction)
+        {
+            var body = _movement.GetComponent<Rigidbody2D>();
+            var center =
+                (Vector2)_movement.transform.position
+                + new Vector2(Mathf.Sign(direction) * ProbeDistance, 0f);
+            var filter = new ContactFilter2D { useTriggers = false };
+            var count = Physics2D.OverlapBox(center, ProbeSize, 0f, filter, ProbeHits);
+            for (var i = 0; i < count; i++)
+            {
+                if (ProbeHits[i] != null && ProbeHits[i].attachedRigidbody != body)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

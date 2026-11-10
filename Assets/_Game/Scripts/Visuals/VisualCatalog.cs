@@ -49,12 +49,16 @@ namespace HealthyRace.Visuals
         Finish,
         Victory,
         Defeat,
+        Dust,
     }
 
     [CreateAssetMenu(menuName = "Healthy Race/Visual Catalog")]
     public sealed class VisualCatalog : ScriptableObject
     {
         public Sprite[] Characters = new Sprite[5];
+
+        /// <summary>Partes do personagem articulado, uma pele por estado de Bem-Estar.</summary>
+        public CharacterSkin[] Skins = new CharacterSkin[5];
         public Sprite[] Foods = new Sprite[18];
         public Sprite[] Environment = new Sprite[13];
         public Sprite Background;
@@ -133,6 +137,19 @@ namespace HealthyRace.Visuals
         public Color IdentityColor(int player) => player == 2 ? PlayerTwo : PlayerOne;
 
         public Sprite Character(WellbeingAppearance appearance) => Characters[(int)appearance];
+
+        public bool TryGetSkin(WellbeingAppearance appearance, out CharacterSkin skin)
+        {
+            var index = (int)appearance;
+            if (Skins != null && index >= 0 && index < Skins.Length && Skins[index].IsComplete)
+            {
+                skin = Skins[index];
+                return true;
+            }
+
+            skin = default;
+            return false;
+        }
 
         public Sprite Food(string id)
         {
