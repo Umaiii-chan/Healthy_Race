@@ -282,7 +282,8 @@ def decor(g):
 
 def level_file(g):
     """Arquivo lido pelo jogo: mapa (linha de cima primeiro), placas e enfeites."""
-    lines = ["; Fase 1 - Corrida do Equilíbrio. Gerado por tools/levels/fase01_map.py.", "[mapa]"]
+    lines = ["; Fase 1 - Corrida do Equilíbrio. Gerado por tools/levels/fase01_map.py.",
+             "[tema]", "numero 1", "nome Corrida do Equilíbrio", "tempo-alvo 130", "[mapa]"]
     lines += ["".join(g[y]) for y in range(H - 1, -1, -1)]
     lines.append("[placas]")
     lines += [f"{x} {y} {text}" for x, y, text in signs()]

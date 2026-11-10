@@ -14,25 +14,31 @@ Soma dos `BasePoints` definidos nos ScriptableObjects `FoodData` dos alimentos s
 
 $$\text{HealthyPoints} = \sum \text{BasePoints}_{\text{healthy}}$$
 
-### 2. Pontos de Puzzles Cooperativos (`PuzzlePoints`)
+### 2. Pontos de mecanismos (`PuzzlePoints`)
 
-Recompensa por puzzles cooperativos resolvidos (ex: Zona 5):
+Nas fases de corrida, cada alavanca puxada vale 150 pontos para quem a puxou (o jogador mais
+perto dela no momento). O portão fica aberto para os dois depois disso.
 
-$$\text{PuzzlePoints} = N_{\text{puzzles}} \times 150\text{ pts}$$
+$$\text{PuzzlePoints} = N_{\text{alavancas}} \times 150\text{ pts}$$
 
 ### 3. Bônus de Tempo (`TimeBonus`)
 
-Concedido se o jogador concluiu a prova dentro do tempo-alvo ($T \le 180\text{s}$):
+Cheio até o **tempo-alvo da fase** ($T_{alvo}$, `tempo-alvo` no `[tema]` do mapa; 180 s sem
+ele) e cai em linha reta até zero em $1{,}5 \times T_{alvo}$:
 
-$$\text{TimeBonus} = 600\text{ pts} \quad (\text{se } \text{Finished} \text{ e } T \le 180\text{s})$$
+$$\text{TimeBonus} = 600 \times \text{clamp}_{[0,1]}\left(1 - \frac{T - T_{alvo}}{0{,}5\,T_{alvo}}\right)$$
+
+Os tempos-alvo vêm do tempo do robô de testes no caminho longo de cada fase (100 s a 180 s).
 
 ### 4. Bônus de Chegada (`ArrivalBonus`)
 
-Ordem de chegada na faixa oficial:
+Nas fases de corrida (`ScoreConfig.CreateForRace`):
 
-- 1º Colocado: $+200\text{ pts}$
-- 2º Colocado (dentro da janela de 20s): $+100\text{ pts}$
-- DNF (Não concluiu): $0\text{ pts}$
+- 1º colocado: $+500\text{ pts}$
+- 2º colocado (dentro do prazo de 45 s): $+250\text{ pts}$
+- Não concluiu: $0\text{ pts}$
+
+O `ScoreConfig.CreateDefault` (200 / 100) continua valendo onde não há corrida.
 
 ### 5. Bônus de Bem-Estar Final (`WellbeingBonus`)
 

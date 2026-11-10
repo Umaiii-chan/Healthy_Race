@@ -24,8 +24,18 @@ namespace HealthyRace.Tests.EditMode
             "Assets/_Game/Prefabs/Collectibles/PF_FoodCollectible.prefab";
         private const string CatalogPath = "Assets/_Game/Art/VisualAtlas/SO_VisualCatalog.asset";
 
-        private static LevelGrid LoadGrid() =>
-            LevelGrid.Parse(AssetDatabase.LoadAssetAtPath<TextAsset>(MapPath).text);
+        /// <summary>Os mapas das 10 fases.</summary>
+        public static IEnumerable<string> Maps =>
+            Enumerable.Range(1, 10).Select(n => $"Assets/_Game/Levels/Fase{n:00}.txt");
+
+        private static LevelGrid LoadGrid() => LoadGrid(MapPath);
+
+        private static LevelGrid LoadGrid(string path)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+            Assert.That(asset, Is.Not.Null, $"mapa ausente: {path}");
+            return LevelGrid.Parse(asset.text);
+        }
 
         [Test]
         public void Scene_OpensWithoutMissingScripts_AndHasConfiguredBootstrap()
@@ -125,11 +135,11 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(grid.Signs.Count, Is.GreaterThanOrEqualTo(12), "placa em cada bifurcação");
         }
 
-        [Test]
-        public void Map_EveryStandingSpotHasHeadroom()
+        [TestCaseSource(nameof(Maps))]
+        public void Map_EveryStandingSpotHasHeadroom(string map)
         {
             // corpo de 1,25; com 1,5 de espaço livre ninguém fica preso (só não pula)
-            var grid = LoadGrid();
+            var grid = LoadGrid(map);
             var problems = new List<string>();
             for (var x = 1; x < grid.Width - 1; x++)
             for (var y = 1; y < grid.Height - 1; y++)
@@ -150,6 +160,51 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(problems, Is.Empty, string.Join(", ", problems));
         }
 
+        [TestCaseSource(nameof(Maps))]
+        public void Map_AnyLevel_IsClosed_HasSpawnsDoorsAndATheme(string map)
+        {
+            var grid = LoadGrid(map);
+            for (var x = 0; x < grid.Width; x++)
+            {
+                Assert.That(grid[x, 0], Is.EqualTo(LevelGrid.Solid));
+                Assert.That(grid[x, grid.Height - 1], Is.EqualTo(LevelGrid.Solid));
+            }
+
+            for (var y = 0; y < grid.Height; y++)
+            {
+                Assert.That(grid[0, y], Is.EqualTo(LevelGrid.Solid));
+                Assert.That(grid[grid.Width - 1, y], Is.EqualTo(LevelGrid.Solid));
+            }
+
+            Assert.That(grid.Count(LevelGrid.SpawnOne), Is.EqualTo(1));
+            Assert.That(grid.Count(LevelGrid.SpawnTwo), Is.EqualTo(1));
+            Assert.That(grid.Count(LevelGrid.DoorOne), Is.EqualTo(2));
+            Assert.That(grid.Count(LevelGrid.DoorTwo), Is.EqualTo(2));
+            Assert.That(grid.Count(LevelGrid.Fast), Is.GreaterThan(0));
+            Assert.That(grid.Count(LevelGrid.Healthy), Is.GreaterThan(0));
+            Assert.That(grid.LevelNumber, Is.InRange(1, 10));
+            Assert.That(grid.LevelName, Is.Not.Empty);
+        }
+
+        [Test]
+        public void Maps_AreTenDistinctLevels()
+        {
+            var grids = Maps.Select(LoadGrid).ToList();
+            Assert.That(grids.Select(g => g.LevelNumber), Is.EqualTo(Enumerable.Range(1, 10)));
+            Assert.That(grids.Select(g => g.LevelName).Distinct().Count(), Is.EqualTo(10));
+            var layouts = grids.Select(g =>
+                string.Join(
+                    "",
+                    Enumerable
+                        .Range(0, g.Height)
+                        .Select(y => new string(
+                            Enumerable.Range(0, g.Width).Select(x => g[x, y]).ToArray()
+                        ))
+                )
+            );
+            Assert.That(layouts.Distinct().Count(), Is.EqualTo(10), "nenhum mapa repetido");
+        }
+
         [Test]
         public void Map_HasThePlannedContent()
         {
@@ -161,10 +216,10 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(grid.Runs(LevelGrid.Lift).Count(), Is.EqualTo(5), "um elevador por virada");
         }
 
-        [Test]
-        public void Map_FastFoodOnlyInTheShortCorridor_HealthyOnlyOutsideIt()
+        [TestCaseSource(nameof(Maps))]
+        public void Map_FastFoodOnlyInTheShortCorridor_HealthyOnlyOutsideIt(string map)
         {
-            var grid = LoadGrid();
+            var grid = LoadGrid(map);
             foreach (var cell in grid.Cells(LevelGrid.Fast))
             {
                 Assert.That(grid.IsShortCorridor(cell.x, cell.y), Is.True, $"fast-food em {cell}");
@@ -192,20 +247,28 @@ namespace HealthyRace.Tests.EditMode
             );
         }
 
-        [TestCase(LevelGrid.SpawnOne, LevelGrid.DoorOne)]
-        [TestCase(LevelGrid.SpawnTwo, LevelGrid.DoorTwo)]
-        public void Routes_EachPlayerReachesTheOwnDoorAlone(char spawn, char door)
+        [TestCaseSource(nameof(Maps))]
+        public void Routes_EachPlayerReachesTheOwnDoorAlone(string map)
         {
-            var grid = LoadGrid();
-            var start = grid.Cells(spawn).Single();
-            var route = LevelRoutes.Find(grid, start, c => grid[c.x, c.y] == door);
-            Assert.That(route, Is.Not.Empty, $"sem rota de {spawn} até {door}");
+            var grid = LoadGrid(map);
+            foreach (
+                var (spawn, door) in new[]
+                {
+                    (LevelGrid.SpawnOne, LevelGrid.DoorOne),
+                    (LevelGrid.SpawnTwo, LevelGrid.DoorTwo),
+                }
+            )
+            {
+                var start = grid.Cells(spawn).Single();
+                var route = LevelRoutes.Find(grid, start, c => grid[c.x, c.y] == door);
+                Assert.That(route, Is.Not.Empty, $"sem rota de {spawn} até {door}");
+            }
         }
 
-        [Test]
-        public void Routes_LongPath_ReachesTheDoorWithoutEnteringTheShortCorridor()
+        [TestCaseSource(nameof(Maps))]
+        public void Routes_LongPath_ReachesTheDoorWithoutEnteringTheShortCorridor(string map)
         {
-            var grid = LoadGrid();
+            var grid = LoadGrid(map);
             var start = grid.Cells(LevelGrid.SpawnOne).Single();
             var route = LevelRoutes.Find(
                 grid,
@@ -216,10 +279,10 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(route, Is.Not.Empty, "o caminho longo precisa existir inteiro");
         }
 
-        [Test]
-        public void Routes_ShortPath_EachCorridorLeadsToTheDoor()
+        [TestCaseSource(nameof(Maps))]
+        public void Routes_ShortPath_EachCorridorLeadsToTheDoor(string map)
         {
-            var grid = LoadGrid();
+            var grid = LoadGrid(map);
             var corridors = grid.Cells(LevelGrid.Fast).ToList();
             Assert.That(corridors, Is.Not.Empty);
             foreach (var cell in corridors)
@@ -235,11 +298,11 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(toCorridor.Any(s => s.Move == RouteMove.Fall), Is.True);
         }
 
-        [Test]
-        public void Routes_TheShortCorridorCannotBeJumped()
+        [TestCaseSource(nameof(Maps))]
+        public void Routes_TheShortCorridorCannotBeJumped(string map)
         {
             // teto baixo: no corredor não há pulo, então o fast-food é inevitável
-            var grid = LoadGrid();
+            var grid = LoadGrid(map);
             foreach (var cell in grid.Cells(LevelGrid.Fast))
             {
                 var jumps = LevelRoutes

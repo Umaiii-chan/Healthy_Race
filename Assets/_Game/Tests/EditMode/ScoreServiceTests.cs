@@ -293,5 +293,42 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(match.IsTie, Is.True);
             Assert.That(match.Reason, Is.EqualTo(TieBreakReason.AbsoluteTie));
         }
+
+        [Test]
+        public void TimeBonus_IsFullUntilTheTarget_ThenFallsLinearlyToZeroAtOneAndAHalf()
+        {
+            var config = ScoreConfig.CreateForRace(100f);
+            int Bonus(float time) =>
+                ScoreService
+                    .CalculatePlayerScore(
+                        new ScoreInput
+                        {
+                            PlayerIndex = 1,
+                            FinishTime = time,
+                            Finished = true,
+                            ArrivalPlacement = 1,
+                        },
+                        config
+                    )
+                    .TimeBonus;
+
+            Assert.That(Bonus(90f), Is.EqualTo(config.MaxTimeBonus));
+            Assert.That(Bonus(100f), Is.EqualTo(config.MaxTimeBonus));
+            Assert.That(Bonus(125f), Is.EqualTo(config.MaxTimeBonus / 2));
+            Assert.That(Bonus(150f), Is.EqualTo(0));
+            Assert.That(Bonus(400f), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void RaceConfig_RewardsArrivingFirst_AndKeepsTheOtherDefaults()
+        {
+            var race = ScoreConfig.CreateForRace(140f);
+            var basic = ScoreConfig.CreateDefault();
+            Assert.That(race.FirstPlaceArrivalBonus, Is.EqualTo(500));
+            Assert.That(race.SecondPlaceArrivalBonus, Is.EqualTo(250));
+            Assert.That(race.TargetTimeSeconds, Is.EqualTo(140f));
+            Assert.That(race.UltraPenaltyPerItem, Is.EqualTo(basic.UltraPenaltyPerItem));
+            Assert.That(race.PointsPerPuzzle, Is.EqualTo(basic.PointsPerPuzzle));
+        }
     }
 }

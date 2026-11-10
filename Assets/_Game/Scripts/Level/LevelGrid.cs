@@ -80,12 +80,40 @@ namespace HealthyRace.Level
         private readonly char[,] _cells;
         private readonly List<LevelSign> _signs;
         private readonly List<LevelDecor> _decor;
+        private readonly Dictionary<string, string> _theme;
 
-        private LevelGrid(char[,] cells, List<LevelSign> signs, List<LevelDecor> decor)
+        private LevelGrid(
+            char[,] cells,
+            List<LevelSign> signs,
+            List<LevelDecor> decor,
+            Dictionary<string, string> theme
+        )
         {
             _cells = cells;
             _signs = signs;
             _decor = decor;
+            _theme = theme;
+        }
+
+        /// <summary>Seção <c>[tema]</c>: <c>numero</c>, <c>nome</c> e cores (<c>#RRGGBB</c>).</summary>
+        public IReadOnlyDictionary<string, string> Theme => _theme;
+
+        public int LevelNumber =>
+            _theme.TryGetValue("numero", out var value)
+            && int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n)
+                ? n
+                : 0;
+
+        public string LevelName => _theme.TryGetValue("nome", out var value) ? value : string.Empty;
+
+        /// <summary>Cor do tema, ou <paramref name="fallback"/> se a chave falta ou é inválida.</summary>
+        public Color ThemeColor(string key, Color fallback)
+        {
+            return
+                _theme.TryGetValue(key, out var value)
+                && ColorUtility.TryParseHtmlString(value, out var color)
+                ? color
+                : fallback;
         }
 
         public int Width => _cells.GetLength(0);
@@ -120,6 +148,7 @@ namespace HealthyRace.Level
             var rows = new List<string>();
             var signs = new List<LevelSign>();
             var decor = new List<LevelDecor>();
+            var theme = new Dictionary<string, string>();
             var section = string.Empty;
             foreach (var raw in text.Replace("\r", string.Empty).Split('\n'))
             {
@@ -145,6 +174,14 @@ namespace HealthyRace.Level
                         break;
                     case "enfeites":
                         decor.Add(ParseDecor(line));
+                        break;
+                    case "tema":
+                        var parts = line.Split(new[] { ' ' }, 2);
+                        if (parts.Length == 2)
+                        {
+                            theme[parts[0].Trim().ToLowerInvariant()] = parts[1].Trim();
+                        }
+
                         break;
                 }
             }
@@ -172,7 +209,7 @@ namespace HealthyRace.Level
                 }
             }
 
-            return new LevelGrid(cells, signs, decor);
+            return new LevelGrid(cells, signs, decor, theme);
         }
 
         private static LevelSign ParseSign(string line)

@@ -22,7 +22,36 @@ namespace HealthyRace.Editor.Build
         [MenuItem("Healthy Race/Evidence/Capture Level 01")]
         public static void Capture()
         {
-            EditorSceneManager.OpenScene(ScenePath);
+            CaptureScene(ScenePath, OutputPath, "fase-inteira", quarters: true);
+            Debug.Log("LEVEL_EVIDENCE_COMPLETE: 5 PNG renders saved.");
+        }
+
+        /// <summary>Uma imagem da fase inteira para cada uma das 10 fases.</summary>
+        [MenuItem("Healthy Race/Evidence/Capture all levels")]
+        public static void CaptureAll()
+        {
+            var levels = HealthyRace.Editor.Visuals.VisualAssetBuilder.LevelScenes;
+            for (var i = 0; i < levels.Length; i++)
+            {
+                CaptureScene(
+                    levels[i].Scene,
+                    "docs/evidence/fases",
+                    $"fase-{i + 1:00}",
+                    quarters: false
+                );
+            }
+
+            Debug.Log($"LEVEL_EVIDENCE_COMPLETE: {levels.Length} level overviews saved.");
+        }
+
+        private static void CaptureScene(
+            string scenePath,
+            string folder,
+            string wholeName,
+            bool quarters
+        )
+        {
+            EditorSceneManager.OpenScene(scenePath);
             var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             // Awake muda a gravidade e o frame rate; no editor isso iria para o
             // ProjectSettings, então os dois voltam ao fim da captura.
@@ -33,7 +62,7 @@ namespace HealthyRace.Editor.Build
                 typeof(LevelBootstrap)
                     .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
                     .Invoke(bootstrap, null);
-                CaptureViews(bootstrap);
+                CaptureViews(bootstrap, folder, wholeName, quarters);
             }
             finally
             {
@@ -42,7 +71,12 @@ namespace HealthyRace.Editor.Build
             }
         }
 
-        private static void CaptureViews(LevelBootstrap bootstrap)
+        private static void CaptureViews(
+            LevelBootstrap bootstrap,
+            string folder,
+            string wholeName,
+            bool quarters
+        )
         {
             var world = bootstrap.CameraController.GetComponent<Camera>();
             var canvas = bootstrap.PlayerOneHud.GetComponentInParent<Canvas>();
@@ -64,7 +98,7 @@ namespace HealthyRace.Editor.Build
             ui.clearFlags = CameraClearFlags.SolidColor;
             ui.backgroundColor = new Color(0f, 0f, 0f, 0f);
 
-            Directory.CreateDirectory(OutputPath);
+            Directory.CreateDirectory(folder);
             var grid = bootstrap.Grid;
 
             // fase inteira, sem HUD: 64×36 cabe exatamente em 16:9
@@ -72,9 +106,16 @@ namespace HealthyRace.Editor.Build
                 world,
                 Size,
                 new Vector2(grid.Width, grid.Height) * 0.5f,
-                grid.Height * 0.5f
+                // cabe na altura ou na largura (fases largas)
+                Mathf.Max(grid.Height * 0.5f, grid.Width * 0.5f * Size.y / Size.x)
             );
-            Save(whole, "fase-inteira");
+            Save(whole, folder, wholeName);
+            if (!quarters)
+            {
+                Object.DestroyImmediate(whole);
+                Object.DestroyImmediate(ui.gameObject);
+                return;
+            }
 
             // quartos, como o jogo mostra: mundo abaixo da faixa do HUD, HUD por cima
             var band = Mathf.RoundToInt(LevelBootstrap.HudBandPixels);
@@ -94,14 +135,13 @@ namespace HealthyRace.Editor.Build
                 var x = i % 2 == 0 ? half * aspect : grid.Width - half * aspect;
                 var y = i < 2 ? half : grid.Height - half;
                 var view = RenderWorld(world, worldSize, new Vector2(x, y), half);
-                Save(Compose(view, hud), names[i]);
+                Save(Compose(view, hud), folder, names[i]);
                 Object.DestroyImmediate(view);
             }
 
             Object.DestroyImmediate(hud);
             Object.DestroyImmediate(whole);
             Object.DestroyImmediate(ui.gameObject);
-            Debug.Log("LEVEL_EVIDENCE_COMPLETE: 5 PNG renders saved.");
         }
 
         private static Texture2D RenderWorld(
@@ -161,9 +201,9 @@ namespace HealthyRace.Editor.Build
             return result;
         }
 
-        private static void Save(Texture2D texture, string name)
+        private static void Save(Texture2D texture, string folder, string name)
         {
-            File.WriteAllBytes($"{OutputPath}/{name}.png", texture.EncodeToPNG());
+            File.WriteAllBytes($"{folder}/{name}.png", texture.EncodeToPNG());
         }
     }
 }

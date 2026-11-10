@@ -47,10 +47,10 @@ namespace HealthyRace.Tests.PlayMode
             Physics2D.gravity = _originalGravity;
         }
 
-        private static IEnumerator LoadLevel()
+        private static IEnumerator LoadLevel(int level = 1)
         {
             var loadOp = SceneManager.LoadSceneAsync(
-                GameFlow.SceneForLevel(1),
+                GameFlow.SceneForLevel(level),
                 LoadSceneMode.Single
             );
             while (!loadOp.isDone)
@@ -179,6 +179,11 @@ namespace HealthyRace.Tests.PlayMode
             Teleport(player, lever.transform.position);
             yield return new WaitForSeconds(0.3f);
             Assert.That(lever.IsActivated, Is.True);
+            Assert.That(
+                bootstrap.MatchController.PuzzlesSolvedBy(1),
+                Is.EqualTo(1),
+                "quem puxa a alavanca ganha os pontos do mecanismo"
+            );
             Assert.That(gate.IsOpen, Is.False, "o portão demora para abrir");
 
             yield return new WaitForSeconds(LevelBootstrap.GateOpenDelay + 0.2f);
@@ -189,9 +194,15 @@ namespace HealthyRace.Tests.PlayMode
         // Corrida inteira
         // =====================================================================
         [UnityTest]
-        public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_AtFullWellbeing()
+        public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_AtFullWellbeing(
+            [Values(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)] int level
+        )
         {
-            yield return Race(startingWellbeing: -1, label: "bem-estar cheio");
+            yield return Race(
+                level,
+                startingWellbeing: -1,
+                label: $"fase {level}, bem-estar cheio"
+            );
             // o atalho cobra no tempo: comendo todo o fast-food, o curto chega depois
             Assert.That(
                 _times[1],
@@ -226,7 +237,7 @@ namespace HealthyRace.Tests.PlayMode
         [UnityTest]
         public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_FromZeroWellbeing()
         {
-            yield return Race(startingWellbeing: 0, label: "bem-estar zero");
+            yield return Race(1, startingWellbeing: 0, label: "fase 1, bem-estar zero");
         }
 
         /// <summary>
@@ -234,9 +245,9 @@ namespace HealthyRace.Tests.PlayMode
         /// O tempo de jogo avança em passos fixos, então o teste roda mais rápido que
         /// o relógio e os tempos medidos são os do jogo.
         /// </summary>
-        private IEnumerator Race(int startingWellbeing, string label)
+        private IEnumerator Race(int level, int startingWellbeing, string label)
         {
-            yield return LoadLevel();
+            yield return LoadLevel(level);
             var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var grid = bootstrap.Grid;
             var longRoute = LevelRoutes.Find(
@@ -267,7 +278,14 @@ namespace HealthyRace.Tests.PlayMode
                     bootstrap.PlayerTwo,
                     shortRoute,
                     "P2 curto",
-                    c => LevelRoutes.Find(grid, c, d => grid[d.x, d.y] == LevelGrid.DoorTwo)
+                    // desviado, continua comendo o fast-food que falta: é a rota do curto
+                    c =>
+                        ShortRoute(
+                            grid,
+                            c,
+                            RemainingFastFood(bootstrap).Where(f => (f.y - 1) / 6 >= (c.y - 1) / 6),
+                            strict: false
+                        )
                 ),
             };
             var doors = new[] { bootstrap.PlayerOneDoor, bootstrap.PlayerTwoDoor };
@@ -302,12 +320,25 @@ namespace HealthyRace.Tests.PlayMode
             }
 
             Time.captureDeltaTime = 0f;
+            yield return null;
+            var results = bootstrap.MatchController.FinalResults;
+            Debug.Log(
+                $"PONTOS ({label}): longo {results.Player1.Score.FinalScore} "
+                    + $"(saudáveis {results.Player1.Score.HealthyPoints}, mecanismos {results.Player1.Score.PuzzlePoints}, "
+                    + $"tempo {results.Player1.Score.TimeBonus}, chegada {results.Player1.Score.ArrivalBonus}, "
+                    + $"bem-estar {results.Player1.Score.WellbeingBonus}, ultra -{results.Player1.Score.UltraPenalty}, "
+                    + $"fadiga -{results.Player1.Score.FatiguePenalty}) | curto {results.Player2.Score.FinalScore} "
+                    + $"(saudáveis {results.Player2.Score.HealthyPoints}, tempo {results.Player2.Score.TimeBonus}, "
+                    + $"chegada {results.Player2.Score.ArrivalBonus}, bem-estar {results.Player2.Score.WellbeingBonus}, "
+                    + $"ultra -{results.Player2.Score.UltraPenalty}, fadiga -{results.Player2.Score.FatiguePenalty})"
+            );
             var p1 = bootstrap.PlayerOne.GetComponent<WellbeingComponent>().CurrentValue;
             var p2 = bootstrap.PlayerTwo.GetComponent<WellbeingComponent>().CurrentValue;
             Debug.Log(
                 $"CORRIDA ({label}): longo {times[0]:0.0} s (Bem-Estar {p1}, "
                     + $"{bots[0].Replans} desvios), curto {times[1]:0.0} s (Bem-Estar {p2}, "
-                    + $"{bots[1].Replans} desvios)"
+                    + $"{bots[1].Replans} desvios) | desvios P1: {string.Join("; ", bots[0].Detours)}"
+                    + $" | desvios P2: {string.Join("; ", bots[1].Detours)}"
             );
             Assert.That(times[0], Is.GreaterThan(0f), $"P1 não terminou: {bots[0].Status}");
             Assert.That(times[1], Is.GreaterThan(0f), $"P2 não terminou: {bots[1].Status}");
@@ -318,9 +349,30 @@ namespace HealthyRace.Tests.PlayMode
         /// em que a corrida os encontra (andares pares para a direita, ímpares para a
         /// esquerda), e termina na porta do P2.
         /// </summary>
-        private static List<RouteStep> ShortRoute(LevelGrid grid, Vector2Int start)
+        private static List<RouteStep> ShortRoute(LevelGrid grid, Vector2Int start) =>
+            ShortRoute(grid, start, grid.Cells(LevelGrid.Fast));
+
+        /// <summary>Fast-food ainda não comido, em células da grade.</summary>
+        private static IEnumerable<Vector2Int> RemainingFastFood(LevelBootstrap bootstrap) =>
+            bootstrap
+                .Foods.Where(f =>
+                    f != null
+                    && f.gameObject.activeSelf
+                    && f.FoodData.Category == HealthyRace.Collectibles.FoodCategory.UltraProcessed
+                )
+                .Select(f => new Vector2Int(
+                    Mathf.FloorToInt(f.transform.position.x),
+                    Mathf.FloorToInt(f.transform.position.y)
+                ));
+
+        private static List<RouteStep> ShortRoute(
+            LevelGrid grid,
+            Vector2Int start,
+            IEnumerable<Vector2Int> fastFood,
+            bool strict = true
+        )
         {
-            var waypoints = grid.Cells(LevelGrid.Fast)
+            var waypoints = fastFood
                 .OrderBy(c => c.y)
                 .ThenBy(c => ((c.y - 1) / 6) % 2 == 0 ? c.x : -c.x)
                 .ToList();
@@ -329,6 +381,11 @@ namespace HealthyRace.Tests.PlayMode
             foreach (var waypoint in waypoints)
             {
                 var leg = LevelRoutes.Find(grid, from, c => c == waypoint);
+                if (!strict && leg.Count == 0)
+                {
+                    continue;
+                }
+
                 Assert.That(leg, Is.Not.Empty, $"sem trecho de {from} até {waypoint}");
                 route.AddRange(leg.Skip(1));
                 from = waypoint;
@@ -347,6 +404,7 @@ namespace HealthyRace.Tests.PlayMode
         private sealed class RouteBot
         {
             private const float StuckSeconds = 8f;
+            private const float RetrySeconds = 3f;
 
             private readonly GameObject _player;
             private readonly PlayerMovement _movement;
@@ -357,6 +415,7 @@ namespace HealthyRace.Tests.PlayMode
             private bool _jumped;
             private bool _leftGround;
             private float _jumpWait;
+            private bool _retried;
             private float _stepTime;
 
             public RouteBot(
@@ -375,6 +434,8 @@ namespace HealthyRace.Tests.PlayMode
 
             /// <summary>Quantas vezes caiu fora da rota (plataforma, espinho) e refez o caminho.</summary>
             public int Replans { get; private set; }
+
+            public List<string> Detours { get; } = new();
 
             public string Failure { get; private set; }
 
@@ -444,6 +505,7 @@ namespace HealthyRace.Tests.PlayMode
                         _leftGround = false;
                         _stepTime = 0f;
                         Replans++;
+                        Detours.Add($"{step} em {here}");
                         return;
                     }
                 }
@@ -510,6 +572,7 @@ namespace HealthyRace.Tests.PlayMode
 
                 if (arrived)
                 {
+                    _retried = false;
                     _index++;
                     _jumped = false;
                     _leftGround = false;
@@ -520,6 +583,25 @@ namespace HealthyRace.Tests.PlayMode
                 if (_movement.IsMovementEnabled)
                 {
                     _stepTime += Step;
+                }
+
+                // parado sem progresso: como um jogador, tenta outro caminho dali
+                if (_stepTime > RetrySeconds && !_retried)
+                {
+                    var here = new Vector2Int(Mathf.FloorToInt(x), Mathf.RoundToInt(feet));
+                    var fresh = _replan(here);
+                    _retried = true;
+                    if (fresh.Count > 1)
+                    {
+                        _route = fresh;
+                        _index = 1;
+                        _jumped = false;
+                        _leftGround = false;
+                        Replans++;
+                        _stepTime = 0f;
+                        Detours.Add($"parado em {here}");
+                        return;
+                    }
                 }
 
                 if (_stepTime > StuckSeconds)

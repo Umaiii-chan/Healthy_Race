@@ -223,14 +223,30 @@ def gate():
     return down(image)
 
 
+def neutral(image, reference):
+    """Versão em tons de cinza claros para colorir no jogo pelo tema da fase.
+    `reference` é a cor que vira branco; o resto fica proporcional a ela."""
+    ref = 0.299 * reference[0] + 0.587 * reference[1] + 0.114 * reference[2]
+    rgba = image.convert("RGBA")
+    luma = rgba.convert("L").point(lambda v: min(255, int(round(v / ref * 255))))
+    return Image.merge("RGBA", (luma, luma, luma, rgba.getchannel("A")))
+
+
+# Cores que reproduzem a Fase 1 com a arte neutra; o [tema] de cada fase troca.
+# Repetidas em LevelBootstrap (DefaultBrickTint, DefaultWallTint, DefaultFoliageTint).
+BRICK_TINT = (69, 105, 79)
+WALL_TINT = (226, 240, 222)
+FOLIAGE_TINT = (124, 180, 124)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     images = {
-        "SP_GH_Wall": wall(),
-        "SP_GH_Leaves": leaves(),
-        "SP_GH_Brick": brick(),
-        "SP_GH_BrickTop": brick_top(),
-        "SP_GH_Ramp": ramp(),
+        "SP_GH_Wall": neutral(wall(), WALL_TINT),
+        "SP_GH_Leaves": neutral(leaves(), (136, 188, 130)),
+        "SP_GH_Brick": neutral(brick(), (70, 100, 78)),
+        "SP_GH_BrickTop": neutral(brick_top(), (124, 164, 120)),
+        "SP_GH_Ramp": neutral(ramp(), (70, 100, 78)),
         "SP_GH_FastFloor": fast_floor(),
         "SP_GH_FastSign": fast_sign(),
         "SP_GH_Pot": pot(),

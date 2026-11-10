@@ -1,5 +1,9 @@
 # Fase 1 - auditoria antes do redesign
 
+> **Histórico.** Este documento descreve uma versão anterior da Fase 1, substituída pela
+> corrida em andares de [levels/fase-01.md](levels/fase-01.md). Fica como registro do
+> processo de design.
+
 ## Estado e escopo
 
 - Base auditada: `290dc68`, em `origin/develop`, em 20/09/2026.

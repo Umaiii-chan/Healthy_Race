@@ -96,6 +96,21 @@ namespace HealthyRace.Level
         private readonly List<FoodData> _fastFoods = new();
         private readonly float[] _bestHeight = new float[3];
 
+        // A arte da estufa é neutra (cinza claro) e ganha a cor do [tema] da fase. Sem
+        // tema, estas cores reproduzem a Fase 1 (ver build_greenhouse.py).
+        public static readonly Color DefaultBrickTint = new Color32(69, 105, 79, 255);
+        public static readonly Color DefaultWallTint = new Color32(226, 240, 222, 255);
+        public static readonly Color DefaultFoliageTint = new Color32(124, 180, 124, 255);
+
+        public Color BrickTint => _grid.ThemeColor("tijolo", DefaultBrickTint);
+
+        /// <summary>Faixa do topo dos blocos: o tijolo clareado.</summary>
+        public Color BrickTopTint => Color.Lerp(BrickTint, Color.white, 0.3f);
+
+        public Color WallTint => _grid.ThemeColor("parede", DefaultWallTint);
+
+        public Color FoliageTint => _grid.ThemeColor("folhagem", DefaultFoliageTint);
+
         /// <summary>Quanto a folhagem de fundo acompanha a câmera (0 = presa à fase).</summary>
         public const float FoliageFollowFactor = 0.35f;
 
@@ -310,6 +325,7 @@ namespace HealthyRace.Level
             );
             if (wall != null)
             {
+                renderer.color = WallTint;
                 var size = wall.bounds.size;
                 renderer.transform.localScale = new Vector3(
                     _grid.Width / size.x,
@@ -338,6 +354,7 @@ namespace HealthyRace.Level
                     -35,
                     Color.clear
                 );
+                foliage.color = FoliageTint;
                 _foliage = foliage.gameObject.AddComponent<ParallaxLayer>();
             }
         }
@@ -364,6 +381,11 @@ namespace HealthyRace.Level
                     -20,
                     new Color(0.23f, 0.35f, 0.26f)
                 );
+                if (Art.Brick != null)
+                {
+                    brick.color = BrickTint;
+                }
+
                 brick.name = $"Bloco {run.X0}-{run.X1},{run.Y}";
             }
 
@@ -387,7 +409,7 @@ namespace HealthyRace.Level
 
                     var width = x - start;
                     var corridor = LooksLikeCorridor(start, run.Y + 1);
-                    TiledObject(
+                    var top = TiledObject(
                         "Topo",
                         terrain.transform,
                         corridor ? Art.FastFloor : Art.BrickTop,
@@ -396,6 +418,10 @@ namespace HealthyRace.Level
                         -19,
                         new Color(0.38f, 0.53f, 0.4f)
                     );
+                    if (!corridor && Art.BrickTop != null)
+                    {
+                        top.color = BrickTopTint;
+                    }
                 }
             }
 
@@ -428,6 +454,10 @@ namespace HealthyRace.Level
                 );
                 Fit(renderer, Vector2.one);
                 renderer.flipX = !up;
+                if (Art.Ramp != null)
+                {
+                    renderer.color = BrickTint;
+                }
             }
 
             // tábuas (e a base da lama e dos espinhos) entram no mesmo colisor
@@ -782,11 +812,38 @@ namespace HealthyRace.Level
                 lever.OnActivated += () =>
                 {
                     AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
+                    // quem puxou (o mais perto da alavanca) ganha os pontos do mecanismo
+                    _matchController?.RegisterPuzzleSolved(ClosestPlayer(lever.transform.position));
                     StartCoroutine(OpenGateAfterDelay(door));
                 };
                 _gates.Add((lever, door));
             }
         }
+
+        private int ClosestPlayer(Vector2 position)
+        {
+            if (_playerOne == null || _playerTwo == null)
+            {
+                return _playerOne != null ? 1 : 0;
+            }
+
+            var d1 = ((Vector2)_playerOne.transform.position - position).sqrMagnitude;
+            var d2 = ((Vector2)_playerTwo.transform.position - position).sqrMagnitude;
+            return d1 <= d2 ? 1 : 2;
+        }
+
+        /// <summary>Tempo-alvo do bônus de tempo (<c>tempo-alvo</c> no [tema]; 180 s sem ele).</summary>
+        public float TargetTimeSeconds =>
+            _grid != null
+            && _grid.Theme.TryGetValue("tempo-alvo", out var value)
+            && float.TryParse(
+                value,
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var seconds
+            )
+                ? seconds
+                : 180f;
 
         private IEnumerator OpenGateAfterDelay(PuzzleDoor door)
         {
@@ -1254,7 +1311,12 @@ namespace HealthyRace.Level
                 ),
                 true
             );
-            _cameraController.SetZoomLimits(MinimumViewHeight * 0.5f, _grid.Height * 0.5f);
+            // afasta até caber a fase inteira, na altura ou na largura (fases largas)
+            var viewAspect = 1920f / (1080f - HudBandPixels);
+            _cameraController.SetZoomLimits(
+                MinimumViewHeight * 0.5f,
+                Mathf.Max(_grid.Height * 0.5f, _grid.Width * 0.5f / viewAspect)
+            );
             _cameraController.SetPadding(new Vector2(4f, 3f));
             if (_foliage != null)
             {
@@ -1291,6 +1353,11 @@ namespace HealthyRace.Level
 
             _matchHud = new GameObject("Match HUD", typeof(RectTransform)).AddComponent<MatchHUD>();
             _matchHud.Initialize(canvasObject.transform, Vector2.zero);
+            _matchHud.SetLevelName(
+                _grid.LevelNumber > 0
+                    ? $"Fase {_grid.LevelNumber} · {_grid.LevelName}"
+                    : _grid.LevelName
+            );
 
             var p1Wellbeing = _playerOne.GetComponent<WellbeingComponent>();
             var p2Wellbeing = _playerTwo.GetComponent<WellbeingComponent>();
@@ -1354,6 +1421,7 @@ namespace HealthyRace.Level
                 _playerOneHud,
                 _playerTwoHud,
                 null,
+                scoreConfig: Scoring.ScoreConfig.CreateForRace(TargetTimeSeconds),
                 secondFinishLine: _playerTwoDoor,
                 requireBothAtDoors: false,
                 timeLimitSeconds: MatchTimeLimitSeconds

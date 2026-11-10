@@ -317,12 +317,7 @@ namespace HealthyRace.Editor.Visuals
 
             // VerticalSlice_Core segue na lista só porque um teste PlayMode a carrega
             // por SceneManager; nenhum fluxo do jogo chega a ela.
-            EditorBuildSettings.scenes = new[]
-            {
-                new EditorBuildSettingsScene(MenuScenePath, true),
-                new EditorBuildSettingsScene(Phase1ScenePath, true),
-                new EditorBuildSettingsScene(VerticalSliceScenePath, true),
-            };
+            ApplyBuildScenes();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(

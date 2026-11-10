@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using HealthyRace.Collectibles;
@@ -29,10 +30,36 @@ namespace HealthyRace.Editor.Visuals
         public const string PlayerTwoVisualPath = Root + "Prefabs/Visual/PF_VIS_Player_P2.prefab";
 
         /// <summary>Mapa de cada fase e a cena que ele gera.</summary>
-        public static readonly (string Map, string Scene)[] LevelScenes =
+        public static readonly (string Map, string Scene)[] LevelScenes = BuildLevelList();
+
+        /// <summary>Fase 1 tem a cena histórica; as outras, Scenes/FaseNN.unity.</summary>
+        private static (string Map, string Scene)[] BuildLevelList()
         {
-            (LevelsRoot + "Fase01.txt", Phase1ScenePath),
-        };
+            var list = new (string Map, string Scene)[10];
+            list[0] = (LevelsRoot + "Fase01.txt", Phase1ScenePath);
+            for (var n = 2; n <= 10; n++)
+            {
+                list[n - 1] = ($"{LevelsRoot}Fase{n:00}.txt", $"{Root}Scenes/Fase{n:00}.unity");
+            }
+
+            return list;
+        }
+
+        /// <summary>Menu, as 10 fases em ordem e a cena de teste que um teste PlayMode carrega.</summary>
+        public static void ApplyBuildScenes()
+        {
+            var scenes = new List<EditorBuildSettingsScene>
+            {
+                new EditorBuildSettingsScene(MenuScenePath, true),
+            };
+            foreach (var (_, scene) in LevelScenes)
+            {
+                scenes.Add(new EditorBuildSettingsScene(scene, true));
+            }
+
+            scenes.Add(new EditorBuildSettingsScene(VerticalSliceScenePath, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
 
         [MenuItem("Healthy Race/Visuals/Build greenhouse levels")]
         public static void BuildGreenhouse()
@@ -55,6 +82,8 @@ namespace HealthyRace.Editor.Visuals
             {
                 BuildLevelScene(map, scene);
             }
+
+            ApplyBuildScenes();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

@@ -1,4 +1,8 @@
 ; Fase 1 - Corrida do Equilíbrio. Gerado por tools/levels/fase01_map.py.
+[tema]
+numero 1
+nome Corrida do Equilíbrio
+tempo-alvo 130
 [mapa]
 ################################################################
 #..............................................................#

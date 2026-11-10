@@ -1,5 +1,9 @@
 # Relatório de Garantia da Qualidade e Validação do MVP (QA-01)
 
+> **Histórico.** Este é o relatório do MVP. O relatório da versão 1.0.0 está em
+> [TEST_REPORT.md](TEST_REPORT.md); várias regras daqui mudaram (corrida em vez de arena
+> cooperativa, prazo de 45 s, 10 fases).
+
 ## Healthy Race — Fase 1: Corrida do Equilíbrio
 
 ---

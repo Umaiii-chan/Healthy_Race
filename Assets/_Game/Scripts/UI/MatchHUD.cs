@@ -15,6 +15,10 @@ namespace HealthyRace.UI
 
         private Text _timerText;
         private Text _finalWindowText;
+        private Text _levelText;
+
+        /// <summary>Nome da fase, na linha de baixo do painel (some durante a contagem final).</summary>
+        public string LevelName => _levelText != null ? _levelText.text : string.Empty;
         private Image _panelImage;
 
         private float _currentTime;
@@ -76,6 +80,26 @@ namespace HealthyRace.UI
             );
 
             _finalWindowText.gameObject.SetActive(false);
+
+            _levelText = CreateText(
+                "LevelText",
+                transform,
+                string.Empty,
+                13,
+                FontStyle.Normal,
+                new Color(0.8f, 0.86f, 0.92f),
+                new Vector2(0f, -36f),
+                new Vector2(Width - 20f, 20f),
+                TextAnchor.MiddleCenter
+            );
+        }
+
+        public void SetLevelName(string levelName)
+        {
+            if (_levelText != null)
+            {
+                _levelText.text = levelName ?? string.Empty;
+            }
         }
 
         public void UpdateTimer(float seconds)
@@ -96,6 +120,8 @@ namespace HealthyRace.UI
             }
 
             _finalWindowText.gameObject.SetActive(true);
+
+            _levelText?.gameObject.SetActive(false);
             _finalWindowText.text = message;
             if (_panelImage != null)
             {
@@ -116,6 +142,7 @@ namespace HealthyRace.UI
             if (active)
             {
                 _finalWindowText.gameObject.SetActive(true);
+                _levelText?.gameObject.SetActive(false);
                 _finalWindowText.text =
                     $"JANELA FINAL: {Mathf.CeilToInt(_finalWindowTimeRemaining)}s";
                 if (_panelImage != null)
@@ -126,6 +153,7 @@ namespace HealthyRace.UI
             else
             {
                 _finalWindowText.gameObject.SetActive(false);
+                _levelText?.gameObject.SetActive(true);
                 if (_panelImage != null)
                 {
                     _panelImage.color = new Color(0.04f, 0.08f, 0.14f, 0.85f);

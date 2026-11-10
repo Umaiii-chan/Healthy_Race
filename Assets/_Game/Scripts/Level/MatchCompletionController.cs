@@ -103,6 +103,22 @@ namespace HealthyRace.Level
         public int FirstFinisherIndex => _firstFinisherIndex;
         public MatchResultData FinalResults => _finalResults;
         public ScoreConfig ScoreConfig => _scoreConfig;
+
+        private readonly int[] _puzzlesSolved = new int[3];
+
+        /// <summary>Mecanismos resolvidos por jogador (alavancas puxadas, nas corridas).</summary>
+        public int PuzzlesSolvedBy(int playerIndex) =>
+            playerIndex is 1 or 2 ? _puzzlesSolved[playerIndex] : 0;
+
+        /// <summary>Credita um mecanismo resolvido (vale <see cref="Scoring.ScoreConfig.PointsPerPuzzle"/>).</summary>
+        public void RegisterPuzzleSolved(int playerIndex)
+        {
+            if (playerIndex is 1 or 2 && _state != MatchCompletionState.Concluded)
+            {
+                _puzzlesSolved[playerIndex]++;
+            }
+        }
+
         public bool RequireBothAtDoors => _requireBothAtDoors;
         public FinishLine PlayerOneDoor => _finishLine;
         public FinishLine PlayerTwoDoor =>
@@ -527,8 +543,10 @@ namespace HealthyRace.Level
             var p1Fatigue = _playerOne != null ? _playerOne.GetComponent<FatigueComponent>() : null;
             var p2Fatigue = _playerTwo != null ? _playerTwo.GetComponent<FatigueComponent>() : null;
 
-            int p1Puzzles = (_finalPuzzle != null && _finalPuzzle.IsSolved) ? 1 : 0;
-            int p2Puzzles = (_finalPuzzle != null && _finalPuzzle.IsSolved) ? 1 : 0;
+            int p1Puzzles =
+                (_finalPuzzle != null && _finalPuzzle.IsSolved ? 1 : 0) + _puzzlesSolved[1];
+            int p2Puzzles =
+                (_finalPuzzle != null && _finalPuzzle.IsSolved ? 1 : 0) + _puzzlesSolved[2];
 
             var p1Input = new ScoreInput
             {
@@ -647,6 +665,7 @@ namespace HealthyRace.Level
             _finalWindowTimeRemaining = 0f;
             _firstFinisherIndex = 0;
             _finalResults = default;
+            _puzzlesSolved[1] = _puzzlesSolved[2] = 0;
 
             if (_finishLine != null)
             {
