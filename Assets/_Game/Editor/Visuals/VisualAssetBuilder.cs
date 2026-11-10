@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using HealthyRace.Level;
+using HealthyRace.UI;
 using HealthyRace.Visuals;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -9,6 +11,7 @@ using UnityEditor.SceneManagement;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -21,9 +24,16 @@ namespace HealthyRace.Editor.Visuals
         public const string Root = "Assets/_Game/";
         public const string CatalogPath = Root + "Art/VisualAtlas/SO_VisualCatalog.asset";
         public const string ScenePath = Root + "Scenes/Test/VisualTest.unity";
+        public const string MenuScenePath = Root + "Scenes/MainMenu.unity";
+        public const string Phase1ScenePath = Root + "Scenes/Phase1_CorridaDoEquilibrio.unity";
+        public const string VerticalSliceScenePath = Root + "Scenes/VerticalSlice_Core.unity";
+        public const string ScreensPrefabPath = Root + "Prefabs/Visual/PF_VIS_Screens.prefab";
+        public const string InputActionsPath = Root + "Input/HealthyRaceInputActions.inputactions";
         private static Material _material;
         private static VisualCatalog _catalog;
         private static Sprite _fill;
+        private static Sprite _round;
+        private static readonly Color Leaf = new Color32(140, 224, 78, 255);
         private static readonly Color Ink = new Color32(29, 47, 43, 255);
         private static readonly Color Cream = new Color32(248, 247, 224, 255);
         private static readonly List<Button> Buttons = new();
@@ -263,6 +273,310 @@ namespace HealthyRace.Editor.Visuals
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("VISUAL_BUILD_COMPLETE: VisualTest, catalog, prefabs and 12 clips saved.");
+        }
+
+        /// <summary>
+        /// Regera só o prefab de telas e liga o fluxo do jogo: cena MainMenu, campos
+        /// de fluxo da Fase 1 e a lista de cenas da build. Não toca nos demais prefabs.
+        /// </summary>
+        [MenuItem("Healthy Race/Visuals/Build screens and game flow")]
+        public static void BuildFlow()
+        {
+            if (
+                !Application.isBatchMode
+                && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()
+            )
+                return;
+            _catalog = AssetDatabase.LoadAssetAtPath<VisualCatalog>(CatalogPath);
+            if (_catalog == null)
+                throw new InvalidOperationException(
+                    "Catálogo visual ausente: rode 'Build owned visual assets' antes."
+                );
+            _fill = CreateShape("SP_Fill", false);
+            var ui = BuildUi();
+
+            var menuScene = EditorSceneManager.NewScene(
+                NewSceneSetup.EmptyScene,
+                NewSceneMode.Single
+            );
+            var menu = new GameObject("MainMenu").AddComponent<MainMenuBootstrap>();
+            Assign(menu, "_screensPrefab", ui);
+            EditorSceneManager.SaveScene(menuScene, MenuScenePath);
+
+            var phaseScene = EditorSceneManager.OpenScene(Phase1ScenePath);
+            var phase = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            Assign(phase, "_screensPrefab", ui);
+            Assign(
+                phase,
+                "_inputActions",
+                AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath)
+            );
+            EditorSceneManager.SaveScene(phaseScene);
+
+            // VerticalSlice_Core segue na lista só porque um teste PlayMode a carrega
+            // por SceneManager; nenhum fluxo do jogo chega a ela.
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(MenuScenePath, true),
+                new EditorBuildSettingsScene(Phase1ScenePath, true),
+                new EditorBuildSettingsScene(VerticalSliceScenePath, true),
+            };
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(
+                "FLOW_BUILD_COMPLETE: screens prefab, MainMenu scene and build scenes saved."
+            );
+        }
+
+        private static void Assign(Object target, string field, Object value)
+        {
+            if (target == null || value == null)
+                throw new InvalidOperationException($"Não foi possível atribuir '{field}'.");
+            var serialized = new SerializedObject(target);
+            var property = serialized.FindProperty(field);
+            if (property == null)
+                throw new InvalidOperationException($"Campo '{field}' não existe em {target}.");
+            property.objectReferenceValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(target);
+        }
+
+        /// <summary>Retângulo arredondado 9-slice para botões, cartões e etiquetas.</summary>
+        private static Sprite CreateRounded()
+        {
+            var path = Root + "Art/UI/Visual/SP_Round.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (existing != null && existing.texture != null)
+                return existing;
+            if (existing != null)
+                AssetDatabase.DeleteAsset(path);
+            const int size = 64;
+            const float radius = 22f;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "SP_RoundTexture",
+                filterMode = FilterMode.Bilinear,
+            };
+            for (var y = 0; y < size; y++)
+            for (var x = 0; x < size; x++)
+            {
+                var dx = Mathf.Max(radius - (x + 0.5f), x + 0.5f - (size - radius), 0f);
+                var dy = Mathf.Max(radius - (y + 0.5f), y + 0.5f - (size - radius), 0f);
+                var distance = Mathf.Sqrt(dx * dx + dy * dy);
+                texture.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(radius - distance + 0.5f)));
+            }
+            texture.Apply();
+            AssetDatabase.CreateAsset(texture, path);
+            var sprite = Sprite.Create(
+                texture,
+                new Rect(0, 0, size, size),
+                new Vector2(0.5f, 0.5f),
+                64,
+                0,
+                SpriteMeshType.FullRect,
+                new Vector4(24, 24, 24, 24)
+            );
+            sprite.name = "SP_Round";
+            AssetDatabase.AddObjectToAsset(sprite, texture);
+            AssetDatabase.SetMainObject(sprite, path);
+            EditorUtility.SetDirty(sprite);
+            return sprite;
+        }
+
+        private static Image Rounded(Image image, float cornerScale = 1f)
+        {
+            image.sprite = _round;
+            image.type = Image.Type.Sliced;
+            image.pixelsPerUnitMultiplier = cornerScale;
+            return image;
+        }
+
+        private static Text Bold(Text text, Color? stroke = null, float strokeWidth = 0f)
+        {
+            text.fontStyle = FontStyle.Bold;
+            if (stroke.HasValue)
+            {
+                // Três contornos encadeados (diagonal, horizontal, vertical): um só
+                // deixa degraus visíveis nos cantos em fontes grandes.
+                foreach (
+                    var distance in new[]
+                    {
+                        new Vector2(strokeWidth * 0.7f, strokeWidth * 0.7f),
+                        new Vector2(strokeWidth, 0f),
+                        new Vector2(0f, strokeWidth),
+                    }
+                )
+                {
+                    var outline = text.gameObject.AddComponent<Outline>();
+                    outline.effectColor = stroke.Value;
+                    outline.effectDistance = distance;
+                }
+                var shadow = text.gameObject.AddComponent<Shadow>();
+                shadow.effectColor = new Color(
+                    stroke.Value.r,
+                    stroke.Value.g,
+                    stroke.Value.b,
+                    0.55f
+                );
+                shadow.effectDistance = new Vector2(0, -strokeWidth * 2f);
+            }
+            return text;
+        }
+
+        private static Image Decor(
+            Transform parent,
+            string name,
+            Sprite sprite,
+            float x,
+            float y,
+            float size,
+            float amplitude,
+            float period,
+            float phase,
+            float tilt = 0f
+        )
+        {
+            var image = Panel(Box(parent, name, x, y, size, size), Color.white);
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.gameObject.AddComponent<UiFloat>().Configure(amplitude, period, phase, tilt);
+            return image;
+        }
+
+        private static void Chip(
+            Transform parent,
+            string label,
+            float x,
+            float y,
+            float width,
+            float height,
+            int size,
+            Color fill,
+            Color ink
+        )
+        {
+            var chip = Box(parent, label + " chip", x, y, width, height);
+            Rounded(Panel(chip, fill), 1.2f);
+            Bold(Label(chip, label, 0, 0, width, height, size, ink, TextAnchor.MiddleCenter));
+        }
+
+        private static void Scenery(GameObject screen)
+        {
+            // Mesma arte do menu, escurecida: as telas internas ficam da mesma família.
+            var image = screen.GetComponent<Image>();
+            image.sprite = _catalog.Background;
+            image.color = new Color(0.2f, 0.31f, 0.27f);
+        }
+
+        private static void BuildMenu(GameObject screen)
+        {
+            var menu = screen.transform;
+            var background = screen.GetComponent<Image>();
+            background.sprite = _catalog.Background;
+            background.color = Color.white;
+
+            // Alimentos saudáveis flutuando no céu, em volta do título.
+            Decor(menu, "Food_Banana", _catalog.Foods[1], 930, 70, 150, 14, 3.1f, 0.4f, 5);
+            Decor(menu, "Food_Apple", _catalog.Foods[0], 790, 250, 170, 16, 2.6f, 1.3f, -6);
+            Decor(menu, "Food_Carrot", _catalog.Foods[5], 1040, 300, 130, 12, 2.9f, 2.2f, 7);
+            Decor(menu, "Food_Broccoli", _catalog.Foods[6], 880, 470, 130, 13, 3.3f, 3.0f, -5);
+            Decor(menu, "Food_Water", _catalog.Foods[8], 1085, 520, 105, 11, 2.7f, 4.1f, 4);
+            Decor(menu, "Food_Strawberry", _catalog.Foods[4], 690, 590, 105, 12, 3.0f, 5.2f, -7);
+
+            // Título.
+            Bold(Label(menu, "HEALTHY", 108, 48, 1000, 190, 150, Cream), Ink, 3.5f);
+            Bold(Label(menu, "RACE", 108, 196, 760, 250, 210, Leaf), Ink, 4f);
+            Chip(menu, "CORRIDA DO EQUILÍBRIO", 118, 462, 560, 58, 28, Ink, Leaf);
+            Bold(
+                Label(
+                    menu,
+                    "Duas pessoas. Um percurso.\nCada escolha muda a corrida.",
+                    122,
+                    536,
+                    640,
+                    96,
+                    32,
+                    Ink
+                )
+            );
+
+            // Dupla de corredores no gramado.
+            var runnerOne = Decor(
+                menu,
+                "Runner_P1",
+                _catalog.Characters[0],
+                150,
+                650,
+                360,
+                10,
+                1.7f,
+                0f
+            );
+            runnerOne.raycastTarget = false;
+            var runnerTwo = Decor(
+                menu,
+                "Runner_P2",
+                _catalog.Characters[0],
+                430,
+                670,
+                340,
+                10,
+                1.7f,
+                1.6f
+            );
+            runnerTwo.rectTransform.localScale = new Vector3(-1, 1, 1);
+            Chip(menu, "P1", 280, 1018, 100, 44, 26, _catalog.PlayerOne, Color.white);
+            Chip(menu, "P2", 550, 1022, 100, 44, 26, _catalog.PlayerTwo, Color.white);
+
+            // O contraponto: quem só come ultraprocessado fica para trás.
+            Decor(menu, "Runner_Salo", _catalog.Characters[4], 900, 770, 240, 5, 2.8f, 2.4f);
+            Decor(menu, "Food_Burger", _catalog.Foods[10], 1100, 830, 110, 8, 3.4f, 0.9f, 6);
+            Decor(menu, "Food_Donut", _catalog.Foods[14], 800, 910, 100, 8, 3.1f, 2.7f, -6);
+            Decor(menu, "Food_Soda", _catalog.Foods[12], 1125, 950, 90, 7, 2.9f, 4.4f, 5);
+
+            // Cartão de ações.
+            var card = Box(menu, "MenuCard", 1250, 200, 560, 620);
+            Rounded(Panel(card, new Color32(21, 40, 35, 225)));
+            Bold(
+                Label(
+                    card,
+                    "PRONTOS PARA CORRER?",
+                    40,
+                    28,
+                    480,
+                    40,
+                    24,
+                    Leaf,
+                    TextAnchor.MiddleCenter
+                )
+            );
+            Button(card, "JOGAR", 40, 90, 480, VisualCommand.Play, 112, 48, Leaf);
+            Button(card, "Como jogar", 40, 230, 480, VisualCommand.Controls, 68, 28);
+            Button(card, "Áudio", 40, 316, 480, VisualCommand.Audio, 68, 28);
+            Button(card, "Sair", 40, 402, 480, VisualCommand.Quit, 68, 28);
+            Label(
+                card,
+                "MULTIPLAYER LOCAL  •  2 JOGADORES",
+                40,
+                500,
+                480,
+                36,
+                21,
+                Cream,
+                TextAnchor.MiddleCenter
+            );
+            Label(
+                card,
+                "Mouse ou setas + Enter",
+                40,
+                546,
+                480,
+                32,
+                19,
+                new Color(Cream.r, Cream.g, Cream.b, 0.7f),
+                TextAnchor.MiddleCenter
+            );
+            Chip(menu, "ODS 3  •  SAÚDE E BEM-ESTAR", 1250, 850, 560, 56, 24, Cream, Ink);
         }
 
         private static void ImportAtlas()
@@ -650,20 +964,41 @@ namespace HealthyRace.Editor.Visuals
             float x,
             float y,
             float width,
-            VisualCommand command
+            VisualCommand command,
+            float height = 64,
+            int fontSize = 27,
+            Color? fill = null
         )
         {
-            var rect = Box(parent, label, x, y, width, 64);
-            var image = Panel(rect, Cream);
+            var rect = Box(parent, label, x, y, width, height);
+            // Pivô no centro: o destaque cresce o botão sem deslocá-lo.
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(x + width * 0.5f, -y - height * 0.5f);
+            var image = Rounded(Panel(rect, fill ?? Cream), 1.5f);
             image.raycastTarget = true;
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             var colors = button.colors;
-            colors.highlightedColor = new Color(0.79f, 1f, 0.55f);
+            colors.highlightedColor = fill.HasValue
+                ? new Color(0.86f, 1f, 0.72f)
+                : new Color(0.79f, 1f, 0.55f);
             colors.selectedColor = colors.highlightedColor;
             colors.pressedColor = new Color(0.62f, 0.84f, 0.4f);
             button.colors = colors;
-            Label(rect, label, 16, 0, width - 32, 64, 27, Ink, TextAnchor.MiddleCenter);
+            rect.gameObject.AddComponent<UiHoverScale>();
+            var text = Label(
+                rect,
+                label,
+                16,
+                0,
+                width - 32,
+                height,
+                fontSize,
+                Ink,
+                TextAnchor.MiddleCenter
+            );
+            if (fill.HasValue)
+                text.fontStyle = FontStyle.Bold;
             Buttons.Add(button);
             Commands.Add(command);
             return button;
@@ -748,6 +1083,7 @@ namespace HealthyRace.Editor.Visuals
         {
             Buttons.Clear();
             Commands.Clear();
+            _round = CreateRounded();
             var root = new GameObject(
                 "PF_VIS_Screens",
                 typeof(RectTransform),
@@ -797,46 +1133,11 @@ namespace HealthyRace.Editor.Visuals
                 Cream,
                 TextAnchor.MiddleCenter
             );
-            var menu = screens[1].transform;
-            Label(menu, "HEALTHY\nRACE", 170, 160, 850, 310, 122, Cream);
-            Label(
-                menu,
-                "CORRIDA DO EQUILÍBRIO",
-                180,
-                520,
-                820,
-                50,
-                30,
-                new Color(0.7f, 0.94f, 0.45f)
-            );
-            Label(
-                menu,
-                "Duas pessoas. Um percurso.\nCada escolha muda a corrida.",
-                180,
-                610,
-                760,
-                100,
-                34,
-                Cream
-            );
-            var menuPortrait = Panel(Box(menu, "VITA", 770, 430, 300, 420), Color.white);
-            menuPortrait.sprite = _catalog.Characters[0];
-            menuPortrait.preserveAspect = true;
-            Button(menu, "Jogar", 1190, 330, 480, VisualCommand.Play);
-            Button(menu, "Controles", 1190, 418, 480, VisualCommand.Controls);
-            Button(menu, "Áudio", 1190, 506, 480, VisualCommand.Audio);
-            Button(menu, "Sair", 1190, 594, 480, VisualCommand.Quit);
-            Label(
-                menu,
-                "MULTIPLAYER LOCAL  •  2 JOGADORES",
-                1190,
-                710,
-                480,
-                40,
-                22,
-                Cream,
-                TextAnchor.MiddleCenter
-            );
+            BuildMenu(screens[1]);
+            Scenery(screens[0]);
+            Scenery(screens[4]);
+            Scenery(screens[5]);
+            Scenery(screens[6]);
             var gameplay = screens[2].transform;
             var hud1 = Hud(gameplay, 1);
             var hud2 = Hud(gameplay, 2);
@@ -924,17 +1225,40 @@ namespace HealthyRace.Editor.Visuals
                 Label(card, "P" + (i + 1), 28, 12, 554, 50, 36, _catalog.IdentityColor(i + 1));
                 resultTexts[i] = Label(card, "", 28, 72, 554, 655, 25, Cream, TextAnchor.UpperLeft);
             }
-            Button(result, "Jogar novamente", 480, 960, 450, VisualCommand.Restart);
-            Button(result, "Menu", 990, 960, 450, VisualCommand.Menu);
+            // Linha com layout automático: sem "Próxima fase" os outros dois recentram.
+            var actions = Box(result, "Actions", 210, 946, 1500, 84);
+            var row = actions.gameObject.AddComponent<HorizontalLayoutGroup>();
+            row.spacing = 36;
+            row.childAlignment = TextAnchor.MiddleCenter;
+            row.childControlWidth = false;
+            row.childControlHeight = false;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = false;
+            Button(actions, "Próxima fase", 0, 0, 430, VisualCommand.Next, 72, 30, Leaf);
+            Button(actions, "Jogar novamente", 0, 0, 430, VisualCommand.Restart, 72, 30);
+            Button(actions, "Menu", 0, 0, 430, VisualCommand.Menu, 72, 30);
             var controls = screens[5].transform;
-            Label(controls, "CONTROLES", 250, 130, 1420, 100, 64, Cream, TextAnchor.MiddleCenter);
+            Label(controls, "COMO JOGAR", 250, 90, 1420, 100, 64, Cream, TextAnchor.MiddleCenter);
+            Label(
+                controls,
+                "Alimentos saudáveis aumentam o Bem-Estar; ultraprocessados reduzem.\n"
+                    + "Bem-Estar baixo deixa você mais lento e pode causar fadiga.\n"
+                    + "A fase termina quando os dois chegam às suas portas.",
+                260,
+                200,
+                1400,
+                130,
+                28,
+                Cream,
+                TextAnchor.MiddleCenter
+            );
             Label(
                 controls,
                 "P1  ●\n\nMover       A / D\nPular       W ou Espaço\nInteragir   E",
                 360,
-                340,
+                380,
                 550,
-                370,
+                330,
                 36,
                 _catalog.PlayerOne
             );
@@ -942,23 +1266,13 @@ namespace HealthyRace.Editor.Visuals
                 controls,
                 "P2  ◆\n\nMover       ← / →\nPular       ↑\nInteragir   Ctrl direito",
                 1050,
-                340,
+                380,
                 550,
-                370,
+                330,
                 36,
                 _catalog.PlayerTwo
             );
-            Label(
-                controls,
-                "Pausa: Esc   •   Controle: analógico / botão sul / botão oeste",
-                300,
-                740,
-                1320,
-                65,
-                28,
-                Cream,
-                TextAnchor.MiddleCenter
-            );
+            Label(controls, "Pausa: Esc", 300, 740, 1320, 65, 28, Cream, TextAnchor.MiddleCenter);
             Button(controls, "Voltar", 720, 860, 480, VisualCommand.Back);
             var audio = screens[6].transform;
             Label(

@@ -48,7 +48,7 @@ namespace HealthyRace.Tests.Visuals
                 .SelectMany(r => r.GetComponentsInChildren<RaceScreenView>())
                 .Single();
             screen.Show(VisualScreen.MainMenu);
-            var play = screen.GetComponentsInChildren<Button>().Single(b => b.name == "Jogar");
+            var play = screen.GetComponentsInChildren<Button>().Single(b => b.name == "JOGAR");
             play.onClick.Invoke();
             Assert.That(screen.Screen, Is.EqualTo(VisualScreen.Gameplay));
             screen.Show(VisualScreen.Audio);

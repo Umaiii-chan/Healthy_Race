@@ -52,6 +52,7 @@ namespace HealthyRace.Visuals
         Controls,
         Audio,
         Back,
+        Next,
     }
 
     public static class VisualUiFormat
