@@ -52,6 +52,10 @@ namespace HealthyRace.Level
         [SerializeField, Min(0)]
         private int _dnfPenalty = 20;
 
+        [Tooltip("Duração máxima da partida em segundos. 0 = sem limite.")]
+        [SerializeField, Min(0f)]
+        private float _timeLimitSeconds;
+
         [Header("Scoring")]
         [SerializeField]
         private ScoreConfig _scoreConfig;
@@ -73,7 +77,10 @@ namespace HealthyRace.Level
         [SerializeField]
         private MatchResultsPanel _resultsPanel;
 
+        private const float TimeLimitWarningSeconds = 30f;
+
         private MatchCompletionState _state = MatchCompletionState.Running;
+        private float _elapsed;
         private float _finalWindowTimeRemaining;
         private int _firstFinisherIndex;
         private GameObject _playerOne;
@@ -89,6 +96,10 @@ namespace HealthyRace.Level
         public float FinalWindowDuration => _finalWindowDuration;
         public float FinalWindowTimeRemaining => _finalWindowTimeRemaining;
         public int DnfPenalty => _dnfPenalty;
+        public float TimeLimitSeconds => _timeLimitSeconds;
+
+        /// <summary>Tempo de partida decorrido (para de contar ao concluir).</summary>
+        public float Elapsed => _elapsed;
         public int FirstFinisherIndex => _firstFinisherIndex;
         public MatchResultData FinalResults => _finalResults;
         public ScoreConfig ScoreConfig => _scoreConfig;
@@ -116,10 +127,12 @@ namespace HealthyRace.Level
             CooperativePuzzleController finalPuzzle = null,
             ScoreConfig scoreConfig = null,
             FinishLine secondFinishLine = null,
-            bool requireBothAtDoors = false
+            bool requireBothAtDoors = false,
+            float timeLimitSeconds = 0f
         )
         {
             UnbindFinishLine();
+            _timeLimitSeconds = Mathf.Max(0f, timeLimitSeconds);
 
             _finishLine = finishLine;
             _secondFinishLine = secondFinishLine;
@@ -201,12 +214,68 @@ namespace HealthyRace.Level
 
         private void Update()
         {
+            Tick(Time.deltaTime);
+        }
+
+        /// <summary>
+        /// Avança o relógio da partida. Público para que os testes possam simular a
+        /// passagem do tempo sem esperar em tempo real.
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            if (_state == MatchCompletionState.Concluded)
+            {
+                return;
+            }
+
+            _elapsed += deltaTime;
+            if (_timeLimitSeconds > 0f && _elapsed >= _timeLimitSeconds)
+            {
+                ConcludeWithPenalties();
+                return;
+            }
+
             if (_state == MatchCompletionState.WaitingForPartner)
             {
                 if (AreBothPlayersAtDoors())
                 {
                     ConcludeMatch();
+                    return;
                 }
+
+                // Sem prazo, um parceiro que não consegue subir prenderia a partida
+                // para sempre. O primeiro segue livre para ajudar enquanto o prazo corre.
+                _finalWindowTimeRemaining -= deltaTime;
+                FinalWindowTicked?.Invoke(_finalWindowTimeRemaining);
+                if (_matchHud != null)
+                {
+                    var partner = _firstFinisherIndex == 1 ? 2 : 1;
+                    _matchHud.ShowStatusMessage(
+                        $"P{_firstFinisherIndex} NA PORTA - P{partner} TEM "
+                            + $"{Mathf.CeilToInt(Mathf.Max(0f, _finalWindowTimeRemaining))}s"
+                    );
+                }
+
+                if (_finalWindowTimeRemaining <= 0f)
+                {
+                    ConcludeWithPenalties();
+                }
+
+                return;
+            }
+
+            if (_state == MatchCompletionState.Running)
+            {
+                var remaining = _timeLimitSeconds - _elapsed;
+                if (
+                    _timeLimitSeconds > 0f
+                    && remaining <= TimeLimitWarningSeconds
+                    && _matchHud != null
+                )
+                {
+                    _matchHud.ShowStatusMessage($"TEMPO ACABANDO: {Mathf.CeilToInt(remaining)}s");
+                }
+
                 return;
             }
 
@@ -215,7 +284,7 @@ namespace HealthyRace.Level
                 return;
             }
 
-            _finalWindowTimeRemaining -= Time.deltaTime;
+            _finalWindowTimeRemaining -= deltaTime;
             FinalWindowTicked?.Invoke(_finalWindowTimeRemaining);
 
             if (_matchHud != null)
@@ -262,8 +331,9 @@ namespace HealthyRace.Level
 
         /// <summary>
         /// Modo portas duplas: a primeira chegada define a ordem, mas ninguém é
-        /// congelado (o primeiro pode sair para ajudar). A partida só encerra quando
-        /// os dois estão em suas portas ao mesmo tempo. Não há janela final nem DNF.
+        /// congelado (o primeiro pode sair para ajudar). A partida encerra quando os
+        /// dois estão em suas portas ao mesmo tempo ou quando a janela aberta pela
+        /// primeira chegada expira; nesse caso quem não chegou leva DNF.
         /// </summary>
         private void HandleDoorArrival(int playerIndex, float finishTime)
         {
@@ -276,7 +346,8 @@ namespace HealthyRace.Level
             {
                 _firstFinisherIndex = playerIndex;
                 _state = MatchCompletionState.WaitingForPartner;
-                _finalWindowTimeRemaining = 0f;
+                _finalWindowTimeRemaining = _finalWindowDuration;
+                FinalWindowStarted?.Invoke(_finalWindowDuration);
 
                 if (_matchHud != null)
                 {
@@ -312,9 +383,45 @@ namespace HealthyRace.Level
             ConcludeMatch();
         }
 
+        /// <summary>
+        /// Encerra por tempo (janela das portas ou limite da partida): quem não
+        /// registrou chegada perde Bem-Estar e sai como DNF. Vale a chegada
+        /// registrada, não a presença na porta no instante do prazo: quem chegou e
+        /// saiu para ajudar o parceiro não é punido por ter ajudado.
+        /// </summary>
+        public void ConcludeWithPenalties()
+        {
+            if (_state == MatchCompletionState.Concluded)
+            {
+                return;
+            }
+
+            for (var playerIndex = 1; playerIndex <= 2; playerIndex++)
+            {
+                var door = GetDoor(playerIndex);
+                if (door != null && door.HasPlayerFinished(playerIndex))
+                {
+                    continue;
+                }
+
+                var wellbeing = GetPlayerWellbeing(playerIndex);
+                if (wellbeing != null)
+                {
+                    wellbeing.ApplyDelta(-_dnfPenalty);
+                }
+            }
+
+            ConcludeMatch();
+        }
+
         public void ConcludeMatch()
         {
             _state = MatchCompletionState.Concluded;
+
+            // A fadiga em curso reativaria o movimento e somaria Bem-Estar depois
+            // do resultado já calculado.
+            HaltFatigue(_playerOne);
+            HaltFatigue(_playerTwo);
 
             if (_matchHud != null)
             {
@@ -459,10 +566,39 @@ namespace HealthyRace.Level
                 Player1 = r1,
                 Player2 = r2,
                 WinnerPlayerIndex = winner,
-                TotalDuration = Mathf.Max(p1Time, p2Time),
+                // tempo de partida, não a última chegada: encerrar por prazo também conta
+                TotalDuration = Mathf.Max(_elapsed, Mathf.Max(p1Time, p2Time)),
                 HasDnf = r1.IsDnf || r2.IsDnf,
                 ScoreResult = scoreResult,
             };
+        }
+
+        private static void ResumeFatigue(GameObject player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            var fatigue = player.GetComponent<FatigueComponent>();
+            if (fatigue != null)
+            {
+                fatigue.Resume();
+            }
+        }
+
+        private static void HaltFatigue(GameObject player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            var fatigue = player.GetComponent<FatigueComponent>();
+            if (fatigue != null)
+            {
+                fatigue.Halt();
+            }
         }
 
         public void FreezePlayer(int playerIndex)
@@ -500,6 +636,9 @@ namespace HealthyRace.Level
         public void ResetMatch()
         {
             _state = MatchCompletionState.Running;
+            _elapsed = 0f;
+            ResumeFatigue(_playerOne);
+            ResumeFatigue(_playerTwo);
             _finalWindowTimeRemaining = 0f;
             _firstFinisherIndex = 0;
             _finalResults = default;
