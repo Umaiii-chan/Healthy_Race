@@ -19,6 +19,10 @@ Define os dados imutáveis de um item coletável alimentar:
 - **Gameplay**:
   - `BasePoints`: pontuação concedida ao coletar o alimento;
   - `WellbeingDelta`: valor de variação direta no Bem-Estar (positivo para saudáveis, negativo para ultraprocessados);
+  - Peso do ultraprocessado (regra por categoria, não por asset): ao comer, o jogador fica
+    com `FoodData.UltraProcessedSlowMultiplier` (0,5) da velocidade por
+    `FoodData.UltraProcessedSlowSeconds` (5 s). Comer de novo renova o tempo, sem somar.
+    Saudáveis não têm esse efeito;
 - **Apresentação Opcional**:
   - `Sprite`: ícone do alimento;
   - `CollectSound`: efeito sonoro disparado na coleta.
