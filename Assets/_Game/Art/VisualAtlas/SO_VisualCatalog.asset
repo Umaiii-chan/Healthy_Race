@@ -74,6 +74,18 @@ MonoBehaviour:
     Spikes: {fileID: 21300000, guid: 4af7ab137ae910243a9a8ff6995d4fda, type: 3}
     Mud: {fileID: 21300000, guid: 5e13bde8478e3014faca382808cd58cf, type: 3}
     Sign: {fileID: 21300000, guid: 66c7fddd6bae5bd40b74c713e00986e1, type: 3}
+  Greenhouse:
+    Wall: {fileID: 21300000, guid: 700b6a94231875f479a49c97a5f8d558, type: 3}
+    Leaves: {fileID: 21300000, guid: c25523c47017d804e8ac0012452c25cd, type: 3}
+    Brick: {fileID: 21300000, guid: aa7dd3cde7ecac74e99fe5863af1a268, type: 3}
+    BrickTop: {fileID: 21300000, guid: 1772ac18c96f613469af9c21dac68da8, type: 3}
+    Ramp: {fileID: 21300000, guid: c0f3360a8171ecc4f913215202e5b106, type: 3}
+    FastFloor: {fileID: 21300000, guid: fb35c1803104231409c4c7eb4aed8169, type: 3}
+    FastSign: {fileID: 21300000, guid: 19b9a038059d94c4da8b1293a00a916c, type: 3}
+    Pot: {fileID: 21300000, guid: 692f1d676fe6dbd488d6955950341f05, type: 3}
+    Vine: {fileID: 21300000, guid: ae1ad61fb1f571f4e9ace086733dc386, type: 3}
+    Lift: {fileID: 21300000, guid: e7e599243e8658c49b5bbe2a0157c90c, type: 3}
+    Gate: {fileID: 21300000, guid: 38a01d0e35ed1cd4ea91a51aefdf8be4, type: 3}
   Foods:
   - {fileID: 1721945217, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: 711178196, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}

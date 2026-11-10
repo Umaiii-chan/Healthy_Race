@@ -53,7 +53,7 @@ namespace HealthyRace.Obstacles
 
             if (_affectedPlayers.Add(movement))
             {
-                movement.SetMovementMultipliers(_speedMultiplier, movement.JumpMultiplier);
+                movement.SetTerrainMultiplier(_speedMultiplier);
                 PlayerEntered?.Invoke(movement);
             }
         }
@@ -68,7 +68,7 @@ namespace HealthyRace.Obstacles
 
             if (_affectedPlayers.Remove(movement))
             {
-                movement.SetMovementMultipliers(1f, movement.JumpMultiplier);
+                movement.SetTerrainMultiplier(1f);
                 PlayerExited?.Invoke(movement);
             }
         }
@@ -99,7 +99,7 @@ namespace HealthyRace.Obstacles
             {
                 if (movement != null)
                 {
-                    movement.SetMovementMultipliers(1f, movement.JumpMultiplier);
+                    movement.SetTerrainMultiplier(1f);
                 }
             }
             _affectedPlayers.Clear();

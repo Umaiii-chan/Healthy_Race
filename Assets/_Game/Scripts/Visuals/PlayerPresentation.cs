@@ -41,8 +41,11 @@ namespace HealthyRace.Visuals
 
         private const float BlockedSecondsToPush = 0.08f;
         private const float FeetOffset = 0.6f;
-        private const float ProbeDistance = 0.54f;
-        private static readonly Vector2 ProbeSize = new(0.14f, 0.6f);
+
+        // A sonda cruza a borda do corpo (meia largura 0,425): o terreno tem colisor
+        // só de contorno, então uma sonda inteira dentro da parede não acha nada.
+        private const float ProbeDistance = 0.48f;
+        private static readonly Vector2 ProbeSize = new(0.2f, 0.6f);
         private static readonly Collider2D[] ProbeHits = new Collider2D[8];
 
         private PlayerMovement _movement;

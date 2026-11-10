@@ -117,12 +117,12 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(mud.AffectedPlayerCount, Is.EqualTo(0));
 
             // Manually simulate entering mud
-            movement.SetMovementMultipliers(mud.SpeedMultiplier, movement.JumpMultiplier);
-            Assert.That(movement.MovementMultiplier, Is.EqualTo(0.7f).Within(0.001f));
+            movement.SetTerrainMultiplier(mud.SpeedMultiplier);
+            Assert.That(movement.TerrainMultiplier, Is.EqualTo(0.7f).Within(0.001f));
 
             // Manually simulate leaving mud
-            movement.SetMovementMultipliers(1f, movement.JumpMultiplier);
-            Assert.That(movement.MovementMultiplier, Is.EqualTo(1f).Within(0.001f));
+            movement.SetTerrainMultiplier(1f);
+            Assert.That(movement.TerrainMultiplier, Is.EqualTo(1f).Within(0.001f));
         }
 
         [Test]

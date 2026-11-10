@@ -77,6 +77,38 @@ namespace HealthyRace.Visuals
             && Bushes != null;
     }
 
+    /// <summary>Arte das fases em labirinto: estufa (caminho longo) e lanchonete (curto).</summary>
+    [Serializable]
+    public struct GreenhouseArt
+    {
+        public Sprite Wall;
+
+        /// <summary>Folhagem de fundo que ladrilha; camada de parallax.</summary>
+        public Sprite Leaves;
+        public Sprite Brick;
+        public Sprite BrickTop;
+        public Sprite Ramp;
+        public Sprite FastFloor;
+        public Sprite FastSign;
+        public Sprite Pot;
+        public Sprite Vine;
+        public Sprite Lift;
+        public Sprite Gate;
+
+        public bool IsComplete =>
+            Wall != null
+            && Leaves != null
+            && Brick != null
+            && BrickTop != null
+            && Ramp != null
+            && FastFloor != null
+            && FastSign != null
+            && Pot != null
+            && Vine != null
+            && Lift != null
+            && Gate != null;
+    }
+
     [CreateAssetMenu(menuName = "Healthy Race/Visual Catalog")]
     public sealed class VisualCatalog : ScriptableObject
     {
@@ -86,6 +118,8 @@ namespace HealthyRace.Visuals
         public CharacterSkin[] Skins = new CharacterSkin[5];
 
         public ArenaArt Arena;
+
+        public GreenhouseArt Greenhouse;
         public Sprite[] Foods = new Sprite[18];
         public Sprite[] Environment = new Sprite[13];
         public Sprite Background;

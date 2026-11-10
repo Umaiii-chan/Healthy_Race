@@ -166,7 +166,7 @@ namespace HealthyRace.Tests.PlayMode
         [UnityTest]
         public IEnumerator HUD_Layout_At1280x720_HasNoOverlapBetweenP1AndP2()
         {
-            // A fase usa CanvasScaler com referência 1920x1080 (ver Phase1Bootstrap.CreateHud);
+            // A fase usa CanvasScaler com referência 1920x1080 (ver LevelBootstrap.CreateHud);
             // numa tela 1280x720 o canvas inteiro é escalado, então a conta que vale é
             // a do espaço de referência.
             var canvasGo = CreateCanvas(new Vector2(1920f, 1080f));

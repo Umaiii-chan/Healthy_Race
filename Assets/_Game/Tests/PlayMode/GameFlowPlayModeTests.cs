@@ -100,7 +100,7 @@ namespace HealthyRace.Tests.PlayMode
             yield return WaitForScene(GameFlow.SceneForLevel(1));
 
             Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(GameFlow.SceneForLevel(1)));
-            Assert.That(Object.FindFirstObjectByType<Phase1Bootstrap>(), Is.Not.Null);
+            Assert.That(Object.FindFirstObjectByType<LevelBootstrap>(), Is.Not.Null);
             Assert.That(GameFlow.CurrentLevel, Is.EqualTo(1));
         }
 
@@ -169,7 +169,7 @@ namespace HealthyRace.Tests.PlayMode
             yield return Load(GameFlow.SceneForLevel(1));
             GameFlow.LoadLevel(1);
             yield return WaitForScene(GameFlow.SceneForLevel(1));
-            var screens = Object.FindFirstObjectByType<Phase1Bootstrap>().Screens;
+            var screens = Object.FindFirstObjectByType<LevelBootstrap>().Screens;
             screens.Pause();
             var level = GameFlow.CurrentLevel;
 
@@ -186,7 +186,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Pause_FreezesTime_AndContinueRestoresIt()
         {
             yield return Load(GameFlow.SceneForLevel(1));
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var screens = bootstrap.Screens;
             Assert.That(screens, Is.Not.Null, "A fase deve ter as telas de pausa/resultados.");
             Assert.That(
@@ -215,7 +215,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Pause_ControlsScreen_ReturnsToPause()
         {
             yield return Load(GameFlow.SceneForLevel(1));
-            var screens = Object.FindFirstObjectByType<Phase1Bootstrap>().Screens;
+            var screens = Object.FindFirstObjectByType<LevelBootstrap>().Screens;
 
             screens.Pause();
             screens.View.Request(VisualCommand.Controls);
@@ -231,7 +231,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator MatchConcluded_ShowsResults_AndIgnoresPause()
         {
             yield return Load(GameFlow.SceneForLevel(1));
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
 
             bootstrap.MatchController.ConcludeMatch();
             yield return null;
@@ -249,7 +249,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Restart_FromResults_RestoresInitialState()
         {
             yield return Load(GameFlow.SceneForLevel(1));
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var wellbeing = bootstrap.PlayerOne.GetComponent<WellbeingComponent>();
             wellbeing.ApplyDelta(-30);
             Assert.That(wellbeing.CurrentValue, Is.EqualTo(70));
@@ -261,7 +261,7 @@ namespace HealthyRace.Tests.PlayMode
             yield return null;
             yield return WaitForScene(GameFlow.SceneForLevel(1));
 
-            var reloaded = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var reloaded = Object.FindFirstObjectByType<LevelBootstrap>();
             Assert.That(reloaded, Is.Not.Null);
             Assert.That(
                 reloaded.GetInstanceID(),
@@ -281,7 +281,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Menu_FromPause_ReturnsToMainMenuUnpaused()
         {
             yield return Load(GameFlow.SceneForLevel(1));
-            var screens = Object.FindFirstObjectByType<Phase1Bootstrap>().Screens;
+            var screens = Object.FindFirstObjectByType<LevelBootstrap>().Screens;
             screens.Pause();
 
             screens.View.Request(VisualCommand.Menu);

@@ -306,7 +306,7 @@ namespace HealthyRace.Editor.Visuals
             EditorSceneManager.SaveScene(menuScene, MenuScenePath);
 
             var phaseScene = EditorSceneManager.OpenScene(Phase1ScenePath);
-            var phase = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var phase = Object.FindFirstObjectByType<LevelBootstrap>();
             Assign(phase, "_screensPrefab", ui);
             Assign(
                 phase,

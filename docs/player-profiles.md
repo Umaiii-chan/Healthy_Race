@@ -1,7 +1,8 @@
 # Perfis de Jogador (assimetria P1 / P2)
 
 > Status: **proposta**. A Parte 1 (orçamento derivado) está implementada; os perfis
-> descritos aqui dependem do aceite do mapa da arena. Ver `docs/phase1-blockout.md`.
+> descritos aqui foram pensados para a arena cooperativa, substituída pela corrida da
+> Fase 1 (`docs/levels/fase-01.md`).
 
 ## Por que assimetria
 

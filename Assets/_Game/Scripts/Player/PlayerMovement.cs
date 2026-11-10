@@ -34,7 +34,13 @@ namespace HealthyRace.Player
         private bool _risingFromJump;
         private float _jumpMultiplier = 1f;
         private float _movementMultiplier = 1f;
+        private float _terrainMultiplier = 1f;
+        private float _airGravityScale = -1f;
+        private bool _wasSupported;
         private Rigidbody2D _rigidbody;
+
+        /// <summary>Distância máxima que o jogador é puxado para continuar colado ao piso.</summary>
+        private const float GroundSnapDistance = 0.35f;
 
         public bool IsGrounded => _groundCheck != null && _groundCheck.IsGrounded;
 
@@ -54,7 +60,16 @@ namespace HealthyRace.Player
 
         public float JumpMultiplier => _jumpMultiplier;
 
+        /// <summary>Multiplicador do Bem-Estar (faixa atual).</summary>
         public float MovementMultiplier => _movementMultiplier;
+
+        /// <summary>Multiplicador do terreno sob o jogador (lama), independente do Bem-Estar.</summary>
+        public float TerrainMultiplier => _terrainMultiplier;
+
+        /// <summary>Velocidade horizontal efetiva = base × Bem-Estar × terreno.</summary>
+        public float EffectiveMoveSpeed => _moveSpeed * _movementMultiplier * _terrainMultiplier;
+
+        public bool IsOnSlope => _groundCheck != null && _groundCheck.IsOnSlope;
 
         public float MoveInput { get; private set; }
 
@@ -94,10 +109,27 @@ namespace HealthyRace.Player
                 _coyoteTimer = _coyoteTime;
             }
 
+            // Logo depois de sair do topo de uma rampa (ou de entrar numa descida) o
+            // sensor perde o piso por um passo; sem isto o jogador "decolaria".
+            if (!isGrounded && _wasSupported && !_risingFromJump)
+            {
+                var gap = _groundCheck.DistanceToGround(GroundSnapDistance);
+                if (gap > 0f)
+                {
+                    _rigidbody.position += Vector2.down * gap;
+                    velocity.y = 0f;
+                    isGrounded = _groundCheck.Refresh();
+                    supported = isGrounded;
+                }
+            }
+
+            var onSlope = supported && _groundCheck.IsOnSlope;
+            var jumped = false;
+
             if (_isMovementEnabled)
             {
-                var targetSpeed = MoveInput * _moveSpeed * _movementMultiplier;
-                velocity.x =
+                var targetSpeed = MoveInput * EffectiveMoveSpeed;
+                var horizontal =
                     isGrounded && _groundAcceleration > 0f
                         ? Mathf.MoveTowards(
                             velocity.x,
@@ -105,6 +137,7 @@ namespace HealthyRace.Player
                             _groundAcceleration * deltaTime
                         )
                         : targetSpeed;
+                velocity.x = horizontal;
 
                 var canJump = supported || _coyoteTimer > 0f;
                 if (_jumpBufferTimer > 0f && canJump)
@@ -113,14 +146,37 @@ namespace HealthyRace.Player
                     _jumpBufferTimer = 0f;
                     _coyoteTimer = 0f;
                     _risingFromJump = true;
+                    jumped = true;
                     Jumped?.Invoke();
+                }
+                else if (onSlope)
+                {
+                    // Na rampa a velocidade segue o piso: a mesma rapidez horizontal do
+                    // plano, subindo ou descendo junto.
+                    var normal = _groundCheck.GroundNormal;
+                    var tangent = new Vector2(normal.y, -normal.x);
+                    velocity = tangent * (horizontal / tangent.x);
+                }
+                else if (supported && velocity.y > 0f)
+                {
+                    // Chegou ao plano vindo de uma subida: não sai voando.
+                    velocity.y = 0f;
                 }
             }
             else
             {
                 velocity.x = 0f;
                 _jumpBufferTimer = 0f;
+                if (onSlope)
+                {
+                    velocity = Vector2.zero;
+                }
             }
+
+            // Parado ou andando na rampa, sem gravidade: com o colisor sem atrito o
+            // jogador escorregaria rampa abaixo.
+            SetSlopeGravity(onSlope && !jumped);
+            _wasSupported = supported && !jumped;
 
             if (!supported)
             {
@@ -156,6 +212,33 @@ namespace HealthyRace.Player
         {
             _movementMultiplier = Mathf.Max(0f, movementMultiplier);
             _jumpMultiplier = Mathf.Max(0f, jumpMultiplier);
+        }
+
+        /// <summary>
+        /// Efeito do terreno (lama). Separado do Bem-Estar: sair da lama não apaga o
+        /// efeito da faixa de Bem-Estar, e mudar de faixa na lama não apaga a lama.
+        /// </summary>
+        public void SetTerrainMultiplier(float multiplier)
+        {
+            _terrainMultiplier = Mathf.Clamp(multiplier, 0.05f, 1f);
+        }
+
+        private void SetSlopeGravity(bool onSlope)
+        {
+            if (onSlope)
+            {
+                if (_airGravityScale < 0f)
+                {
+                    _airGravityScale = _rigidbody.gravityScale;
+                }
+
+                _rigidbody.gravityScale = 0f;
+            }
+            else if (_airGravityScale >= 0f)
+            {
+                _rigidbody.gravityScale = _airGravityScale;
+                _airGravityScale = -1f;
+            }
         }
     }
 }

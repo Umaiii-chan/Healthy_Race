@@ -26,7 +26,7 @@ namespace HealthyRace.Tests.PlayMode
         public void SetUp()
         {
             _originalGravity = Physics2D.gravity;
-            Physics2D.gravity = new Vector2(0f, Phase1Bootstrap.PhaseGravityY);
+            Physics2D.gravity = new Vector2(0f, LevelBootstrap.PhaseGravityY);
         }
 
         [TearDown]
@@ -57,7 +57,7 @@ namespace HealthyRace.Tests.PlayMode
             var budget = JumpBudget.For(player);
             Assert.That(
                 budget.Apex,
-                Is.EqualTo(Phase1Bootstrap.TargetJumpApex).Within(0.01f),
+                Is.EqualTo(LevelBootstrap.TargetJumpApex).Within(0.01f),
                 "Declared budget must match the arena design target."
             );
 
@@ -91,21 +91,22 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator JumpBudget_CannotClearTheArenaTierSpacing()
+        public IEnumerator JumpBudget_ClearsAOneTileStep_EvenAtTheLowestWellbeing()
         {
             CreateGround();
             var player = CreateArenaPlayer(new Vector2(0f, 0.5f));
+            // Salo (Bem-Estar zero): pulo × 0,8. Os mapas só exigem degraus de 1 tile.
+            player.SetMovementMultipliers(0.7f, 0.8f);
 
             yield return WaitForGrounded(player);
 
             var measuredApex = 0f;
             yield return MeasureJump(player, 0f, apex => measuredApex = apex, _ => { });
 
-            var tierSpacing = Phase1Bootstrap.Tier1Top - Phase1Bootstrap.Tier0Top;
             Assert.That(
                 measuredApex,
-                Is.LessThan(tierSpacing),
-                "A single jump must not reach the next tier; cooperation would be optional."
+                Is.GreaterThan(1.15f),
+                "Com o pior Bem-Estar o pulo ainda precisa vencer um degrau de 1 tile."
             );
         }
 
@@ -168,7 +169,7 @@ namespace HealthyRace.Tests.PlayMode
             _createdObjects.Add(ground);
         }
 
-        /// <summary>Jogador com a mesma física que <see cref="Phase1Bootstrap"/> aplica.</summary>
+        /// <summary>Jogador com a mesma física que <see cref="LevelBootstrap"/> aplica.</summary>
         private PlayerMovement CreateArenaPlayer(Vector2 position)
         {
             var player = new GameObject("Jump Budget Test Player");
@@ -179,7 +180,7 @@ namespace HealthyRace.Tests.PlayMode
             rigidbody.gravityScale = JumpBudget.GravityScaleForApex(
                 Physics2D.gravity.y,
                 12f,
-                Phase1Bootstrap.TargetJumpApex,
+                LevelBootstrap.TargetJumpApex,
                 Time.fixedDeltaTime
             );
             rigidbody.constraints = RigidbodyConstraints2D.FreezeRotation;

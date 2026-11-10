@@ -67,7 +67,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Rig_ExistsOnBothPlayers_AndFacesTheMovementDirection()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             foreach (var player in new[] { bootstrap.PlayerOne, bootstrap.PlayerTwo })
             {
                 Assert.That(
@@ -100,7 +100,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Rig_ChangesSkinWhenWellbeingChangesBand()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var rig = bootstrap.PlayerOne.GetComponentInChildren<CharacterRig>();
             var catalog = bootstrap.VisualCatalog;
             Assert.That(rig.Skin.Head, Is.SameAs(catalog.Skins[0].Head));
@@ -117,7 +117,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Rig_Blink_ClosesTheEyesAndOpensAgain()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var rig = bootstrap.PlayerOne.GetComponentInChildren<CharacterRig>();
 
             Assert.That(rig.FaceSprite, Is.SameAs(rig.Skin.Face));
@@ -139,7 +139,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Rig_ReduceMotionDuringABlink_ReopensTheEyes()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var presentation = bootstrap.PlayerOne.GetComponentInChildren<PlayerPresentation>();
             var rig = presentation.Rig;
 
@@ -162,7 +162,7 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Rig_WithoutAPlayer_StillHonoursReduceMotion()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
 
             // rig solto, como na galeria: sem jogador nem movimento ligados
             var loose = Object.Instantiate(bootstrap.PlayerOneVisualPrefab);
@@ -176,37 +176,35 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Presentation_DetectsPushingAgainstTheBox()
+        public IEnumerator Presentation_DetectsPushingAgainstAWall()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var player = bootstrap.PlayerOne;
             var presentation = player.GetComponentInChildren<PlayerPresentation>();
             var movement = TakeControl(player);
-            var box = bootstrap.GateThreeBox;
-            Assert.That(box, Is.Not.Null);
             Assert.That(presentation.IsBlocked, Is.False);
 
-            // encosta o jogador no lado esquerdo da caixa, no mesmo piso
+            // encosta o jogador na moldura esquerda, no piso da largada
             var body = player.GetComponent<Rigidbody2D>();
-            var start = new Vector2(box.transform.position.x - 1.15f, box.transform.position.y);
+            var start = new Vector2(1.5f, bootstrap.SpawnOne.y);
             body.linearVelocity = Vector2.zero;
             body.position = start;
             player.transform.position = start;
             yield return new WaitForSeconds(0.3f);
             Assert.That(movement.IsGrounded, Is.True, "O jogador precisa estar apoiado.");
 
-            movement.SetHorizontalInput(1f);
+            movement.SetHorizontalInput(-1f);
             yield return new WaitForSeconds(0.4f);
 
-            Assert.That(presentation.IsBlocked, Is.True, "Andando contra a caixa: empurrando.");
+            Assert.That(presentation.IsBlocked, Is.True, "Andando contra a parede: empurrando.");
         }
 
         [UnityTest]
         public IEnumerator Presentation_JumpEmitsDustAtTheFeet()
         {
             yield return LoadArena();
-            var bootstrap = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
             var presentation = bootstrap.PlayerOne.GetComponentInChildren<PlayerPresentation>();
 
             presentation.Play(VisualAction.Jump);

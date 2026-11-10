@@ -90,7 +90,7 @@ namespace HealthyRace.Editor.Visuals
             ConfigurePlayerPhysics();
 
             var phaseScene = EditorSceneManager.OpenScene(Phase1ScenePath);
-            var phase = Object.FindFirstObjectByType<Phase1Bootstrap>();
+            var phase = Object.FindFirstObjectByType<LevelBootstrap>();
             Assign(phase, "_playerOneVisualPrefab", p1);
             Assign(phase, "_playerTwoVisualPrefab", p2);
             EditorSceneManager.SaveScene(phaseScene);
