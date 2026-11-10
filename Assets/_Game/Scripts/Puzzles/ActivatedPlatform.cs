@@ -49,11 +49,13 @@ namespace HealthyRace.Puzzles
 
         private void FixedUpdate()
         {
+            // Posição do corpo, não do transform: com interpolação o transform fica
+            // um passo de física atrás e a plataforma não avançaria.
+            var current = _rigidbody.position;
             var destination = _isActive
                 ? _targetPosition
-                : (_returnWhenDeactivated ? _originPosition : (Vector2)transform.position);
+                : (_returnWhenDeactivated ? _originPosition : current);
 
-            var current = (Vector2)transform.position;
             if (Vector2.Distance(current, destination) > 0.001f)
             {
                 var next = Vector2.MoveTowards(

@@ -232,13 +232,7 @@ namespace HealthyRace.Visuals
             if (_animator != null && _animator.runtimeAnimatorController != null)
                 _animator.SetInteger("Action", (int)action);
             if (_rig != null)
-                _rig.SetExpression(
-                    action == VisualAction.Push
-                    || action == VisualAction.Jump
-                    || action == VisualAction.Interact
-                        ? CharacterExpression.Effort
-                        : CharacterExpression.Normal
-                );
+                _rig.SetExpression(ExpressionFor(action));
             // poeira nos dois contatos com o chão: a saída do pulo e a aterrissagem
             if (
                 Application.isPlaying
@@ -307,6 +301,8 @@ namespace HealthyRace.Visuals
             {
                 _rig.Velocity = velocity;
                 _rig.SetFacing(input);
+                // o peso do ultraprocessado aparece no rosto enquanto dura
+                _rig.SetExpression(ExpressionFor(_action));
             }
 
             var pushing = Mathf.Abs(input) > 0.5f && _movement.IsGrounded && HasSolidAhead(input);
@@ -314,6 +310,15 @@ namespace HealthyRace.Visuals
             IsBlocked = _blockedFor >= BlockedSecondsToPush;
             return IsBlocked;
         }
+
+        /// <summary>Esforço ao empurrar, pular, interagir ou enquanto pesado de ultraprocessado.</summary>
+        private CharacterExpression ExpressionFor(VisualAction action) =>
+            action == VisualAction.Push
+            || action == VisualAction.Jump
+            || action == VisualAction.Interact
+            || (_movement != null && _movement.IsSluggish)
+                ? CharacterExpression.Effort
+                : CharacterExpression.Normal;
 
         /// <summary>Consulta (só leitura) se há algo sólido encostado na frente do jogador.</summary>
         private bool HasSolidAhead(float direction)

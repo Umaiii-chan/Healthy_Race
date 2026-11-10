@@ -35,6 +35,8 @@ namespace HealthyRace.Player
         private float _jumpMultiplier = 1f;
         private float _movementMultiplier = 1f;
         private float _terrainMultiplier = 1f;
+        private float _sluggishMultiplier = 1f;
+        private float _sluggishTimer;
         private float _airGravityScale = -1f;
         private bool _wasSupported;
         private Rigidbody2D _rigidbody;
@@ -66,8 +68,16 @@ namespace HealthyRace.Player
         /// <summary>Multiplicador do terreno sob o jogador (lama), independente do Bem-Estar.</summary>
         public float TerrainMultiplier => _terrainMultiplier;
 
-        /// <summary>Velocidade horizontal efetiva = base × Bem-Estar × terreno.</summary>
-        public float EffectiveMoveSpeed => _moveSpeed * _movementMultiplier * _terrainMultiplier;
+        /// <summary>Lentidão passageira depois de comer ultraprocessado (1 quando não há).</summary>
+        public float SluggishMultiplier => _sluggishTimer > 0f ? _sluggishMultiplier : 1f;
+
+        public bool IsSluggish => _sluggishTimer > 0f;
+
+        public float SluggishSecondsRemaining => _sluggishTimer;
+
+        /// <summary>Velocidade horizontal efetiva = base × Bem-Estar × terreno × lentidão.</summary>
+        public float EffectiveMoveSpeed =>
+            _moveSpeed * _movementMultiplier * _terrainMultiplier * SluggishMultiplier;
 
         public bool IsOnSlope => _groundCheck != null && _groundCheck.IsOnSlope;
 
@@ -184,6 +194,7 @@ namespace HealthyRace.Player
             }
 
             _jumpBufferTimer = Mathf.Max(0f, _jumpBufferTimer - deltaTime);
+            _sluggishTimer = Mathf.Max(0f, _sluggishTimer - deltaTime);
             _rigidbody.linearVelocity = velocity;
         }
 
@@ -218,6 +229,28 @@ namespace HealthyRace.Player
         /// Efeito do terreno (lama). Separado do Bem-Estar: sair da lama não apaga o
         /// efeito da faixa de Bem-Estar, e mudar de faixa na lama não apaga a lama.
         /// </summary>
+        /// <summary>
+        /// Deixa o jogador mais lento por um tempo (o "peso" do ultraprocessado). Comer
+        /// de novo enquanto pesado renova o tempo, sem somar o efeito.
+        /// </summary>
+        public void ApplySluggishness(float multiplier, float seconds)
+        {
+            if (seconds <= 0f || multiplier >= 1f)
+            {
+                return;
+            }
+
+            var clamped = Mathf.Clamp(multiplier, 0.05f, 1f);
+            _sluggishMultiplier = IsSluggish ? Mathf.Min(_sluggishMultiplier, clamped) : clamped;
+            _sluggishTimer = Mathf.Max(_sluggishTimer, seconds);
+        }
+
+        public void ClearSluggishness()
+        {
+            _sluggishTimer = 0f;
+            _sluggishMultiplier = 1f;
+        }
+
         public void SetTerrainMultiplier(float multiplier)
         {
             _terrainMultiplier = Mathf.Clamp(multiplier, 0.05f, 1f);

@@ -187,9 +187,12 @@ def build_floor(g, k):
             put(59, s + dy, "P")
             put(61, s + dy, "Q")
     else:
-        # elevador do fim do andar até o longo do andar de cima
+        # elevador do fim do andar até o longo do andar de cima. Embaixo dele há
+        # piso fixo: com o elevador lá em cima, quem chega espera em vez de cair.
         for x in TURN:
             put(x, s, "E")
+            if k > 0:
+                put(x, s_row, "=")
             for y in range(s + 1, long_row(k + 1) + 1):
                 put(x, y, ":")
 

@@ -667,8 +667,8 @@ namespace HealthyRace.Level
         }
 
         /// <summary>
-        /// Elevador de autoatendimento: o sensor viaja junto com a plataforma, então
-        /// ela sobe com quem estiver em cima e desce sozinha quando fica vazia.
+        /// Elevador de autoatendimento (<see cref="LiftRiderSensor"/>): sobe com quem
+        /// está em cima e desce sozinho quando fica vazio. Embaixo há piso fixo.
         /// </summary>
         private void CreateLifts()
         {
@@ -695,6 +695,12 @@ namespace HealthyRace.Level
                 );
                 var collider = lift.AddComponent<BoxCollider2D>();
                 collider.size = new Vector2(width, LiftThickness);
+                // mão única: segura quem está em cima e, ao descer, passa por quem
+                // espera embaixo em vez de esmagá-lo contra o piso fixo
+                collider.usedByEffector = true;
+                var effector = lift.AddComponent<PlatformEffector2D>();
+                effector.useOneWay = true;
+                effector.surfaceArc = 170f;
                 var renderer = lift.AddComponent<SpriteRenderer>();
                 renderer.sprite = Art.Lift != null ? Art.Lift : PlaceholderSpriteFactory.Square;
                 renderer.drawMode =
@@ -704,14 +710,8 @@ namespace HealthyRace.Level
                 var platform = lift.AddComponent<ActivatedPlatform>();
                 platform.Configure(new Vector2(0f, rise), LiftSpeed);
 
-                var sensor = new GameObject("Sensor");
-                sensor.transform.SetParent(lift.transform, false);
-                sensor.transform.localPosition = new Vector3(0f, LiftThickness * 0.5f + 0.2f, 0f);
-                var trigger = sensor.AddComponent<BoxCollider2D>();
-                trigger.isTrigger = true;
-                trigger.size = new Vector2(width - 0.3f, 0.4f);
-                var button = sensor.AddComponent<PressureButton>();
-                button.OnPressedStateChanged += platform.SetState;
+                // sobe com quem está com os pés em cima; não com quem ela atravessa
+                lift.AddComponent<LiftRiderSensor>().Configure(collider, platform);
                 _lifts.Add(platform);
 
                 // trilhos do curso, só visuais

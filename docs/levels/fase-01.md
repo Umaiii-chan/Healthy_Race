@@ -34,8 +34,8 @@ checkpoint) e no fim (no elevador para o andar de cima).
 | Onde fica | Corredor baixo de lanchonete (ladrilho vermelho, letreiros "FAST") | Por cima, na estufa (madeira, vasos, trepadeiras) |
 | Percurso | Reto, sem pulos | Lombadas com rampas, lama, alavanca e portão, espinhos, plataformas que caem |
 | Alimentos | 2 fast-foods por trecho, no meio do corredor: não dá para desviar | 2 a 3 saudáveis por trecho |
-| Ganha | Chega antes no trecho | Pontos dos saudáveis e Bem-Estar alto |
-| Paga | Perde Bem-Estar e pontos; com Bem-Estar baixo fica mais lento e pode ter fadiga | Tempo dos obstáculos |
+| Ganha | Menos distância e nenhum obstáculo | Pontos dos saudáveis, Bem-Estar alto e, no fim, chega antes |
+| Paga | Cada fast-food deixa pesado (metade da velocidade por 5 s); perde Bem-Estar e pontos e pode ter fadiga | Tempo dos obstáculos |
 
 No total: 32 saudáveis, 24 fast-foods, 11 checkpoints, 4 alavancas, 10 trechos de
 espinhos, 12 plataformas que caem e 3 poças de lama.
@@ -54,11 +54,12 @@ A dificuldade do caminho longo sobe aos poucos:
 | 6 | ← | Espinhos, plataformas que caem e alavanca | Espinhos, plataformas que caem e espinhos |
 
 - **Viradas:** elevador de autoatendimento no fim de cada andar. Ele sobe com quem estiver
-  em cima e volta sozinho; um só por virada, largo o bastante para os dois.
+  em cima e volta sozinho; um só por virada, largo o bastante para os dois. Há piso fixo
+  embaixo: com o elevador lá em cima, quem chega espera por ele.
 - **Checkpoints:** na chegada de cada andar e no meio de cada um. Cair nos espinhos devolve
   ao último checkpoint com −5 de Bem-Estar; cair de uma plataforma leva ao caminho curto.
 - **Chegada:** portas P1 e P2 no fim do sexto andar, na esquerda. Quando o primeiro chega, o
-  outro tem 45 segundos; depois disso sai como "não concluiu". A partida tem limite de 5 min.
+  outro tem 45 segundos; depois disso sai como "não concluiu". A partida tem limite de 5 min. A partida tem limite de 5 min.
 
 ## Mapa
 
@@ -78,25 +79,25 @@ A dificuldade do caminho longo sobe aos poucos:
 27  #...C....L..G......h...................................h.....::#
 26  #::==.==========^=====.w.w.==....../==.===.w.w.===~~~====^=..::#
 25  #::#........f.........f........C../#........f.........f......EE#
-24  #::#=========================================================..#
+24  #::#===========================================================#
 23  #::.................................................h..........#
 22  #::.......h.........h............................../##\........#
 21  #::...../##\.h......................h.....h......./####\...C...#
 20  #::..============.w.w.===.==\......====^=====^============.==::#
 19  #EE......f.........f........#\..C........f.........f........#::#
-18  #..=========================================================#::#
+18  #===========================================================#::#
 17  #...........................................G................::#
 16  #............h..............................G................::#
 15  #...C...............h......h.............L..G..h.......h.....::#
 14  #::==.======.w.w.======~~~===....../==.============^=======..::#
 13  #::#........f.........f........C../#........f.........f......EE#
-12  #::#=========================================================..#
+12  #::#===========================================================#
 11  #::...............................................G............#
 10  #::........................................h......G............#
  9  #::.../##\.h.....h...................h.../##\..h..G..L.....C...#
  8  #::..=========^=====^====.==\......=======================.==::#
  7  #EE......f.........f........#\..C........f.........f........#::#
- 6  #..=========================================================#::#
+ 6  #===========================================================#::#
  5  #...........h................................................::#
  4  #........./##\.............................h.................::#
  3  #.12...../####\...h.....h................./##\........h..h...::#
@@ -146,15 +147,19 @@ jogador (P1 pelo longo, P2 pelo curto comendo todo o fast-food), em tempo de jog
 
 | Partida | Longo (P1) | Curto (P2) |
 | --- | --- | --- |
-| Começando com Bem-Estar cheio | 127,9 s, termina com Bem-Estar 100 | 103,0 s, termina com 0 |
-| Começando com Bem-Estar zero | 126,4 s, termina com 100 | 91,9 s, termina com 0 |
+| Começando com Bem-Estar cheio | 125,0 s, termina com Bem-Estar 100 | 140,3 s, termina com 0 |
+| Começando com Bem-Estar zero | 126,4 s, termina com 100 | 142,7 s, termina com 0 |
 
-- As duas rotas terminam sozinhas, inclusive partindo de Bem-Estar zero.
+- As duas rotas terminam sozinhas, inclusive partindo de Bem-Estar zero. O teste exige que
+  o curto, comendo todo o fast-food, chegue **depois** do longo.
+- **O atalho cobra no tempo** (decisão de 10/11/2026): cada ultraprocessado deixa o jogador
+  **pesado** por 5 s, com metade da velocidade (`FoodData.UltraProcessedSlowSeconds` e
+  `UltraProcessedSlowMultiplier`). Comer de novo renova o tempo, sem somar. O rosto do
+  personagem fica com expressão de esforço enquanto dura. Os fast-foods do corredor ficam a
+  10 tiles um do outro, então quem atravessa o corredor fica pesado quase o tempo todo.
+- Antes do peso, o curto chegava 25 a 35 s **antes** (103 s contra 128 s).
 - O robô para no centro de cada tile antes de pular, então um jogador de verdade faz o
-  longo mais rápido. Mesmo assim, **pelo tempo o curto vence**: a lentidão do Bem-Estar baixo
-  não compensa os obstáculos do longo. Quem vai pelo longo termina com Bem-Estar 100 e os
-  pontos dos saudáveis; quem vai pelo curto, com 0.
-- A estimativa antes da construção (68 s longo, 76 s curto) não se confirmou.
+  longo mais rápido; a vantagem do longo na prática é maior que a da tabela.
 
 ## Checklist da Etapa 3
 
@@ -173,9 +178,8 @@ jogador (P1 pelo longo, P2 pelo curto comendo todo o fast-food), em tempo de jog
 
 ## Pontos em aberto
 
-- **O curto deve ser sempre mais rápido?** Hoje ele é, por 25 a 35 s. Se a ideia é "o atalho
-  cobra depois" também no tempo, dá para deixar o fast-food mais pesado na velocidade ou o
-  corredor mais longo; se a cobrança é só em pontos e Bem-Estar, fica como está.
+- **Atalho de vez em quando:** pegar só um ou dois corredores curtos ainda pode compensar.
+  É de propósito (moderação), mas vale observar nas partidas de teste.
 - **Equilíbrio de pontos:** o bônus por chegar primeiro (100 pontos) é pequeno perto dos
   saudáveis; falta medir com a pontuação final e propor ajuste.
 - **Câmera:** se um jogador ficar muito à frente, a câmera afasta até a fase inteira; o HUD
@@ -191,3 +195,9 @@ jogador (P1 pelo longo, P2 pelo curto comendo todo o fast-food), em tempo de jog
 - A porta do P2 ficava sobre um vão sem piso.
 - A animação de empurrar nunca disparava contra as paredes da fase (sonda inteira dentro da
   parede, e o terreno tem colisor só de contorno).
+- Com dois jogadores, o elevador deixava um buraco no piso quando subia (quem chegava caía
+  para o andar de baixo) e esmagava quem esperava quando descia. Agora há piso fixo sob cada
+  elevador, a plataforma é de mão única e o `LiftRiderSensor` sobe só com quem está com os
+  pés em cima, carregando o jogador junto.
+- `ActivatedPlatform` lia a posição do transform, que com interpolação fica um passo atrás:
+  com um passo de física por quadro a plataforma não saía do lugar.

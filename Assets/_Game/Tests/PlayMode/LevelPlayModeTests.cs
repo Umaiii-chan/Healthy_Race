@@ -22,6 +22,7 @@ namespace HealthyRace.Tests.PlayMode
         private const float Step = 0.02f;
 
         private Vector2 _originalGravity;
+        private readonly float[] _times = new float[2];
 
         [SetUp]
         public void SetUp()
@@ -191,6 +192,35 @@ namespace HealthyRace.Tests.PlayMode
         public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_AtFullWellbeing()
         {
             yield return Race(startingWellbeing: -1, label: "bem-estar cheio");
+            // o atalho cobra no tempo: comendo todo o fast-food, o curto chega depois
+            Assert.That(
+                _times[1],
+                Is.GreaterThan(_times[0]),
+                $"curto {_times[1]:0.0} s deveria ser mais lento que longo {_times[0]:0.0} s"
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator FastFood_MakesThePlayerSluggish_ForAWhile()
+        {
+            yield return LoadLevel();
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+            var food = bootstrap.Foods.First(f =>
+                f.FoodData.Category == HealthyRace.Collectibles.FoodCategory.UltraProcessed
+            );
+            var player = bootstrap.PlayerOne;
+            var movement = TakeControl(player);
+            var normal = movement.EffectiveMoveSpeed;
+            Teleport(player, food.transform.position);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(movement.IsSluggish, Is.True);
+            Assert.That(movement.EffectiveMoveSpeed, Is.LessThan(normal * 0.8f));
+            yield return new WaitForSeconds(
+                HealthyRace.Collectibles.FoodData.UltraProcessedSlowSeconds + 0.2f
+            );
+            Assert.That(movement.IsSluggish, Is.False, "o peso passa");
         }
 
         [UnityTest]
@@ -227,11 +257,22 @@ namespace HealthyRace.Tests.PlayMode
 
             var bots = new[]
             {
-                new RouteBot(bootstrap.PlayerOne, longRoute, "P1 longo"),
-                new RouteBot(bootstrap.PlayerTwo, shortRoute, "P2 curto"),
+                new RouteBot(
+                    bootstrap.PlayerOne,
+                    longRoute,
+                    "P1 longo",
+                    c => LevelRoutes.Find(grid, c, d => grid[d.x, d.y] == LevelGrid.DoorOne)
+                ),
+                new RouteBot(
+                    bootstrap.PlayerTwo,
+                    shortRoute,
+                    "P2 curto",
+                    c => LevelRoutes.Find(grid, c, d => grid[d.x, d.y] == LevelGrid.DoorTwo)
+                ),
             };
             var doors = new[] { bootstrap.PlayerOneDoor, bootstrap.PlayerTwoDoor };
-            var times = new float[2];
+            var times = _times;
+            times[0] = times[1] = 0f;
             var start = Time.time;
 
             Time.captureDeltaTime = Step;
@@ -264,8 +305,9 @@ namespace HealthyRace.Tests.PlayMode
             var p1 = bootstrap.PlayerOne.GetComponent<WellbeingComponent>().CurrentValue;
             var p2 = bootstrap.PlayerTwo.GetComponent<WellbeingComponent>().CurrentValue;
             Debug.Log(
-                $"CORRIDA ({label}): longo {times[0]:0.0} s (Bem-Estar {p1}), "
-                    + $"curto {times[1]:0.0} s (Bem-Estar {p2})"
+                $"CORRIDA ({label}): longo {times[0]:0.0} s (Bem-Estar {p1}, "
+                    + $"{bots[0].Replans} desvios), curto {times[1]:0.0} s (Bem-Estar {p2}, "
+                    + $"{bots[1].Replans} desvios)"
             );
             Assert.That(times[0], Is.GreaterThan(0f), $"P1 não terminou: {bots[0].Status}");
             Assert.That(times[1], Is.GreaterThan(0f), $"P2 não terminou: {bots[1].Status}");
@@ -308,7 +350,8 @@ namespace HealthyRace.Tests.PlayMode
 
             private readonly GameObject _player;
             private readonly PlayerMovement _movement;
-            private readonly List<RouteStep> _route;
+            private readonly System.Func<Vector2Int, List<RouteStep>> _replan;
+            private List<RouteStep> _route;
             private readonly string _name;
             private int _index = 1;
             private bool _jumped;
@@ -316,15 +359,42 @@ namespace HealthyRace.Tests.PlayMode
             private float _jumpWait;
             private float _stepTime;
 
-            public RouteBot(GameObject player, List<RouteStep> route, string name)
+            public RouteBot(
+                GameObject player,
+                List<RouteStep> route,
+                string name,
+                System.Func<Vector2Int, List<RouteStep>> replan
+            )
             {
                 _player = player;
                 _movement = TakeControl(player);
                 _route = route;
                 _name = name;
+                _replan = replan;
             }
 
+            /// <summary>Quantas vezes caiu fora da rota (plataforma, espinho) e refez o caminho.</summary>
+            public int Replans { get; private set; }
+
             public string Failure { get; private set; }
+
+            private static string LiftsStatus()
+            {
+                var text = "elevadores:";
+                foreach (
+                    var sensor in Object.FindObjectsByType<HealthyRace.Puzzles.LiftRiderSensor>(
+                        FindObjectsSortMode.None
+                    )
+                )
+                {
+                    var platform = sensor.GetComponent<HealthyRace.Puzzles.ActivatedPlatform>();
+                    text +=
+                        $" [{(Vector2)sensor.transform.position} ativo {platform.IsActive} "
+                        + $"passageiro {sensor.HasRider}]";
+                }
+
+                return text;
+            }
 
             private bool IsLift(Vector2Int cell) =>
                 Object.FindFirstObjectByType<LevelBootstrap>().Grid[cell.x, cell.y]
@@ -335,7 +405,8 @@ namespace HealthyRace.Tests.PlayMode
                     ? $"{_name} no passo {_index}/{_route.Count} ({_route[_index]}), "
                         + $"em {(Vector2)_player.transform.position}, chão {_movement.IsGrounded}, "
                         + $"vel {_movement.Velocity}, rampa {_movement.IsOnSlope}, "
-                        + $"pulou {_jumped}/{_leftGround}, mov {_movement.IsMovementEnabled}"
+                        + $"pulou {_jumped}/{_leftGround}, mov {_movement.IsMovementEnabled}, "
+                        + LiftsStatus()
                     : $"{_name} terminou a rota";
 
             public void Tick()
@@ -355,6 +426,28 @@ namespace HealthyRace.Tests.PlayMode
                 var ty = step.Cell.y;
                 var steer = Mathf.Clamp((tx - x) * 2.5f, -1f, 1f);
                 var grounded = _movement.IsGrounded;
+
+                // caiu da plataforma ou voltou ao checkpoint: refaz a rota dali
+                if (
+                    grounded
+                    && step.Move != RouteMove.Lift
+                    && Mathf.Min(Mathf.Abs(feet - ty), Mathf.Abs(feet - previous.y)) > 1.5f
+                )
+                {
+                    var here = new Vector2Int(Mathf.FloorToInt(x), Mathf.RoundToInt(feet));
+                    var fresh = _replan(here);
+                    if (fresh.Count > 1)
+                    {
+                        _route = fresh;
+                        _index = 1;
+                        _jumped = false;
+                        _leftGround = false;
+                        _stepTime = 0f;
+                        Replans++;
+                        return;
+                    }
+                }
+
                 var atTarget = grounded && Mathf.Abs(feet - ty) < 0.6f && Mathf.Abs(tx - x) < 0.5f;
                 if (step.Move != RouteMove.Lift && IsLift(step.Cell))
                 {
