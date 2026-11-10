@@ -49,6 +49,11 @@ namespace HealthyRace.Visuals
             if (kind == FeedbackKind.PuzzleActivation)
                 _color = new Color(1f, 0.86f, 0.4f);
             _duration = kind == FeedbackKind.Victory ? 0.85f : 0.55f;
+            if (kind == FeedbackKind.Dust)
+            {
+                _color = new Color(0.93f, 0.9f, 0.8f);
+                _duration = 0.32f;
+            }
             var count =
                 reduced ? 3
                 : kind == FeedbackKind.Victory ? 10
@@ -77,11 +82,19 @@ namespace HealthyRace.Visuals
                 renderer.color = _color;
                 _particles[i] = renderer;
                 var angle = i * Mathf.PI * 2 / count;
-                _directions[i] = new Vector3(
-                    Mathf.Cos(angle),
-                    Mathf.Sin(angle) + (negative ? -0.25f : 0.5f),
-                    0f
-                );
+                _directions[i] =
+                    kind == FeedbackKind.Dust
+                        // rente ao chão, abrindo para os dois lados
+                        ? new Vector3(
+                            Mathf.Cos(angle) * 0.9f,
+                            Mathf.Abs(Mathf.Sin(angle)) * 0.22f,
+                            0f
+                        )
+                        : new Vector3(
+                            Mathf.Cos(angle),
+                            Mathf.Sin(angle) + (negative ? -0.25f : 0.5f),
+                            0f
+                        );
             }
         }
 

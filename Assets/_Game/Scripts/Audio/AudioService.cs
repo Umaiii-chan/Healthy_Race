@@ -35,6 +35,8 @@ namespace HealthyRace.Audio
         private float _sfxVolume = 0.8f;
 
         private readonly Dictionary<AudioClipId, AudioClip> _clipCache = new();
+        private AudioCatalog _catalog;
+        private bool _catalogLoaded;
 
         public static AudioService Instance
         {
@@ -276,40 +278,29 @@ namespace HealthyRace.Audio
 
         private AudioClip LoadClip(AudioClipId id)
         {
-#if UNITY_EDITOR
-            string relativePath = id switch
+            if (!_catalogLoaded)
             {
-                AudioClipId.Music_Menu => "Assets/_Game/Audio/Music/mus_menu.wav",
-                AudioClipId.Music_Level01 => "Assets/_Game/Audio/Music/mus_level01.wav",
-                AudioClipId.Sfx_Jump => "Assets/_Game/Audio/SFX/sfx_jump.wav",
-                AudioClipId.Sfx_Step => "Assets/_Game/Audio/SFX/sfx_step.wav",
-                AudioClipId.Sfx_PickupHealthy => "Assets/_Game/Audio/SFX/sfx_pickup_healthy.wav",
-                AudioClipId.Sfx_PickupUltra => "Assets/_Game/Audio/SFX/sfx_pickup_ultra.wav",
-                AudioClipId.Sfx_WellbeingUp => "Assets/_Game/Audio/SFX/sfx_wellbeing_up.wav",
-                AudioClipId.Sfx_WellbeingDown => "Assets/_Game/Audio/SFX/sfx_wellbeing_down.wav",
-                AudioClipId.Sfx_Fatigue => "Assets/_Game/Audio/SFX/sfx_fatigue.wav",
-                AudioClipId.Sfx_Button => "Assets/_Game/Audio/SFX/sfx_button.wav",
-                AudioClipId.Sfx_Lever => "Assets/_Game/Audio/SFX/sfx_lever.wav",
-                AudioClipId.Sfx_Door => "Assets/_Game/Audio/SFX/sfx_door.wav",
-                AudioClipId.Sfx_PuzzleSolved => "Assets/_Game/Audio/SFX/sfx_puzzle_solved.wav",
-                AudioClipId.Sfx_Checkpoint => "Assets/_Game/Audio/SFX/sfx_checkpoint.wav",
-                AudioClipId.Sfx_Finish => "Assets/_Game/Audio/SFX/sfx_finish.wav",
-                AudioClipId.Sfx_Victory => "Assets/_Game/Audio/SFX/sfx_victory.wav",
-                AudioClipId.Sfx_Defeat => "Assets/_Game/Audio/SFX/sfx_defeat.wav",
-                AudioClipId.Sfx_Tie => "Assets/_Game/Audio/SFX/sfx_tie.wav",
-                _ => null,
-            };
-
-            if (!string.IsNullOrEmpty(relativePath))
-            {
-                var clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(relativePath);
-                if (clip != null)
+                _catalogLoaded = true;
+                _catalog = Resources.Load<AudioCatalog>(AudioCatalog.ResourcePath);
+                if (_catalog == null)
                 {
-                    return clip;
+                    Debug.LogWarning(
+                        "AudioService: catálogo de áudio ausente em Resources/"
+                            + AudioCatalog.ResourcePath
+                            + "; todos os sons usarão o tom sintético de reserva."
+                    );
                 }
             }
-#endif
-            return null;
+
+            var clip = _catalog != null ? _catalog.Find(id) : null;
+            if (clip == null && _catalog != null)
+            {
+                Debug.LogWarning(
+                    $"AudioService: sem clipe para {id} no catálogo; usando tom sintético."
+                );
+            }
+
+            return clip;
         }
 
         private static AudioClip CreateSyntheticFallback(AudioClipId id)

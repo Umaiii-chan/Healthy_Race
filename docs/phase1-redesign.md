@@ -1,5 +1,9 @@
 # Fase 1 - redesign da Corrida do Equilíbrio
 
+> **Histórico.** Este documento descreve uma versão anterior da Fase 1, substituída pela
+> corrida em andares de [levels/fase-01.md](levels/fase-01.md). Fica como registro do
+> processo de design.
+
 ## Conceito
 
 O redesign usa a referência externa como base de composição: espaços compactos,

@@ -47,6 +47,19 @@ namespace HealthyRace.Scoring
         public int FatiguePenaltyPerEpisode => _fatiguePenaltyPerEpisode;
         public int DnfPenalty => _dnfPenalty;
 
+        /// <summary>
+        /// Pontuação das fases de corrida: chegar primeiro vale mais (500 / 250) e o
+        /// tempo-alvo é o da fase.
+        /// </summary>
+        public static ScoreConfig CreateForRace(float targetTimeSeconds)
+        {
+            var config = CreateDefault();
+            config._firstPlaceArrivalBonus = 500;
+            config._secondPlaceArrivalBonus = 250;
+            config._targetTimeSeconds = Mathf.Max(1f, targetTimeSeconds);
+            return config;
+        }
+
         public static ScoreConfig CreateDefault()
         {
             var config = CreateInstance<ScoreConfig>();

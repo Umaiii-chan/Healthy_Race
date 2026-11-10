@@ -1,0 +1,46 @@
+# Notas da versão
+
+## 1.0.0
+
+Primeira versão completa: corrida para dois jogadores em 10 fases.
+
+### O jogo
+
+- **10 fases de corrida** em estufas de vários andares, cada uma com nome, tamanho, mecânica
+  em destaque e cores próprias. Cada fase vem de um mapa em texto, e o mesmo construtor monta
+  todas.
+- **Caminho curto ou longo** em cada bifurcação. O corredor curto não tem pulos, mas o
+  fast-food é inevitável e deixa o jogador **pesado** (metade da velocidade por 5 s). O
+  caminho longo tem obstáculos e alimentos saudáveis.
+- **Cada jogador termina sozinho** na própria porta; nenhum trecho depende do outro. O segundo
+  tem 45 s depois da chegada do primeiro, e a fase acaba aos 5 minutos.
+- **Obstáculos:** lombadas com rampa, lama, espinhos, plataformas que caem, alavancas com
+  portão e elevadores de autoatendimento.
+- **Pontuação** pensada para a corrida: chegar primeiro vale 500 (segundo, 250), o bônus de
+  tempo cai aos poucos depois do tempo-alvo da fase e cada alavanca puxada vale 150.
+- **Personagem articulado** com animações de correr, pular, cair, aterrissar, empurrar, fadiga,
+  vitória e derrota; rosto de esforço quando pesado de fast-food.
+- **Menu, pausa, reinício e próxima fase**, com câmera compartilhada e HUD numa faixa própria
+  no alto da tela.
+- **Áudio** com música e efeitos para pulo, coleta, alavanca, portão, checkpoint e chegada.
+
+### Qualidade
+
+- Testes automatizados em EditMode e PlayMode, incluindo um robô que percorre as 10 fases
+  pelos dois caminhos com física real. Resultados em [TEST_REPORT.md](TEST_REPORT.md).
+- Defeitos encontrados pelo robô e corrigidos antes da versão:
+  - pulo bloqueado parado na rampa;
+  - elevador que virava degrau, abria buraco no piso ou esmagava quem esperava;
+  - plataforma móvel que não andava com um passo de física por quadro;
+  - espinhos com área maior que o desenho;
+  - animação de empurrar que nunca disparava contra parede.
+
+### Requisitos
+
+- Windows 10 ou 11, 64 bits. Dois jogadores no mesmo teclado.
+
+### Conhecido
+
+- O jogo foi validado pelo robô de testes. Falta uma rodada de partidas com pessoas para
+  calibrar o ritmo e os pontos.
+- Todas as fases usam a mesma música.

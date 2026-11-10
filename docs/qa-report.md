@@ -1,5 +1,9 @@
 # Relatório de Garantia da Qualidade e Validação do MVP (QA-01)
 
+> **Histórico.** Este é o relatório do MVP. O relatório da versão 1.0.0 está em
+> [TEST_REPORT.md](TEST_REPORT.md); várias regras daqui mudaram (corrida em vez de arena
+> cooperativa, prazo de 45 s, 10 fases).
+
 ## Healthy Race — Fase 1: Corrida do Equilíbrio
 
 ---
@@ -18,7 +22,7 @@ O projeto **Healthy Race** alcançou a **Definição de Pronto (Definition of Do
 
 | Item | Critério de Aceite | Status | Evidência de Validação |
 | :--- | :--- | :---: | :--- |
-| **1** | Fase 1 jogável do início ao fim | **CONCLUÍDO** | 6 zonas conectadas (`Phase1Bootstrap.cs`), do Spawn (X: 0) à Chegada (X: 215). |
+| **1** | Fase 1 jogável do início ao fim | **CONCLUÍDO** | Corrida em 6 andares montada por `LevelBootstrap` a partir de `Levels/Fase01.txt`; um robô completa o caminho longo e o curto em `LevelPlayModeTests`. |
 | **2** | P1 e P2 controláveis simultaneamente | **CONCLUÍDO** | Input System desacoplado (A/D/W para P1; Setas/Up para P2). |
 | **3** | Sistema de Bem-Estar afetando movimentação | **CONCLUÍDO** | Clamping estrito `[0, 100]`, 5 faixas (`WellbeingBandData`), multiplicadores de velocidade e pulo imediatos. |
 | **4** | Sistema de Fadiga funcionando | **CONCLUÍDO** | Acúmulo por corrida, transição `Normal` -> `Fatigued`, redução de velocidade e recuperação progressiva ao parar. |

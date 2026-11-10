@@ -22,14 +22,20 @@ namespace HealthyRace.Scoring
             int healthyPoints = input.HealthyPointsEarned;
             int puzzlePoints = input.PuzzlesSolvedCount * config.PointsPerPuzzle;
 
+            // Cheio até o tempo-alvo; depois cai em linha reta até zero em 1,5× o alvo.
             int timeBonus = 0;
-            if (
-                input.Finished
-                && input.FinishTime > 0f
-                && input.FinishTime <= config.TargetTimeSeconds
-            )
+            if (input.Finished && input.FinishTime > 0f)
             {
-                timeBonus = config.MaxTimeBonus;
+                var target = config.TargetTimeSeconds;
+                if (input.FinishTime <= target)
+                {
+                    timeBonus = config.MaxTimeBonus;
+                }
+                else if (target > 0f && input.FinishTime < target * 1.5f)
+                {
+                    var fraction = 1f - (input.FinishTime - target) / (target * 0.5f);
+                    timeBonus = (int)Math.Round(config.MaxTimeBonus * fraction);
+                }
             }
 
             int arrivalBonus = 0;

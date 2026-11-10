@@ -11,7 +11,20 @@ namespace HealthyRace.Core
     {
         public const string MenuScene = "MainMenu";
 
-        private static readonly string[] LevelScenes = { "Phase1_CorridaDoEquilibrio" };
+        /// <summary>As 10 fases em ordem (mapas em Levels/FaseNN.txt).</summary>
+        private static readonly string[] LevelScenes =
+        {
+            "Phase1_CorridaDoEquilibrio",
+            "Fase02",
+            "Fase03",
+            "Fase04",
+            "Fase05",
+            "Fase06",
+            "Fase07",
+            "Fase08",
+            "Fase09",
+            "Fase10",
+        };
 
         /// <summary>Fase em andamento (1-based). Fora de uma fase vale a última jogada.</summary>
         public static int CurrentLevel { get; private set; } = 1;

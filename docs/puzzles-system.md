@@ -50,26 +50,20 @@ O sistema de puzzles e interações cooperativas do Healthy Race provê mecanism
   - Método `ResetPuzzle()` restaura caixa ao spawn original, redefine alavancas e portas;
   - Acionável por botão/alavanca de reset dedicada no cenário ou por gatilho de código.
 
-## Integração na Fase 1 (arena cooperativa)
+## Integração na Fase 1 (corrida)
 
-A Fase 1 é uma arena de tela única com três portais cooperativos, todos amarrados
-por `CooperativePuzzleController.Bind(...)` em `Phase1Bootstrap`
-(métodos `CreateGateOne`, `CreateGateTwo` e `CreateGateThree`):
+A Fase 1 é uma corrida: nenhum mecanismo exige os dois jogadores. `LevelBootstrap` monta,
+a partir do mapa em texto (ver `docs/levels/fase-01.md`):
 
-1. **G1 (T0 → T1)**: `PressureButton` B1 no piso e B2 na ilha direita de T1 erguem a
-   `ActivatedPlatform` AP1 (topo 1.6 → 4.4). Dois controladores, um por botão; a
-   plataforma obedece ao OU dos dois.
-2. **G2 (T1 → T2)**: `Lever` L2 (não alternável) no nicho de T0 abre a `PuzzleDoor` D2
-   (movimento instantâneo, colisor desligado quando aberta) que bloqueia o trecho
-   direito de T2. Um segundo controlador liga o botão de resgate B2r à plataforma
-   AP2 do nicho, que devolve o acionador a T1.
-3. **G3 (T2 → T3)**: `PressureButton` B3 ergue a AP3 (7.8 → 10.8). A `PushableBox`
-   pode ser empurrada sobre B3 para travar a plataforma e servir de degrau. A
-   alavanca de reset R3 (`_resetSwitch`) devolve a caixa ao spawn, e o bootstrap a
-   devolve automaticamente se ela cair abaixo de T2.
+1. **Alavanca e portão** (`L` e `G` no mapa): `Lever` não alternável; ao ser puxada, a
+   `PuzzleDoor` (movimento instantâneo) treme por 1,2 s e abre de vez. A espera faz parte
+   do custo do caminho longo.
+2. **Elevador de autoatendimento** (`E` e `:`): `ActivatedPlatform` com um
+   `PressureButton` filho que viaja junto. Sobe com quem estiver em cima, volta sozinho
+   quando fica vazio e, em repouso, fica rente ao piso.
 
-Detalhes de coordenadas e as saídas de emergência de cada portal estão em
-`docs/phase1-blockout.md`.
+`CooperativePuzzleController` e `PushableBox` continuam no código e nos testes, mas a
+Fase 1 não os usa.
 
 ## Testes Automatizados
 

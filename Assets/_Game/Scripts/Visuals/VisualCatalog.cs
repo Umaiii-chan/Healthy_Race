@@ -49,12 +49,77 @@ namespace HealthyRace.Visuals
         Finish,
         Victory,
         Defeat,
+        Dust,
+    }
+
+    /// <summary>Arte de cenário da arena: fundo em camadas, terreno, perigos e placa.</summary>
+    [Serializable]
+    public struct ArenaArt
+    {
+        public Sprite Sky;
+        public Sprite[] Clouds;
+        public Sprite HillsFar;
+        public Sprite HillsNear;
+        public Sprite Bushes;
+        public Sprite Ground;
+        public Sprite Plank;
+        public Sprite Stone;
+        public Sprite Spikes;
+        public Sprite Mud;
+        public Sprite Sign;
+
+        public bool HasBackground =>
+            Sky != null
+            && Clouds != null
+            && Clouds.Length > 0
+            && HillsFar != null
+            && HillsNear != null
+            && Bushes != null;
+    }
+
+    /// <summary>Arte das fases em labirinto: estufa (caminho longo) e lanchonete (curto).</summary>
+    [Serializable]
+    public struct GreenhouseArt
+    {
+        public Sprite Wall;
+
+        /// <summary>Folhagem de fundo que ladrilha; camada de parallax.</summary>
+        public Sprite Leaves;
+        public Sprite Brick;
+        public Sprite BrickTop;
+        public Sprite Ramp;
+        public Sprite FastFloor;
+        public Sprite FastSign;
+        public Sprite Pot;
+        public Sprite Vine;
+        public Sprite Lift;
+        public Sprite Gate;
+
+        public bool IsComplete =>
+            Wall != null
+            && Leaves != null
+            && Brick != null
+            && BrickTop != null
+            && Ramp != null
+            && FastFloor != null
+            && FastSign != null
+            && Pot != null
+            && Vine != null
+            && Lift != null
+            && Gate != null;
     }
 
     [CreateAssetMenu(menuName = "Healthy Race/Visual Catalog")]
     public sealed class VisualCatalog : ScriptableObject
     {
         public Sprite[] Characters = new Sprite[5];
+
+        /// <summary>Partes do personagem articulado, uma pele por estado de Bem-Estar.</summary>
+        public CharacterSkin[] Skins = new CharacterSkin[5];
+
+        public ArenaArt Arena;
+
+        public GreenhouseArt Greenhouse;
         public Sprite[] Foods = new Sprite[18];
         public Sprite[] Environment = new Sprite[13];
         public Sprite Background;
@@ -133,6 +198,19 @@ namespace HealthyRace.Visuals
         public Color IdentityColor(int player) => player == 2 ? PlayerTwo : PlayerOne;
 
         public Sprite Character(WellbeingAppearance appearance) => Characters[(int)appearance];
+
+        public bool TryGetSkin(WellbeingAppearance appearance, out CharacterSkin skin)
+        {
+            var index = (int)appearance;
+            if (Skins != null && index >= 0 && index < Skins.Length && Skins[index].IsComplete)
+            {
+                skin = Skins[index];
+                return true;
+            }
+
+            skin = default;
+            return false;
+        }
 
         public Sprite Food(string id)
         {

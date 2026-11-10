@@ -1,4 +1,5 @@
 using System;
+using HealthyRace.Player;
 using HealthyRace.WellBeing;
 using UnityEngine;
 
@@ -63,6 +64,13 @@ namespace HealthyRace.Collectibles
 
             _isCollected = true;
             wellbeing.ApplyDelta(_foodData.WellbeingDelta);
+            // o atalho cobra na hora: ultraprocessado deixa o jogador pesado
+            var movement = other.GetComponentInParent<PlayerMovement>();
+            if (movement != null)
+            {
+                movement.ApplySluggishness(_foodData.SlowMultiplier, _foodData.SlowSeconds);
+            }
+
             Collected?.Invoke(this, wellbeing);
 
             if (_foodData.CollectSound != null)
