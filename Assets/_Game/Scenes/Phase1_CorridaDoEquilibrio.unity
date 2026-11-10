@@ -109,7 +109,7 @@ NavMeshSettings:
     ledgeDropHeight: 0
     maxJumpAcrossDistance: 0
     minRegionArea: 2
-    manualCellSize: 0.16666667
+    manualCellSize: 0
     cellSize: 0.16666667
     manualTileSize: 0
     tileSize: 256
@@ -188,6 +188,8 @@ MonoBehaviour:
   _visualCatalog: {fileID: 11400000, guid: a5731bf23b531a74c9515c5433614d51, type: 2}
   _playerOneVisualPrefab: {fileID: 5770368573529694904, guid: aaa27583a59d9954ba68c2011bcc2f5a, type: 3}
   _playerTwoVisualPrefab: {fileID: 3600848854465078626, guid: 15f7f19656bc9dc4e82b5bee25a73807, type: 3}
+  _screensPrefab: {fileID: 8193277210385806417, guid: 583ae726f87d23a4aa22777e1c61fad5, type: 3}
+  _inputActions: {fileID: -944628639613478452, guid: 45e818f4b89d7984c88e2dabb9989360, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
