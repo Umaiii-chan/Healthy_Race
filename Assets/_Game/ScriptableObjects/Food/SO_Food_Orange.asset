@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_Food_Orange
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Collectibles.FoodData
   _id: orange
-  _displayName: Orange
+  _displayName: Laranja
   _category: 0
   _basePoints: 100
   _wellbeingDelta: 10

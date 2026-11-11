@@ -183,7 +183,7 @@ namespace HealthyRace.UI
                 + $"Tempo: {timeStr}\n"
                 + $"Bem-Estar: {player.FinalWellbeing}/100\n\n"
                 + $"Alimentos: +{score.HealthyPoints}\n"
-                + $"Puzzles: +{score.PuzzlePoints}\n"
+                + $"Alavancas: +{score.PuzzlePoints}\n"
                 + $"Bônus Tempo: +{score.TimeBonus}\n"
                 + $"Bônus Chegada: +{score.ArrivalBonus}\n"
                 + $"Bônus Bem-Estar: +{score.WellbeingBonus}\n"

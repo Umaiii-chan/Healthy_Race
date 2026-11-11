@@ -56,40 +56,6 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator PressureButton_PressedByBox_OpensPuzzleDoor()
-        {
-            CreateGround(new Vector2(0f, -1f), new Vector2(20f, 1f));
-            var button = CreatePressureButton(new Vector2(0f, -0.45f));
-            var door = CreateDoor(new Vector2(5f, 0f), new Vector2(0f, 3f), instant: true);
-            var box = CreateBox(new Vector2(0f, 1.5f));
-
-            var puzzleObj = new GameObject("PuzzleController");
-            var puzzle = puzzleObj.AddComponent<CooperativePuzzleController>();
-            _createdObjects.Add(puzzleObj);
-
-            puzzle.Bind(
-                button: button,
-                lever: null,
-                box: box,
-                door: door,
-                platform: null,
-                resetSwitch: null,
-                requireAll: false
-            );
-
-            Assert.That(door.IsOpen, Is.False, "Door should start closed.");
-
-            // Wait for box to land on button
-            for (var frame = 0; frame < 60; frame++)
-            {
-                yield return new WaitForFixedUpdate();
-            }
-
-            Assert.That(button.IsPressed, Is.True, "Button should be pressed by falling box.");
-            Assert.That(door.IsOpen, Is.True, "Door should open when button is pressed.");
-        }
-
-        [UnityTest]
         public IEnumerator ActivatedPlatform_MovesTowardsTarget_WhenActivated()
         {
             var platform = CreatePlatform(new Vector2(0f, 0f), new Vector2(0f, 2f), 4f);
@@ -123,50 +89,6 @@ namespace HealthyRace.Tests.PlayMode
             );
         }
 
-        [UnityTest]
-        public IEnumerator CooperativePuzzle_ResetRecoversCratePosition()
-        {
-            CreateGround(new Vector2(0f, -1f), new Vector2(20f, 1f));
-            var box = CreateBox(new Vector2(2f, 0f));
-            var lever = CreateLever(new Vector2(0f, 0f));
-            var resetSwitch = CreateLever(new Vector2(-3f, 0f));
-            var door = CreateDoor(new Vector2(5f, 0f), new Vector2(0f, 3f), instant: true);
-
-            var puzzleObj = new GameObject("PuzzleController");
-            var puzzle = puzzleObj.AddComponent<CooperativePuzzleController>();
-            _createdObjects.Add(puzzleObj);
-
-            puzzle.Bind(
-                button: null,
-                lever: lever,
-                box: box,
-                door: door,
-                platform: null,
-                resetSwitch: resetSwitch,
-                requireAll: true
-            );
-
-            // Move box away (simulate fallen into pit)
-            box.transform.position = new Vector2(50f, -20f);
-
-            // Trigger reset
-            puzzle.ResetPuzzle();
-
-            Assert.That(
-                box.transform.position.x,
-                Is.EqualTo(2f).Within(0.01f),
-                "Box position X should be restored to initial spawn."
-            );
-            Assert.That(
-                box.transform.position.y,
-                Is.EqualTo(0f).Within(0.01f),
-                "Box position Y should be restored to initial spawn."
-            );
-            Assert.That(door.IsOpen, Is.False, "Door should remain closed after reset.");
-
-            yield return null;
-        }
-
         private GameObject CreateGround(Vector2 position, Vector2 size)
         {
             var ground = new GameObject("Ground");
@@ -178,19 +100,6 @@ namespace HealthyRace.Tests.PlayMode
 
             _createdObjects.Add(ground);
             return ground;
-        }
-
-        private PushableBox CreateBox(Vector2 position)
-        {
-            var boxObj = new GameObject("PushableBox");
-            boxObj.transform.position = position;
-
-            var col = boxObj.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(1f, 1f);
-
-            var box = boxObj.AddComponent<PushableBox>();
-            _createdObjects.Add(boxObj);
-            return box;
         }
 
         private Lever CreateLever(Vector2 position)
@@ -240,20 +149,6 @@ namespace HealthyRace.Tests.PlayMode
             platform.Configure(targetOffset, moveSpeed, returnWhenDeactivated: true);
             _createdObjects.Add(platObj);
             return platform;
-        }
-
-        private PressureButton CreatePressureButton(Vector2 position)
-        {
-            var buttonObj = new GameObject("PressureButton");
-            buttonObj.transform.position = position;
-
-            var col = buttonObj.AddComponent<BoxCollider2D>();
-            col.isTrigger = true;
-            col.size = new Vector2(1.5f, 0.4f);
-
-            var button = buttonObj.AddComponent<PressureButton>();
-            _createdObjects.Add(buttonObj);
-            return button;
         }
 
         private PlayerMovement CreatePlayer(Vector2 position)

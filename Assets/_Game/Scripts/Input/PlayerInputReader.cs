@@ -11,7 +11,6 @@ namespace HealthyRace.Input
     [DisallowMultipleComponent]
     public sealed class PlayerInputReader : MonoBehaviour
     {
-        private const string InteractActionName = "Interact";
         private const string JumpActionName = "Jump";
         private const string MoveActionName = "Move";
 
@@ -21,18 +20,13 @@ namespace HealthyRace.Input
         [SerializeField]
         private PlayerInputId _playerInputId;
 
-        private InputAction _interactAction;
         private bool _isSubscribed;
         private InputAction _jumpAction;
         private InputActionMap _playerActionMap;
         private InputAction _moveAction;
         private InputActionAsset _runtimeInputActions;
 
-        public event Action InteractPerformed;
-
         public event Action JumpPerformed;
-
-        public bool InteractPressed { get; private set; }
 
         public bool IsConfigured => _playerActionMap != null;
 
@@ -81,7 +75,6 @@ namespace HealthyRace.Input
         private void LateUpdate()
         {
             JumpPressed = false;
-            InteractPressed = false;
         }
 
         private void OnDestroy()
@@ -122,7 +115,6 @@ namespace HealthyRace.Input
             _playerActionMap.Disable();
             MoveInput = Vector2.zero;
             JumpPressed = false;
-            InteractPressed = false;
         }
 
         private void EnableActions()
@@ -134,12 +126,6 @@ namespace HealthyRace.Input
 
             Subscribe();
             _playerActionMap.Enable();
-        }
-
-        private void HandleInteract(InputAction.CallbackContext context)
-        {
-            InteractPressed = true;
-            InteractPerformed?.Invoke();
         }
 
         private void HandleJump(InputAction.CallbackContext context)
@@ -180,17 +166,11 @@ namespace HealthyRace.Input
             _playerActionMap = inputActions.FindActionMap(_playerInputId.ToString(), false);
             _moveAction = _playerActionMap?.FindAction(MoveActionName, false);
             _jumpAction = _playerActionMap?.FindAction(JumpActionName, false);
-            _interactAction = _playerActionMap?.FindAction(InteractActionName, false);
 
-            if (
-                _playerActionMap == null
-                || _moveAction == null
-                || _jumpAction == null
-                || _interactAction == null
-            )
+            if (_playerActionMap == null || _moveAction == null || _jumpAction == null)
             {
                 Debug.LogError(
-                    $"Input map '{_playerInputId}' must contain Move, Jump, and Interact actions.",
+                    $"Input map '{_playerInputId}' must contain Move and Jump actions.",
                     this
                 );
             }
@@ -198,12 +178,7 @@ namespace HealthyRace.Input
 
         private void Subscribe()
         {
-            if (
-                _isSubscribed
-                || _moveAction == null
-                || _jumpAction == null
-                || _interactAction == null
-            )
+            if (_isSubscribed || _moveAction == null || _jumpAction == null)
             {
                 return;
             }
@@ -211,7 +186,6 @@ namespace HealthyRace.Input
             _moveAction.performed += HandleMove;
             _moveAction.canceled += HandleMove;
             _jumpAction.performed += HandleJump;
-            _interactAction.performed += HandleInteract;
             _isSubscribed = true;
         }
 
@@ -225,7 +199,6 @@ namespace HealthyRace.Input
             _moveAction.performed -= HandleMove;
             _moveAction.canceled -= HandleMove;
             _jumpAction.performed -= HandleJump;
-            _interactAction.performed -= HandleInteract;
             _isSubscribed = false;
         }
     }

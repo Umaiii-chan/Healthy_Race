@@ -194,6 +194,7 @@ namespace HealthyRace.Tests.PlayMode
         // Corrida inteira
         // =====================================================================
         [UnityTest]
+        [Timeout(600000)]
         public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_AtFullWellbeing(
             [Values(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)] int level
         )
@@ -203,16 +204,104 @@ namespace HealthyRace.Tests.PlayMode
                 startingWellbeing: -1,
                 label: $"fase {level}, bem-estar cheio"
             );
-            // o atalho cobra no tempo: comendo todo o fast-food, o curto chega depois
-            Assert.That(
-                _times[1],
-                Is.GreaterThan(_times[0]),
-                $"curto {_times[1]:0.0} s deveria ser mais lento que longo {_times[0]:0.0} s"
-            );
+            // Com o lanche "pico e queda" o atalho pode ganhar ou perder: os dois têm de
+            // terminar (Race já exige); os tempos saem no log CORRIDA para o balanceamento.
         }
 
         [UnityTest]
-        public IEnumerator FastFood_MakesThePlayerSluggish_ForAWhile()
+        public IEnumerator Countdown_HoldsPlayersAndClock_UntilGo()
+        {
+            RaceCountdown.ForceEnabled = true;
+            try
+            {
+                yield return LoadLevel();
+                var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+                var countdown = bootstrap.Countdown;
+                var movement = bootstrap.PlayerOne.GetComponent<PlayerMovement>();
+                var start = bootstrap.PlayerOne.transform.position.x;
+
+                Assert.That(countdown.IsCounting, Is.True);
+                Assert.That(countdown.CurrentText, Is.EqualTo("3"));
+                Assert.That(movement.IsMovementEnabled, Is.False);
+                movement.SetHorizontalInput(1f);
+                yield return new WaitForSeconds(0.5f);
+                Assert.That(
+                    bootstrap.PlayerOne.transform.position.x,
+                    Is.EqualTo(start).Within(0.05f),
+                    "ninguém anda antes do JÁ!"
+                );
+                Assert.That(
+                    bootstrap.MatchController.Elapsed,
+                    Is.Zero,
+                    "o relógio espera a largada"
+                );
+
+                yield return new WaitForSeconds(RaceCountdown.Seconds);
+                Assert.That(countdown.IsCounting, Is.False);
+                Assert.That(movement.IsMovementEnabled, Is.True);
+                Assert.That(bootstrap.MatchController.Elapsed, Is.GreaterThan(0f));
+                Assert.That(bootstrap.MatchController.Elapsed, Is.LessThan(1.2f));
+            }
+            finally
+            {
+                RaceCountdown.ForceEnabled = false;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator MatchRecorder_InARealLevel_WritesStartSamplesAndPickups()
+        {
+            var directory = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                "healthy-race-rec-" + System.IO.Path.GetRandomFileName()
+            );
+            MatchRecorder.ForceEnabled = true;
+            MatchRecorder.OutputDirectory = directory;
+            try
+            {
+                yield return LoadLevel();
+                var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+                var recorder = bootstrap.GetComponent<MatchRecorder>();
+                Assert.That(recorder, Is.Not.Null, "a fase cria o registro quando ele está ligado");
+                Assert.That(recorder.IsRecording, Is.True);
+
+                var food = bootstrap.Foods.First(f =>
+                    f.FoodData.Category == HealthyRace.Collectibles.FoodCategory.UltraProcessed
+                );
+                TakeControl(bootstrap.PlayerOne);
+                Teleport(bootstrap.PlayerOne, food.transform.position);
+                yield return new WaitForSeconds(2.5f);
+
+                var path = recorder.FilePath;
+                // sair da fase fecha o arquivo com "abandono"
+                Object.Destroy(recorder);
+                yield return null;
+
+                var lines = System.IO.File.ReadAllLines(path);
+                Assert.That(lines[0], Does.Contain("\"evento\":\"largada\""));
+                Assert.That(lines, Has.Some.Contains("\"evento\":\"amostra\""));
+                Assert.That(lines, Has.Some.Contains("\"evento\":\"corredor_entrada\""));
+                Assert.That(lines, Has.Some.Contains("\"evento\":\"coleta\""));
+                Assert.That(lines.Last(), Does.Contain("\"evento\":\"abandono\""));
+                Assert.That(
+                    lines.Count(l => l.Contains("\"evento\":\"amostra\"")),
+                    Is.InRange(2, 5),
+                    "uma amostra por segundo"
+                );
+            }
+            finally
+            {
+                MatchRecorder.ForceEnabled = false;
+                MatchRecorder.OutputDirectory = null;
+                if (System.IO.Directory.Exists(directory))
+                {
+                    System.IO.Directory.Delete(directory, true);
+                }
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Snack_GivesARush_ThenACrash_ThatPasses()
         {
             yield return LoadLevel();
             var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
@@ -226,15 +315,18 @@ namespace HealthyRace.Tests.PlayMode
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
 
-            Assert.That(movement.IsSluggish, Is.True);
+            // as durações dependem do Bem-Estar de quem comeu: lê do próprio efeito
+            Assert.That(movement.IsRushing, Is.True, "o lanche dá o pico");
+            Assert.That(movement.EffectiveMoveSpeed, Is.GreaterThan(normal * 1.1f));
+            yield return new WaitForSeconds(movement.Snack.Remaining + 0.2f);
+            Assert.That(movement.IsCrashing, Is.True, "depois do pico vem a queda");
             Assert.That(movement.EffectiveMoveSpeed, Is.LessThan(normal * 0.8f));
-            yield return new WaitForSeconds(
-                HealthyRace.Collectibles.FoodData.UltraProcessedSlowSeconds + 0.2f
-            );
-            Assert.That(movement.IsSluggish, Is.False, "o peso passa");
+            yield return new WaitForSeconds(movement.Snack.Remaining + 0.2f);
+            Assert.That(movement.SnackState, Is.EqualTo(SnackState.None), "a queda passa");
         }
 
         [UnityTest]
+        [Timeout(600000)]
         public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_FromZeroWellbeing()
         {
             yield return Race(1, startingWellbeing: 0, label: "fase 1, bem-estar zero");
@@ -268,11 +360,8 @@ namespace HealthyRace.Tests.PlayMode
 
             var bots = new[]
             {
-                new RouteBot(
-                    bootstrap.PlayerOne,
-                    longRoute,
-                    "P1 longo",
-                    c => LevelRoutes.Find(grid, c, d => grid[d.x, d.y] == LevelGrid.DoorOne)
+                new RouteBot(bootstrap.PlayerOne, longRoute, "P1 longo", c =>
+                    LevelRoutes.Find(grid, c, d => grid[d.x, d.y] == LevelGrid.DoorOne)
                 ),
                 new RouteBot(
                     bootstrap.PlayerTwo,

@@ -301,7 +301,7 @@ namespace HealthyRace.Visuals
             {
                 _rig.Velocity = velocity;
                 _rig.SetFacing(input);
-                // o peso do ultraprocessado aparece no rosto enquanto dura
+                // a queda do lanche aparece no rosto enquanto dura
                 _rig.SetExpression(ExpressionFor(_action));
             }
 
@@ -311,12 +311,12 @@ namespace HealthyRace.Visuals
             return IsBlocked;
         }
 
-        /// <summary>Esforço ao empurrar, pular, interagir ou enquanto pesado de ultraprocessado.</summary>
+        /// <summary>Esforço ao empurrar, pular, interagir ou na queda do lanche (sonolento).</summary>
         private CharacterExpression ExpressionFor(VisualAction action) =>
             action == VisualAction.Push
             || action == VisualAction.Jump
             || action == VisualAction.Interact
-            || (_movement != null && _movement.IsSluggish)
+            || (_movement != null && _movement.IsCrashing)
                 ? CharacterExpression.Effort
                 : CharacterExpression.Normal;
 

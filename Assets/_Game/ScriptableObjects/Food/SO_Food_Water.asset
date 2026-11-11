@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_Food_Water
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Collectibles.FoodData
   _id: water
-  _displayName: Water
+  _displayName: "\xC1gua"
   _category: 0
   _basePoints: 150
   _wellbeingDelta: 15

@@ -37,17 +37,11 @@ namespace HealthyRace.Collectibles
         [SerializeField]
         private AudioClip _collectSound;
 
-        /// <summary>Ultraprocessado pesa: velocidade × este valor por <see cref="UltraProcessedSlowSeconds"/>.</summary>
-        public const float UltraProcessedSlowMultiplier = 0.5f;
+        /// <summary>Lanche rápido: dá o pico e depois a queda (ver <c>SnackRush</c>).</summary>
+        public bool StartsRush => _category == FoodCategory.UltraProcessed;
 
-        public const float UltraProcessedSlowSeconds = 5f;
-
-        /// <summary>Multiplicador de velocidade passageiro ao comer (1 = nenhum).</summary>
-        public float SlowMultiplier =>
-            _category == FoodCategory.UltraProcessed ? UltraProcessedSlowMultiplier : 1f;
-
-        public float SlowSeconds =>
-            _category == FoodCategory.UltraProcessed ? UltraProcessedSlowSeconds : 0f;
+        /// <summary>Fruta e água (todo saudável, por enquanto) encerram a queda.</summary>
+        public bool EndsCrash => _category == FoodCategory.Healthy;
 
         public int BasePoints => _basePoints;
 

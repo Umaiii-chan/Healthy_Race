@@ -26,7 +26,6 @@ namespace HealthyRace.Editor.Visuals
         public const string ScenePath = Root + "Scenes/Test/VisualTest.unity";
         public const string MenuScenePath = Root + "Scenes/MainMenu.unity";
         public const string Phase1ScenePath = Root + "Scenes/Phase1_CorridaDoEquilibrio.unity";
-        public const string VerticalSliceScenePath = Root + "Scenes/VerticalSlice_Core.unity";
         public const string ScreensPrefabPath = Root + "Prefabs/Visual/PF_VIS_Screens.prefab";
         public const string InputActionsPath = Root + "Input/HealthyRaceInputActions.inputactions";
         private static Material _material;
@@ -315,8 +314,6 @@ namespace HealthyRace.Editor.Visuals
             );
             EditorSceneManager.SaveScene(phaseScene);
 
-            // VerticalSlice_Core segue na lista só porque um teste PlayMode a carrega
-            // por SceneManager; nenhum fluxo do jogo chega a ela.
             ApplyBuildScenes();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -1061,7 +1058,7 @@ namespace HealthyRace.Editor.Visuals
                 Cream,
                 TextAnchor.MiddleCenter
             );
-            Label(
+            var reason = Label(
                 result,
                 "As escolhas contam até a chegada.",
                 250,
@@ -1109,7 +1106,7 @@ namespace HealthyRace.Editor.Visuals
             );
             Label(
                 controls,
-                "P1  ●\n\nMover       A / D\nPular       W ou Espaço\nInteragir   E",
+                "P1  ●\n\nMover       A / D\nPular       W ou Espaço",
                 360,
                 380,
                 550,
@@ -1119,7 +1116,7 @@ namespace HealthyRace.Editor.Visuals
             );
             Label(
                 controls,
-                "P2  ◆\n\nMover       ← / →\nPular       ↑\nInteragir   Ctrl direito",
+                "P2  ◆\n\nMover       ← / →\nPular       ↑",
                 1050,
                 380,
                 550,
@@ -1168,7 +1165,8 @@ namespace HealthyRace.Editor.Visuals
                 Commands.ToArray(),
                 music,
                 effects,
-                toggle
+                toggle,
+                reason
             );
             view.Show(VisualScreen.Gameplay);
             view.RenderRace(0, 0, null);

@@ -57,7 +57,6 @@ namespace HealthyRace.Editor.Visuals
                 scenes.Add(new EditorBuildSettingsScene(scene, true));
             }
 
-            scenes.Add(new EditorBuildSettingsScene(VerticalSliceScenePath, true));
             EditorBuildSettings.scenes = scenes.ToArray();
         }
 
