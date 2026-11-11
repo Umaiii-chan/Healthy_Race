@@ -7,7 +7,7 @@ Data: 11/11/2026. Editor: Unity 6000.3.23f1, Windows 11, modo batch (sem som).
 | Suíte | Testes | Passaram | Falharam |
 | --- | --- | --- | --- |
 | EditMode | 243 | 243 | 0 |
-| PlayMode | 83 | 83 | 0 |
+| PlayMode | 84 | 84 | 0 |
 | Build Windows 64-bit (Mono) | — | sucesso | — |
 
 No GitHub, o CI roda lint de Markdown e YAML, formatação de C# (CSharpier) e validação do
@@ -21,7 +21,9 @@ A 1.0.0 tinha 233 testes EditMode e 91 PlayMode. Na 1.0.1:
 - **saíram 18 testes** do protótipo cooperativo removido (caixa empurrável, botão de pressão,
   controlador cooperativo e a cena `VerticalSlice_Core`): 10 EditMode e 8 PlayMode;
 - **entraram 20 testes EditMode**: distância igual para P1 e P2 nas 10 fases (10), balanceamento
-  em asset (3), progresso pela rota, registro de partida e progresso salvo (7).
+  em asset (3), progresso pela rota, registro de partida e progresso salvo (7);
+- **entrou 1 teste PlayMode**: o registro de partida ligado numa fase real (largada, amostras,
+  entrada no corredor, coleta e fechamento do arquivo).
 
 ## O que é testado
 

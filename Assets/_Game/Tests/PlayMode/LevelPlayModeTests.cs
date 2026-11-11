@@ -212,6 +212,58 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator MatchRecorder_InARealLevel_WritesStartSamplesAndPickups()
+        {
+            var directory = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                "healthy-race-rec-" + System.IO.Path.GetRandomFileName()
+            );
+            MatchRecorder.ForceEnabled = true;
+            MatchRecorder.OutputDirectory = directory;
+            try
+            {
+                yield return LoadLevel();
+                var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+                var recorder = bootstrap.GetComponent<MatchRecorder>();
+                Assert.That(recorder, Is.Not.Null, "a fase cria o registro quando ele está ligado");
+                Assert.That(recorder.IsRecording, Is.True);
+
+                var food = bootstrap.Foods.First(f =>
+                    f.FoodData.Category == HealthyRace.Collectibles.FoodCategory.UltraProcessed
+                );
+                TakeControl(bootstrap.PlayerOne);
+                Teleport(bootstrap.PlayerOne, food.transform.position);
+                yield return new WaitForSeconds(2.5f);
+
+                var path = recorder.FilePath;
+                // sair da fase fecha o arquivo com "abandono"
+                Object.Destroy(recorder);
+                yield return null;
+
+                var lines = System.IO.File.ReadAllLines(path);
+                Assert.That(lines[0], Does.Contain("\"evento\":\"largada\""));
+                Assert.That(lines, Has.Some.Contains("\"evento\":\"amostra\""));
+                Assert.That(lines, Has.Some.Contains("\"evento\":\"corredor_entrada\""));
+                Assert.That(lines, Has.Some.Contains("\"evento\":\"coleta\""));
+                Assert.That(lines.Last(), Does.Contain("\"evento\":\"abandono\""));
+                Assert.That(
+                    lines.Count(l => l.Contains("\"evento\":\"amostra\"")),
+                    Is.InRange(2, 5),
+                    "uma amostra por segundo"
+                );
+            }
+            finally
+            {
+                MatchRecorder.ForceEnabled = false;
+                MatchRecorder.OutputDirectory = null;
+                if (System.IO.Directory.Exists(directory))
+                {
+                    System.IO.Directory.Delete(directory, true);
+                }
+            }
+        }
+
+        [UnityTest]
         public IEnumerator FastFood_MakesThePlayerSluggish_ForAWhile()
         {
             yield return LoadLevel();
