@@ -955,9 +955,20 @@ namespace HealthyRace.Level
                     collectible.Configure(data);
                 }
 
+                // cada jogador tem a sua vez; o item espera, na cor de quem falta
+                collectible.SetPerPlayer(2, WaitingTint);
                 collectible.Collected += HandleFoodCollected;
                 _foods.Add(collectible);
             }
+        }
+
+        /// <summary>Cor de quem ainda não pegou o item (o outro jogador).</summary>
+        private Color WaitingTint(WellbeingComponent lastCollector)
+        {
+            var lastWasOne =
+                _playerOne != null
+                && lastCollector == _playerOne.GetComponent<WellbeingComponent>();
+            return PlayerColor(lastWasOne ? 2 : 1);
         }
 
         private void HandleFoodCollected(FoodCollectible collectible, WellbeingComponent collector)
@@ -1495,7 +1506,7 @@ namespace HealthyRace.Level
                 _playerOne.transform,
                 _playerTwo.transform,
                 i => (i == 1 ? p1Wellbeing : p2Wellbeing)?.CurrentValue ?? 0,
-                i => (i == 1 ? p1Movement : p2Movement)?.IsSluggish ?? false
+                i => (i == 1 ? p1Movement : p2Movement)?.SnackState ?? SnackState.None
             );
             if (p1Fatigue != null)
             {

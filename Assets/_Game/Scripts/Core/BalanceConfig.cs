@@ -50,12 +50,24 @@ namespace HealthyRace.Core
         [SerializeField, Min(0)]
         private int _dnfPenalty = 500;
 
-        [Header("Lanche rápido")]
-        [SerializeField, Range(0.1f, 1f), Tooltip("Velocidade × este valor depois de comer.")]
-        private float _ultraSlowMultiplier = 0.5f;
+        [Header("Lanche rápido: pico e queda")]
+        [SerializeField, Range(1f, 2f), Tooltip("Velocidade × este valor no pico.")]
+        private float _rushMultiplier = 1.3f;
 
-        [SerializeField, Min(0f), Tooltip("Duração do efeito (s); comer de novo renova.")]
-        private float _ultraSlowSeconds = 5f;
+        [SerializeField, Min(0f), Tooltip("Duração do pico (s); outro lanche renova.")]
+        private float _rushSeconds = 2f;
+
+        [SerializeField, Range(0.1f, 1f), Tooltip("Velocidade × este valor na queda.")]
+        private float _crashMultiplier = 0.6f;
+
+        [SerializeField, Min(0f), Tooltip("Duração da queda depois de um lanche (s).")]
+        private float _crashSeconds = 4f;
+
+        [SerializeField, Min(0f), Tooltip("Queda extra por lanche comido ainda no pico (s).")]
+        private float _crashExtraPerChain = 2f;
+
+        [SerializeField, Min(0f), Tooltip("Queda máxima, mesmo encadeando lanches (s).")]
+        private float _crashMaxSeconds = 8f;
 
         [Header("Fadiga")]
         [SerializeField, Min(0f)]
@@ -98,8 +110,12 @@ namespace HealthyRace.Core
         public int UltraPenaltyPerItem => _ultraPenaltyPerItem;
         public int FatiguePenaltyPerEpisode => _fatiguePenaltyPerEpisode;
         public int DnfPenalty => _dnfPenalty;
-        public float UltraSlowMultiplier => _ultraSlowMultiplier;
-        public float UltraSlowSeconds => _ultraSlowSeconds;
+        public float RushMultiplier => _rushMultiplier;
+        public float RushSeconds => _rushSeconds;
+        public float CrashMultiplier => _crashMultiplier;
+        public float CrashSeconds => _crashSeconds;
+        public float CrashExtraPerChain => _crashExtraPerChain;
+        public float CrashMaxSeconds => _crashMaxSeconds;
         public float FatigueDurationSeconds => _fatigueDurationSeconds;
         public int FatigueRecoveryWellbeing => _fatigueRecoveryWellbeing;
         public int FatigueTriggerThreshold => _fatigueTriggerThreshold;

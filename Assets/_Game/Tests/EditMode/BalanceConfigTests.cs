@@ -27,8 +27,10 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(asset.FirstPlaceArrivalBonus, Is.EqualTo(500));
             Assert.That(asset.SecondPlaceArrivalBonus, Is.EqualTo(250));
             Assert.That(asset.PointsPerLever, Is.EqualTo(150));
-            Assert.That(asset.UltraSlowMultiplier, Is.EqualTo(0.5f));
-            Assert.That(asset.UltraSlowSeconds, Is.EqualTo(5f));
+            Assert.That(asset.RushMultiplier, Is.EqualTo(1.3f));
+            Assert.That(asset.RushSeconds, Is.EqualTo(2f));
+            Assert.That(asset.CrashMultiplier, Is.EqualTo(0.6f));
+            Assert.That(asset.CrashSeconds, Is.EqualTo(4f));
             Assert.That(asset.FatigueDurationSeconds, Is.EqualTo(2f));
             Assert.That(asset.FatigueTriggerThreshold, Is.EqualTo(20));
         }
@@ -47,11 +49,11 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
-        public void RaceScoring_AndFoodEffect_ReadTheBalanceInUse()
+        public void RaceScoring_AndSnackEffect_ReadTheBalanceInUse()
         {
             var custom = ScriptableObject.CreateInstance<BalanceConfig>();
             Set(custom, "_firstPlaceArrivalBonus", 900);
-            Set(custom, "_ultraSlowSeconds", 3f);
+            Set(custom, "_crashSeconds", 3f);
             BalanceConfig.Use(custom);
 
             var score = ScoreConfig.CreateForRace(120f);
@@ -65,10 +67,18 @@ namespace HealthyRace.Tests.EditMode
                 0,
                 -18
             );
-            Assert.That(burger.SlowSeconds, Is.EqualTo(3f));
+            var host = new GameObject("Player");
+            host.AddComponent<Rigidbody2D>();
+            host.AddComponent<BoxCollider2D>();
+            host.AddComponent<HealthyRace.Player.PlayerGroundCheck>();
+            var movement = host.AddComponent<HealthyRace.Player.PlayerMovement>();
+            movement.EatSnack();
+            Assert.That(movement.Snack.PendingCrashSeconds, Is.EqualTo(3f));
+            Object.DestroyImmediate(host);
+
+            Assert.That(burger.StartsRush, Is.True);
             var apple = FoodData.Create("apple", "Maçã", FoodCategory.Healthy, 100, 10);
-            Assert.That(apple.SlowSeconds, Is.Zero);
-            Assert.That(apple.SlowMultiplier, Is.EqualTo(1f));
+            Assert.That(apple.StartsRush, Is.False);
 
             Object.DestroyImmediate(burger);
             Object.DestroyImmediate(apple);

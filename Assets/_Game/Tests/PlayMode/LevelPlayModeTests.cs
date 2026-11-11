@@ -203,16 +203,12 @@ namespace HealthyRace.Tests.PlayMode
                 startingWellbeing: -1,
                 label: $"fase {level}, bem-estar cheio"
             );
-            // o atalho cobra no tempo: comendo todo o fast-food, o curto chega depois
-            Assert.That(
-                _times[1],
-                Is.GreaterThan(_times[0]),
-                $"curto {_times[1]:0.0} s deveria ser mais lento que longo {_times[0]:0.0} s"
-            );
+            // Com o lanche "pico e queda" o atalho pode ganhar ou perder: os dois têm de
+            // terminar (Race já exige); os tempos saem no log CORRIDA para o balanceamento.
         }
 
         [UnityTest]
-        public IEnumerator FastFood_MakesThePlayerSluggish_ForAWhile()
+        public IEnumerator Snack_GivesARush_ThenACrash_ThatPasses()
         {
             yield return LoadLevel();
             var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
@@ -226,12 +222,14 @@ namespace HealthyRace.Tests.PlayMode
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
 
-            Assert.That(movement.IsSluggish, Is.True);
+            var balance = HealthyRace.Core.BalanceConfig.Current;
+            Assert.That(movement.IsRushing, Is.True, "o lanche dá o pico");
+            Assert.That(movement.EffectiveMoveSpeed, Is.GreaterThan(normal * 1.1f));
+            yield return new WaitForSeconds(balance.RushSeconds + 0.2f);
+            Assert.That(movement.IsCrashing, Is.True, "depois do pico vem a queda");
             Assert.That(movement.EffectiveMoveSpeed, Is.LessThan(normal * 0.8f));
-            yield return new WaitForSeconds(
-                HealthyRace.Core.BalanceConfig.Current.UltraSlowSeconds + 0.2f
-            );
-            Assert.That(movement.IsSluggish, Is.False, "o peso passa");
+            yield return new WaitForSeconds(balance.CrashSeconds + 0.2f);
+            Assert.That(movement.SnackState, Is.EqualTo(SnackState.None), "a queda passa");
         }
 
         [UnityTest]

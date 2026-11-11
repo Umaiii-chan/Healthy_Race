@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using HealthyRace.Player;
 using UnityEngine;
 
 namespace HealthyRace.Level
@@ -25,7 +26,7 @@ namespace HealthyRace.Level
         private LevelGrid _grid;
         private Transform[] _players;
         private Func<int, int> _wellbeing;
-        private Func<int, bool> _sluggish;
+        private Func<int, SnackState> _snack;
         private RaceProgress[] _progress;
         private bool[] _inCorridor;
         private float _nextSample;
@@ -71,7 +72,7 @@ namespace HealthyRace.Level
             Transform playerOne,
             Transform playerTwo,
             Func<int, int> wellbeing,
-            Func<int, bool> sluggish
+            Func<int, SnackState> snack
         )
         {
             if (!Enabled || _writer != null)
@@ -83,7 +84,7 @@ namespace HealthyRace.Level
             _clock = clock;
             _players = new[] { null, playerOne, playerTwo };
             _wellbeing = wellbeing;
-            _sluggish = sluggish;
+            _snack = snack;
             _inCorridor = new bool[3];
             _progress = new[]
             {
@@ -250,11 +251,19 @@ namespace HealthyRace.Level
                     .Field($"p{i}_y", pos.y)
                     .Field($"p{i}_progresso", i == 1 ? p1 : p2)
                     .Field($"p{i}_bem_estar", _wellbeing != null ? _wellbeing(i) : 0)
-                    .Field($"p{i}_pesado", _sluggish != null && _sluggish(i));
+                    .Field($"p{i}_lanche", SnackName(_snack != null ? _snack(i) : SnackState.None));
             }
 
             entry.Write();
         }
+
+        private static string SnackName(SnackState state) =>
+            state switch
+            {
+                SnackState.Rush => "pico",
+                SnackState.Crash => "queda",
+                _ => "nenhum",
+            };
 
         private float Progress(int player) =>
             _players[player] != null ? _progress[player].Fraction(_players[player].position) : 0f;
