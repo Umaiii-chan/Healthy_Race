@@ -43,6 +43,35 @@ O que a escolha deixa em aberto, e que a folha de modelos precisa resolver:
 6. **Acabamento.** O estudo recebeu 2 de 5: mãos, dobras de roupa, peso de linha e folha de modelo
    precisam de ilustrador.
 
+## Decisões sobre a folha de modelos (11/11/2026)
+
+A folha de modelos (`docs/arte/folha-de-modelos-zuri-tom-2026-11-11.html`) é um estudo em SVG, não
+asset final. O dono do projeto aprovou nela:
+
+| Decisão | Escolha |
+| --- | --- |
+| Indicador de Bem-Estar | **Indicador 2:** faixa de cabeça com pontas na cor do jogador, com munhequeira combinando. As pontas levantam ou caem com o Bem-Estar e ocupam o osso que era da folha no `CharacterRig`, com a mola que já existe |
+| Animação no Unity | **Rig 1:** braço e perna como curva desenhada por código entre ombro e mão (ou quadril e pé), com os alvos de mão e pé animados nos clipes |
+| Vista de jogo | Corpo de perfil com a cabeça em três-quartos, como todas as poses da folha estão desenhadas (assumido a partir da aprovação; não foi respondido em separado) |
+
+O que a folha fixou em relação ao estudo da rodada 2: proporção de 3,3 cabeças (Zuri) e 3,5 (Tom),
+olho menor com a pálpebra mais baixa, roupa de corrida (regata, bermuda com listra, meia curta e
+tênis), contorno fino na luz e grosso no peso, e corrida, vitória, derrota e rostos próprios de
+cada um.
+
+O que continua em aberto:
+
+- A folha recebeu 28 de 40 e **não passa no corte desta bible para personagem**: Acabamento 2 e
+  Originalidade 3. Mãos, dobras de roupa, textura de cabelo e peso de linha precisam de ilustrador
+  antes de qualquer asset final.
+- Idade percebida e ausência de estereótipo não foram conferidas com pessoas de fora.
+- O laranja do Tom fica perto do vermelho do piso e do amarelo dos selos no corredor da lanchonete;
+  conferir no jogo.
+- Nada foi testado no Unity. A estimativa do rig 1 é de cerca de 9 dias de código e integração,
+  sem contar o ilustrador: curva com contorno, prefab e construtor, gerador da folha de peças,
+  os 12 clipes reescritos mais pico e queda, `CharacterRig` e `PlayerPresentation`, testes e capturas.
+- A regra "a pele nunca muda de cor" aposenta as cinco peles de corpo por faixa de Bem-Estar do rig atual.
+
 As seções seguintes continuam valendo como regras e critérios para a folha de modelos.
 
 ## 1. Por que a rodada 1 foi reprovada
