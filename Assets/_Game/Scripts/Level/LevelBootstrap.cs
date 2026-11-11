@@ -1334,71 +1334,20 @@ namespace HealthyRace.Level
 
         private void CreateCamera()
         {
-            var cameraObject = new GameObject(
-                "Camera Compartilhada",
-                typeof(Camera),
-                typeof(AudioListener)
+            _cameraController = LevelCameraSetup.Create(
+                transform,
+                _grid,
+                _spawnOne,
+                _spawnTwo,
+                _playerOne.transform,
+                _playerTwo.transform,
+                _foliage
             );
-            cameraObject.transform.SetParent(transform, false);
-            cameraObject.tag = "MainCamera";
-            var camera = cameraObject.GetComponent<Camera>();
-            camera.orthographic = true;
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.12f, 0.19f, 0.15f);
-            // a faixa de cima é do HUD: a câmera desenha só abaixo dela
-            camera.rect = new Rect(0f, 0f, 1f, 1f - HudBandPixels / 1080f);
-            camera.orthographicSize = MinimumViewHeight * 0.5f;
-            var midpoint = (_spawnOne + _spawnTwo) * 0.5f;
-            cameraObject.transform.position = new Vector3(midpoint.x, midpoint.y, -10f);
-
-            _cameraController = cameraObject.AddComponent<SharedCameraController>();
-            _cameraController.Configure(_playerOne.transform, _playerTwo.transform);
-            _cameraController.SetPlayableBounds(
-                new Bounds(
-                    new Vector3(_grid.Width * 0.5f, _grid.Height * 0.5f, 0f),
-                    new Vector3(_grid.Width, _grid.Height, 20f)
-                ),
-                true
-            );
-            // afasta até caber a fase inteira, na altura ou na largura (fases largas)
-            var viewAspect = 1920f / (1080f - HudBandPixels);
-            _cameraController.SetZoomLimits(
-                MinimumViewHeight * 0.5f,
-                Mathf.Max(_grid.Height * 0.5f, _grid.Width * 0.5f / viewAspect)
-            );
-            _cameraController.SetPadding(new Vector2(4f, 3f));
-            if (_foliage != null)
-            {
-                _foliage.Configure(cameraObject.transform, FoliageFollowFactor, 0f, 0f);
-            }
         }
 
         private void CreateHud()
         {
-            var canvasObject = new GameObject(
-                "HUD",
-                typeof(RectTransform),
-                typeof(Canvas),
-                typeof(CanvasScaler),
-                typeof(GraphicRaycaster)
-            );
-            canvasObject.transform.SetParent(transform, false);
-            var canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 10;
-            var scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 1f;
-
-            var band = new GameObject("FaixaDoHud", typeof(RectTransform), typeof(Image));
-            band.transform.SetParent(canvasObject.transform, false);
-            var bandRect = (RectTransform)band.transform;
-            bandRect.anchorMin = new Vector2(0f, 1f);
-            bandRect.anchorMax = new Vector2(1f, 1f);
-            bandRect.pivot = new Vector2(0.5f, 1f);
-            bandRect.sizeDelta = new Vector2(0f, HudBandPixels);
-            band.GetComponent<Image>().color = new Color(0.08f, 0.13f, 0.1f);
+            var canvasObject = LevelHudSetup.CreateCanvas(transform);
 
             _matchHud = new GameObject("Match HUD", typeof(RectTransform)).AddComponent<MatchHUD>();
             _matchHud.Initialize(canvasObject.transform, Vector2.zero);
@@ -1413,33 +1362,19 @@ namespace HealthyRace.Level
             var p1Fatigue = _playerOne.GetComponent<FatigueComponent>();
             var p2Fatigue = _playerTwo.GetComponent<FatigueComponent>();
 
-            _playerOneHud = new GameObject(
-                "P1 HUD",
-                typeof(RectTransform)
-            ).AddComponent<PlayerHUD>();
-            _playerOneHud.Initialize(
+            _playerOneHud = LevelHudSetup.CreatePlayerHud(
                 canvasObject.transform,
-                "P1",
+                1,
                 PlayerColor(1),
                 p1Wellbeing,
-                p1Fatigue,
-                new Vector2(0f, 1f),
-                new Vector2(0f, 1f),
-                new Vector2(12f, -4f)
+                p1Fatigue
             );
-            _playerTwoHud = new GameObject(
-                "P2 HUD",
-                typeof(RectTransform)
-            ).AddComponent<PlayerHUD>();
-            _playerTwoHud.Initialize(
+            _playerTwoHud = LevelHudSetup.CreatePlayerHud(
                 canvasObject.transform,
-                "P2",
+                2,
                 PlayerColor(2),
                 p2Wellbeing,
-                p2Fatigue,
-                new Vector2(1f, 1f),
-                new Vector2(1f, 1f),
-                new Vector2(-12f, -4f)
+                p2Fatigue
             );
 
             _screens = GameScreens.Create(_screensPrefab, _inputActions, true, transform);

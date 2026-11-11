@@ -1,5 +1,24 @@
 # Notas da versão
 
+## 1.0.1 — build de playtest (Fase A do roadmap)
+
+Mesmas regras da 1.0.0, preparada para o teste com pessoas (decisão D0 de
+`ROADMAP_PRODUTO_FINAL.md`).
+
+### Mudanças
+
+- **Largadas iguais:** o P2 largava 1 tile à frente e a porta do P1 ficava 2 tiles mais perto.
+  As portas foram reposicionadas, e um teste confere que os dois jogadores correm a mesma
+  distância nas 10 fases.
+- **Registro de partida** para o playtest: um arquivo por partida com rota, coletas, liderança
+  e resultado. Guia em `docs/PLAYTEST.md`; análise com `tools/playtest/analisar_partidas.py`.
+- **Progresso salvo:** fases concluídas e melhor tempo de cada fase (base da futura seleção de fase).
+- **Balanceamento em asset** (`Resources/SO_Balance`): pontos, efeito do lanche, fadiga e prazos
+  da partida ajustáveis sem recompilar.
+- **Botão Interagir removido:** não fazia nada. As alavancas continuam por contato.
+- Na tela de resultados, "Puzzle" passou a se chamar "Alavancas".
+- Código do protótipo cooperativo removido (caixa, botão de pressão, cena `VerticalSlice_Core`).
+
 ## 1.0.0
 
 Primeira versão completa: corrida para dois jogadores em 10 fases.
