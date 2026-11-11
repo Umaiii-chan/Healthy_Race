@@ -56,6 +56,9 @@ namespace HealthyRace.Visuals
         [SerializeField, Min(0f), Tooltip("Contorno no lado do peso.")]
         private float _inkHeavy = 0.024f;
 
+        [SerializeField, Tooltip("Material de sprite; sem ele usa o padrão do pipeline.")]
+        private Material _material;
+
         private readonly List<Vector3> _vertices = new();
         private readonly List<Color32> _colors = new();
         private readonly List<int> _triangles = new();
@@ -96,7 +99,8 @@ namespace HealthyRace.Visuals
             float length,
             float width,
             Color fill,
-            float bend = 1f
+            float bend = 1f,
+            bool rebuild = true
         )
         {
             _anchor = anchor;
@@ -105,7 +109,17 @@ namespace HealthyRace.Visuals
             _width = Mathf.Max(0.005f, width);
             _fill = fill;
             _bend = bend;
-            Rebuild();
+            if (rebuild)
+            {
+                Rebuild();
+            }
+        }
+
+        /// <summary>Material de sprite usado pela malha (o do catálogo visual).</summary>
+        public void SetMaterial(Material material)
+        {
+            _material = material;
+            Renderer.sharedMaterial = material;
         }
 
         public void SetInk(Color ink, float lightSide, float heavySide)
@@ -151,7 +165,10 @@ namespace HealthyRace.Visuals
             EnsureMesh();
             Vector2 anchor = _anchor.position;
             Vector2 target = _target.position;
-            var curve = HoseCurve.Solve(anchor, target, _length, _bend);
+            // o lado da dobra acompanha o personagem: virado para a esquerda, o joelho
+            // continua apontando para a frente dele
+            var facing = transform.lossyScale.x < 0f ? -1f : 1f;
+            var curve = HoseCurve.Solve(anchor, target, _length, _bend * facing);
 
             _vertices.Clear();
             _colors.Clear();
@@ -178,7 +195,7 @@ namespace HealthyRace.Visuals
 
             if (Renderer.sharedMaterial == null)
             {
-                Renderer.sharedMaterial = SharedMaterial();
+                Renderer.sharedMaterial = _material != null ? _material : SharedMaterial();
             }
         }
 

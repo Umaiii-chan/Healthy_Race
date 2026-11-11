@@ -1,0 +1,853 @@
+fileFormatVersion: 2
+guid: 3d55181bf6def074e9b58b0cbe80167c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -858914178064125057
+    second: SP_RunnerRig_0
+  - first:
+      213: 4519873096481570557
+    second: SP_RunnerRig_1
+  - first:
+      213: -5676032608944170502
+    second: SP_RunnerRig_2
+  - first:
+      213: -3201728843801870132
+    second: SP_RunnerRig_3
+  - first:
+      213: -929122009748853582
+    second: SP_RunnerRig_4
+  - first:
+      213: -7370769639030716953
+    second: SP_RunnerRig_5
+  - first:
+      213: -6462139848413768155
+    second: SP_RunnerRig_6
+  - first:
+      213: 1134992751937283209
+    second: SP_RunnerRig_7
+  - first:
+      213: 7600185952764204212
+    second: SP_RunnerRig_8
+  - first:
+      213: 5860864833114112846
+    second: SP_RunnerRig_9
+  - first:
+      213: -6637109482060513665
+    second: SP_RunnerRig_10
+  - first:
+      213: 2245403178561830434
+    second: SP_RunnerRig_11
+  - first:
+      213: -6763428538103052476
+    second: SP_RunnerRig_12
+  - first:
+      213: -8959696629193633785
+    second: SP_RunnerRig_13
+  - first:
+      213: -6273430076375208905
+    second: SP_RunnerRig_14
+  - first:
+      213: 854418148106545619
+    second: SP_RunnerRig_15
+  - first:
+      213: 7512536493227381526
+    second: SP_RunnerRig_16
+  - first:
+      213: 6796850695815451148
+    second: SP_RunnerRig_17
+  - first:
+      213: 4007771943573267201
+    second: SP_RunnerRig_18
+  - first:
+      213: -3666853359889891833
+    second: SP_RunnerRig_19
+  - first:
+      213: -2462262945543760648
+    second: SP_RunnerRig_20
+  - first:
+      213: 5023567658102357434
+    second: SP_RunnerRig_21
+  - first:
+      213: -1206502004404029344
+    second: SP_RunnerRig_22
+  - first:
+      213: -1377575900763411648
+    second: SP_RunnerRig_23
+  - first:
+      213: 4735477387267151293
+    second: SP_RunnerRig_24
+  - first:
+      213: -4838198435224315112
+    second: SP_RunnerRig_25
+  - first:
+      213: 5596206339570887982
+    second: SP_RunnerRig_26
+  - first:
+      213: 4459602041075015779
+    second: SP_RunnerRig_27
+  - first:
+      213: -5155701414450038391
+    second: SP_RunnerRig_28
+  - first:
+      213: 988544094458232338
+    second: SP_RunnerRig_29
+  - first:
+      213: 3513652157703544882
+    second: SP_RunnerRig_30
+  - first:
+      213: 2892812101666529987
+    second: SP_RunnerRig_31
+  - first:
+      213: -2778365646311662596
+    second: SP_RunnerRig_32
+  - first:
+      213: 1377762096543526343
+    second: SP_RunnerRig_33
+  - first:
+      213: 1374815447884102424
+    second: SP_RunnerRig_34
+  - first:
+      213: 8392772033171323260
+    second: SP_RunnerRig_35
+  - first:
+      213: 2199849638535010235
+    second: SP_RunnerRig_36
+  - first:
+      213: 2673503642050397996
+    second: SP_RunnerRig_37
+  - first:
+      213: -7890171932180980952
+    second: SP_RunnerRig_38
+  - first:
+      213: -3450725696005929727
+    second: SP_RunnerRig_39
+  - first:
+      213: -1732086351914807067
+    second: SP_RunnerRig_40
+  - first:
+      213: 6875461109571846288
+    second: SP_RunnerRig_41
+  - first:
+      213: 3749549617586064255
+    second: SP_RunnerRig_42
+  - first:
+      213: -1172205125997739071
+    second: SP_RunnerRig_43
+  - first:
+      213: 2595690035001378904
+    second: SP_RunnerRig_44
+  - first:
+      213: 6824454506989329990
+    second: SP_RunnerRig_45
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Runner_Zuri_head
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f056c164e9f157041849728e55a403c3
+      internalID: 1288936845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_face
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b1d2d169e08ecc643922cc62239e58ae
+      internalID: -1647384316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_face_blink
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34108418584e27144a1f64ade69b5fdc
+      internalID: -2059757912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_face_effort
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2db722062584a19419bec48ba713d950
+      internalID: 1248323983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_face_sleepy
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3fb72cbda9f1fca43aacc654a9c04fb1
+      internalID: 1582622424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_face_rush
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 58d278b621831244c9f88156b5d27571
+      internalID: 1736807412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_hair_back
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5436e8d38f2175343863653d895fdb51
+      internalID: 1780363510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_hair_front
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3572ac7ed7537994aa0a5255b6d5be1e
+      internalID: -1897662557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_band
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4ec8db7500404784380b91b868022c0c
+      internalID: -1546789795
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_tail
+      rect:
+        serializedVersion: 2
+        x: 2304
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.78125, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3cef4d32085ca0748ad3962bbf387587
+      internalID: -1705178612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_torso
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.3125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1212770fc652d5a46b8696360ae2a421
+      internalID: 1555679519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_hand
+      rect:
+        serializedVersion: 2
+        x: 2816
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cc0bad878f5d44c42bea240a9f9813f5
+      internalID: -298285993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Zuri_shoe
+      rect:
+        serializedVersion: 2
+        x: 3072
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.40625, y: 0.5390625}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d47c9727060695844a63a02e38c7e15e
+      internalID: -100133346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_head
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b57075987f7e4041a3fd0baff6dea54
+      internalID: -792215067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_face
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb07786fef3e84440b7fd739fa40ffdb
+      internalID: -141875065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_face_blink
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc1cf307450039547aa195253f99eae5
+      internalID: -937130901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_face_effort
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8dff3208331a64944bd317a5e2ac4175
+      internalID: 537916305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_face_sleepy
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ecdb08616ef5664d9d46f478ee75dbe
+      internalID: 751194624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_face_rush
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d29cecfe8cdfdfa4998efc30696ccc9f
+      internalID: 1298990482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_hair_back
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4cb4622b13b20d04bbb930cced0b8cd1
+      internalID: 231222828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_hair_front
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c4a7b84a8d5b29443b5f2288ba19e8e3
+      internalID: 1365312496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_band
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aac533cd20f8ff046868d5ab3a2b85ce
+      internalID: 464005581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_tail
+      rect:
+        serializedVersion: 2
+        x: 2304
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.78125, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d63e246cb575ce4e9e91d5dabbcccef
+      internalID: -1084597900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_torso
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.3125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 351b378bda5e8ee4da5b330bbb3a691b
+      internalID: 374243272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_hand
+      rect:
+        serializedVersion: 2
+        x: 2816
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb77e83c7106c5d4b81035db2d5a24ad
+      internalID: -803756522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Runner_Tom_shoe
+      rect:
+        serializedVersion: 2
+        x: 3072
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.40625, y: 0.5390625}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d06341eb64f6f9044b11557d48ce0c57
+      internalID: -62831953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 289d38f86c8839d4db9dcec8b5bc2986
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Runner_Tom_band: 464005581
+      Runner_Tom_face: -141875065
+      Runner_Tom_face_blink: -937130901
+      Runner_Tom_face_effort: 537916305
+      Runner_Tom_face_rush: 1298990482
+      Runner_Tom_face_sleepy: 751194624
+      Runner_Tom_hair_back: 231222828
+      Runner_Tom_hair_front: 1365312496
+      Runner_Tom_hand: -803756522
+      Runner_Tom_head: -792215067
+      Runner_Tom_shoe: -62831953
+      Runner_Tom_tail: -1084597900
+      Runner_Tom_torso: 374243272
+      Runner_Zuri_band: -1546789795
+      Runner_Zuri_face: -1647384316
+      Runner_Zuri_face_blink: -2059757912
+      Runner_Zuri_face_effort: 1248323983
+      Runner_Zuri_face_rush: 1736807412
+      Runner_Zuri_face_sleepy: 1582622424
+      Runner_Zuri_hair_back: 1780363510
+      Runner_Zuri_hair_front: -1897662557
+      Runner_Zuri_hand: -298285993
+      Runner_Zuri_head: 1288936845
+      Runner_Zuri_shoe: -100133346
+      Runner_Zuri_tail: -1705178612
+      Runner_Zuri_torso: 1555679519
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -84,7 +84,12 @@ namespace HealthyRace.Editor.Visuals
             );
             var renderTarget = new RenderTexture(size.x, size.y, 24) { antiAliasing = 4 };
             camera.targetTexture = renderTarget;
+            // Na primeira vez que uma variante de shader é usada o Editor compila em
+            // segundo plano e pula o desenho: uma foto única sairia sem os membros.
+            var asyncCompilation = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
             camera.Render();
+            ShaderUtil.allowAsyncCompilation = asyncCompilation;
             var previous = RenderTexture.active;
             RenderTexture.active = renderTarget;
             var texture = new Texture2D(size.x, size.y, TextureFormat.RGB24, false);
