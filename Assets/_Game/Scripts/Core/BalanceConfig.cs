@@ -83,7 +83,17 @@ namespace HealthyRace.Core
         private float _crashExtraPerChain = 2f;
 
         [SerializeField, Min(0f), Tooltip("Queda máxima, mesmo encadeando lanches (s).")]
-        private float _crashMaxSeconds = 8f;
+        private float _crashMaxSeconds = 16f;
+
+        [
+            SerializeField,
+            Range(0f, 1f),
+            Tooltip("Com Bem-Estar 0 o pico dura esta fração do normal.")
+        ]
+        private float _lowWellbeingRushFactor = 0.25f;
+
+        [SerializeField, Min(1f), Tooltip("Com Bem-Estar 0 a queda dura este múltiplo do normal.")]
+        private float _lowWellbeingCrashFactor = 3f;
 
         [Header("Fadiga")]
         [SerializeField, Min(0f)]
@@ -142,6 +152,8 @@ namespace HealthyRace.Core
         public float CrashSeconds => _crashSeconds;
         public float CrashExtraPerChain => _crashExtraPerChain;
         public float CrashMaxSeconds => _crashMaxSeconds;
+        public float LowWellbeingRushFactor => _lowWellbeingRushFactor;
+        public float LowWellbeingCrashFactor => _lowWellbeingCrashFactor;
         public float FatigueDurationSeconds => _fatigueDurationSeconds;
         public float FatigueWarningSeconds => _fatigueWarningSeconds;
         public int FatigueRecoveryWellbeing => _fatigueRecoveryWellbeing;

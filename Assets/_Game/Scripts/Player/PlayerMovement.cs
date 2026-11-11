@@ -234,7 +234,7 @@ namespace HealthyRace.Player
         /// efeito da faixa de Bem-Estar, e mudar de faixa na lama não apaga a lama.
         /// </summary>
         /// <summary>Comeu lanche rápido: começa (ou renova) o pico.</summary>
-        public void EatSnack() => Snack.Eat();
+        public void EatSnack(float wellbeing01 = 1f) => Snack.Eat(wellbeing01);
 
         /// <summary>Comeu fruta ou água: encerra a queda, se houver.</summary>
         public bool CureCrash() => Snack.Cure();
@@ -250,7 +250,9 @@ namespace HealthyRace.Player
                 balance.CrashMultiplier,
                 balance.CrashSeconds,
                 balance.CrashExtraPerChain,
-                balance.CrashMaxSeconds
+                balance.CrashMaxSeconds,
+                balance.LowWellbeingRushFactor,
+                balance.LowWellbeingCrashFactor
             );
         }
 

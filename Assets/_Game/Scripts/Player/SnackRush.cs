@@ -29,6 +29,8 @@ namespace HealthyRace.Player
         private readonly float _crashSeconds;
         private readonly float _crashExtraPerChain;
         private readonly float _crashMaxSeconds;
+        private readonly float _lowWellbeingRushFactor;
+        private readonly float _lowWellbeingCrashFactor;
 
         private float _crashDuration;
 
@@ -38,9 +40,13 @@ namespace HealthyRace.Player
             float crashMultiplier,
             float crashSeconds,
             float crashExtraPerChain,
-            float crashMaxSeconds
+            float crashMaxSeconds,
+            float lowWellbeingRushFactor = 1f,
+            float lowWellbeingCrashFactor = 1f
         )
         {
+            _lowWellbeingRushFactor = Mathf.Clamp01(lowWellbeingRushFactor);
+            _lowWellbeingCrashFactor = Mathf.Max(1f, lowWellbeingCrashFactor);
             _rushMultiplier = Mathf.Max(1f, rushMultiplier);
             _rushSeconds = Mathf.Max(0f, rushSeconds);
             _crashMultiplier = Mathf.Clamp(crashMultiplier, 0.05f, 1f);
@@ -67,19 +73,26 @@ namespace HealthyRace.Player
 
         public event Action<SnackState> StateChanged;
 
-        /// <summary>Comeu um lanche rápido.</summary>
-        public void Eat()
+        /// <summary>
+        /// Comeu um lanche rápido. <paramref name="wellbeing01"/> é o Bem-Estar de quem
+        /// comeu, de 0 a 1: com ele baixo o pico encurta e a queda alonga, então o
+        /// primeiro lanche rende e o décimo não.
+        /// </summary>
+        public void Eat(float wellbeing01 = 1f)
         {
             if (_rushSeconds <= 0f)
             {
                 return;
             }
 
+            var w = Mathf.Clamp01(wellbeing01);
+            var crash = _crashSeconds * Mathf.Lerp(_lowWellbeingCrashFactor, 1f, w);
             _crashDuration =
                 State == SnackState.Rush
-                    ? Mathf.Min(_crashDuration + _crashExtraPerChain, _crashMaxSeconds)
-                    : _crashSeconds;
-            Remaining = _rushSeconds;
+                    ? Mathf.Max(_crashDuration, crash) + _crashExtraPerChain
+                    : crash;
+            _crashDuration = Mathf.Min(_crashDuration, _crashMaxSeconds);
+            Remaining = _rushSeconds * Mathf.Lerp(_lowWellbeingRushFactor, 1f, w);
             Change(SnackState.Rush);
         }
 

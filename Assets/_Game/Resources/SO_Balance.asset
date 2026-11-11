@@ -30,7 +30,9 @@ MonoBehaviour:
   _crashMultiplier: 0.6
   _crashSeconds: 4
   _crashExtraPerChain: 2
-  _crashMaxSeconds: 8
+  _crashMaxSeconds: 16
+  _lowWellbeingRushFactor: 0.25
+  _lowWellbeingCrashFactor: 3
   _fatigueDurationSeconds: 1.2
   _fatigueWarningSeconds: 1
   _fatigueRecoveryWellbeing: 15

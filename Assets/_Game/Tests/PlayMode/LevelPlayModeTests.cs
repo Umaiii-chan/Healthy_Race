@@ -194,6 +194,7 @@ namespace HealthyRace.Tests.PlayMode
         // Corrida inteira
         // =====================================================================
         [UnityTest]
+        [Timeout(600000)]
         public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_AtFullWellbeing(
             [Values(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)] int level
         )
@@ -262,17 +263,18 @@ namespace HealthyRace.Tests.PlayMode
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
 
-            var balance = HealthyRace.Core.BalanceConfig.Current;
+            // as durações dependem do Bem-Estar de quem comeu: lê do próprio efeito
             Assert.That(movement.IsRushing, Is.True, "o lanche dá o pico");
             Assert.That(movement.EffectiveMoveSpeed, Is.GreaterThan(normal * 1.1f));
-            yield return new WaitForSeconds(balance.RushSeconds + 0.2f);
+            yield return new WaitForSeconds(movement.Snack.Remaining + 0.2f);
             Assert.That(movement.IsCrashing, Is.True, "depois do pico vem a queda");
             Assert.That(movement.EffectiveMoveSpeed, Is.LessThan(normal * 0.8f));
-            yield return new WaitForSeconds(balance.CrashSeconds + 0.2f);
+            yield return new WaitForSeconds(movement.Snack.Remaining + 0.2f);
             Assert.That(movement.SnackState, Is.EqualTo(SnackState.None), "a queda passa");
         }
 
         [UnityTest]
+        [Timeout(600000)]
         public IEnumerator Race_LongAndShortRoutes_BothFinishAlone_FromZeroWellbeing()
         {
             yield return Race(1, startingWellbeing: 0, label: "fase 1, bem-estar zero");

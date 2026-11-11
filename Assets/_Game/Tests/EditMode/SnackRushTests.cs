@@ -103,6 +103,32 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
+        public void LowWellbeing_ShortensTheRush_AndLengthensTheCrash()
+        {
+            // Bem-Estar 0: pico pela metade, queda em dobro
+            var snack = new SnackRush(1.3f, 2f, 0.6f, 4f, 2f, 12f, 0.5f, 2f);
+            snack.Eat(1f);
+            Assert.That(snack.Remaining, Is.EqualTo(2f).Within(0.001f));
+            Assert.That(snack.PendingCrashSeconds, Is.EqualTo(4f).Within(0.001f));
+
+            snack.Clear();
+            snack.Eat(0f);
+            Assert.That(snack.Remaining, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(snack.PendingCrashSeconds, Is.EqualTo(8f).Within(0.001f));
+
+            snack.Clear();
+            snack.Eat(0.5f);
+            Assert.That(snack.Remaining, Is.EqualTo(1.5f).Within(0.001f));
+            Assert.That(snack.PendingCrashSeconds, Is.EqualTo(6f).Within(0.001f));
+
+            // encadear com Bem-Estar caindo: a queda nunca encurta e respeita o teto
+            snack.Eat(0f);
+            Assert.That(snack.PendingCrashSeconds, Is.EqualTo(10f).Within(0.001f));
+            snack.Eat(0f);
+            Assert.That(snack.PendingCrashSeconds, Is.EqualTo(12f).Within(0.001f));
+        }
+
+        [Test]
         public void StateChanged_FiresOncePerTransition()
         {
             var snack = NewSnack();

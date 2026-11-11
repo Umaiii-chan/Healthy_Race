@@ -124,7 +124,10 @@ namespace HealthyRace.Collectibles
             {
                 if (_foodData.StartsRush)
                 {
-                    movement.EatSnack();
+                    // Bem-Estar já com este lanche descontado
+                    movement.EatSnack(
+                        wellbeing.CurrentValue / (float)WellbeingComponent.MaximumValue
+                    );
                 }
                 else if (_foodData.EndsCrash)
                 {
