@@ -1,4 +1,4 @@
-# CHARACTER_DESIGN — briefing da rodada 2 de personagens
+# CHARACTER_DESIGN — personagens: decisão e briefing da folha de modelos
 
 > Proposta para aprovação — nenhum asset definitivo foi produzido
 
@@ -8,6 +8,42 @@ atitude, de 12 a 16 anos**. Outro agente conduz a rodada 2 de estudos. Aqui fica
 precisa cumprir, como será julgada e, em apêndice, o que foi descartado.
 
 Aplica `ART_BIBLE.md` versão 2.1, seção 5.
+
+## Decisão do dono em 11/11/2026: dupla 4 — Zuri e Tom
+
+A rodada 2 (`docs/arte/personagens-rodada-2-2026-11-11.html`) apresentou cinco duplas de humanos
+estilizados. O dono do projeto escolheu a **dupla 4, "membros de mangueira"**.
+
+| Item | O que foi escolhido |
+| --- | --- |
+| Personagens | **Zuri** (P1, azul): dois coques afro, corre aos saltos. **Tom** (P2, laranja): mais comprido, cabelo bagunçado, corre de tiro |
+| Proporção | 3 cabeças; cabeça, mãos e tênis grandes |
+| Linguagem | Braços e pernas são tubos curvos, sem cotovelo nem joelho marcados; linha média uniforme; o corpo inteiro faz um arco na pose; pálpebra baixa para dar atitude |
+| Cor do P2 | Laranja, como desenhado na dupla (fecha a decisão 4 da seção 7) |
+| Estados | O corpo não muda de tamanho e a pele não muda de cor; pico = corpo todo esticado; queda = mole, com bocejo |
+
+O que a escolha deixa em aberto, e que a folha de modelos precisa resolver:
+
+1. **Indicador de Bem-Estar.** No estudo ele é só a postura, e a nota de Gameplay foi 2 de 5: a
+   postura se confunde com a pose de corrida. A folha de modelos deve testar um segundo canal que
+   se leia em movimento e a 48 px (por exemplo o cabelo — coques de Zuri e mechas de Tom — ou uma
+   munhequeira na cor do jogador), sem motivo de planta.
+2. **"Infantil demais".** Foi uma das críticas da rodada 1, e esta é a dupla que mais puxa para
+   esse lado. A folha de modelos deve segurar a idade aparente em 12 a 16 anos: pálpebra, postura,
+   roupa de corrida, proporção da cabeça.
+3. **Estilo de época.** Animação de membros de mangueira tem histórico de caricatura; rostos e
+   traços ficam neutros e são revisados antes de qualquer asset final.
+4. **Animação no Unity.** Membro curvo não funciona com as peças rígidas do rig atual
+   (`CharacterRig`, folha de partes gerada por `tools/art/build_character_rig.py`). Alternativas a
+   avaliar: membro desenhado como curva (malha ou linha com pontas redondas) entre ombro e mão, com
+   alvo de IK; osso com spline e malha deformável (pacote 2D Animation); ou quadro a quadro. O
+   custo de animação foi estimado como alto.
+5. **Composição.** O exagero das poses pede cenário um pouco mais caricato; conferir a dupla sobre
+   o Cenário 3 aprovado antes de produzir em volume.
+6. **Acabamento.** O estudo recebeu 2 de 5: mãos, dobras de roupa, peso de linha e folha de modelo
+   precisam de ilustrador.
+
+As seções seguintes continuam valendo como regras e critérios para a folha de modelos.
 
 ## 1. Por que a rodada 1 foi reprovada
 

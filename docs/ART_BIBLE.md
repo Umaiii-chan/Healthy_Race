@@ -87,11 +87,13 @@ A página aprovada desenha as placas do HUD e do menu com cantos arredondados. E
 conceito aprovado (placa de madeira pendurada) e pede o acabamento chanfrado; é ajuste de forma, a
 confirmar na próxima rodada de estudos.
 
-## 5. Personagens — em definição na rodada 2
+## 5. Personagens — dupla escolhida, folha de modelos pendente
 
-Situação: **em definição — rodada 2 (humanos estilizados)**. Outro agente conduz os estudos; esta
-bible não desenha personagem. O briefing completo está em `CHARACTER_DESIGN.md`. Qualquer personagem
-só entra se cumprir as regras abaixo.
+Situação: em 11/11/2026 o dono escolheu a **dupla 4 da rodada 2: Zuri (P1, azul) e Tom (P2,
+laranja)**, humanos estilizados de 3 cabeças com membros de mangueira
+(`docs/arte/personagens-rodada-2-2026-11-11.html`). Falta a folha de modelos; os pontos em aberto
+(indicador de Bem-Estar, idade aparente, animação no Unity) estão em `CHARACTER_DESIGN.md`. A dupla
+só vira asset se cumprir as regras abaixo.
 
 | Regra | Como conferir |
 | --- | --- |
@@ -158,7 +160,7 @@ A base é a da página aprovada. Os nomes são desta bible.
 | Nome | Hex | Dono |
 | --- | --- | --- |
 | P1 | `#2F80ED` azul | Roupa, indicador, marcador, porta e retrato do jogador 1 |
-| P2 | `#B054E8` roxo **ou** `#F2994A` laranja | Idem para o jogador 2. Decisão pendente (seção 7.4) |
+| P2 | `#F2994A` laranja | Idem para o jogador 2. Definido pela escolha da dupla 4, desenhada em laranja (seção 7.4) |
 | Lanche | `#E8423A` com creme | Bandeja listrada, piso e toldo do corredor |
 | Parede do corredor | `#FBE3D9` | Interior da cantina |
 | Amarelo | `#FFD23F` | Queijo, ícone de pico, linhas de velocidade |
@@ -197,8 +199,9 @@ Situação: **decisão pendente do dono**.
 ### 7.4 Outras pendências de cor
 
 - **Cor do P2.** A página usa roxo em algumas opções e laranja em outras. Azul e roxo ficam muito
-  próximos em escala de cinza; azul e laranja se separam por claro e escuro. Recomendação: laranja
-  `#F2994A`, conferindo a distância para o amarelo de mecanismo. Decisão pendente.
+  próximos em escala de cinza; azul e laranja se separam por claro e escuro. Ficou laranja
+  `#F2994A`: a dupla escolhida em 11/11/2026 (Zuri e Tom) foi desenhada com P2 laranja. Falta
+  conferir a distância para o amarelo de mecanismo.
 - **Amarelo em três papéis** (mecanismo, cesta dourada, pico). Não é pedido de mudança: os três se
   distinguem pela forma (cabo e alavanca, cesta trançada com bandeirola, raio). Fica como ponto de
   atenção no playtest.
