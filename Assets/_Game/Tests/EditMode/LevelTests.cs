@@ -266,6 +266,31 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [TestCaseSource(nameof(Maps))]
+        public void Routes_BothPlayersRunTheSameDistance(string map)
+        {
+            // Largadas lado a lado e portas lado a lado: quem larga um tile à frente tem
+            // de ter a porta um tile mais longe, senão a corrida começa decidida.
+            var grid = LoadGrid(map);
+            var one = Horizontal(grid, LevelGrid.SpawnOne, LevelGrid.DoorOne);
+            var two = Horizontal(grid, LevelGrid.SpawnTwo, LevelGrid.DoorTwo);
+            Assert.That(two, Is.EqualTo(one), $"P1 corre {one} tiles e P2 corre {two}");
+        }
+
+        private static int Horizontal(LevelGrid grid, char spawn, char door)
+        {
+            var route = LevelRoutes.Find(grid, grid.Cells(spawn).Single(), c =>
+                grid[c.x, c.y] == door
+            );
+            Assert.That(route, Is.Not.Empty, $"sem rota de {spawn} até {door}");
+            var distance = 0;
+            for (var i = 1; i < route.Count; i++)
+            {
+                distance += Mathf.Abs(route[i].Cell.x - route[i - 1].Cell.x);
+            }
+            return distance;
+        }
+
+        [TestCaseSource(nameof(Maps))]
         public void Routes_LongPath_ReachesTheDoorWithoutEnteringTheShortCorridor(string map)
         {
             var grid = LoadGrid(map);

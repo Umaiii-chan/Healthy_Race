@@ -104,7 +104,6 @@ namespace HealthyRace.Tests.PlayMode
                 dnfPenalty: 20,
                 p1Hud: p1Hud,
                 p2Hud: p2Hud,
-                finalPuzzle: null,
                 scoreConfig: null
             );
 

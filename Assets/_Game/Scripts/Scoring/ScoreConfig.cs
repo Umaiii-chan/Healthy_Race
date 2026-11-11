@@ -1,3 +1,4 @@
+using HealthyRace.Core;
 using UnityEngine;
 
 namespace HealthyRace.Scoring
@@ -48,14 +49,21 @@ namespace HealthyRace.Scoring
         public int DnfPenalty => _dnfPenalty;
 
         /// <summary>
-        /// Pontuação das fases de corrida: chegar primeiro vale mais (500 / 250) e o
-        /// tempo-alvo é o da fase.
+        /// Pontuação das fases de corrida, lida de <see cref="BalanceConfig"/>
+        /// (padrão: chegada 500 / 250); o tempo-alvo é o da fase.
         /// </summary>
         public static ScoreConfig CreateForRace(float targetTimeSeconds)
         {
+            var balance = BalanceConfig.Current;
             var config = CreateDefault();
-            config._firstPlaceArrivalBonus = 500;
-            config._secondPlaceArrivalBonus = 250;
+            config._pointsPerPuzzle = balance.PointsPerLever;
+            config._maxTimeBonus = balance.MaxTimeBonus;
+            config._firstPlaceArrivalBonus = balance.FirstPlaceArrivalBonus;
+            config._secondPlaceArrivalBonus = balance.SecondPlaceArrivalBonus;
+            config._wellbeingMultiplier = balance.WellbeingMultiplier;
+            config._ultraPenaltyPerItem = balance.UltraPenaltyPerItem;
+            config._fatiguePenaltyPerEpisode = balance.FatiguePenaltyPerEpisode;
+            config._dnfPenalty = balance.DnfPenalty;
             config._targetTimeSeconds = Mathf.Max(1f, targetTimeSeconds);
             return config;
         }

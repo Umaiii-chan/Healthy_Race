@@ -1,3 +1,4 @@
+using HealthyRace.Core;
 using UnityEngine;
 
 namespace HealthyRace.Collectibles
@@ -37,17 +38,17 @@ namespace HealthyRace.Collectibles
         [SerializeField]
         private AudioClip _collectSound;
 
-        /// <summary>Ultraprocessado pesa: velocidade × este valor por <see cref="UltraProcessedSlowSeconds"/>.</summary>
-        public const float UltraProcessedSlowMultiplier = 0.5f;
-
-        public const float UltraProcessedSlowSeconds = 5f;
-
-        /// <summary>Multiplicador de velocidade passageiro ao comer (1 = nenhum).</summary>
+        /// <summary>
+        /// Multiplicador de velocidade passageiro ao comer (1 = nenhum). Os números do
+        /// ultraprocessado vêm de <see cref="BalanceConfig"/>.
+        /// </summary>
         public float SlowMultiplier =>
-            _category == FoodCategory.UltraProcessed ? UltraProcessedSlowMultiplier : 1f;
+            _category == FoodCategory.UltraProcessed
+                ? BalanceConfig.Current.UltraSlowMultiplier
+                : 1f;
 
         public float SlowSeconds =>
-            _category == FoodCategory.UltraProcessed ? UltraProcessedSlowSeconds : 0f;
+            _category == FoodCategory.UltraProcessed ? BalanceConfig.Current.UltraSlowSeconds : 0f;
 
         public int BasePoints => _basePoints;
 

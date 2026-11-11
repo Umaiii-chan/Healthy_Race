@@ -33,10 +33,10 @@ namespace HealthyRace.Level
         public const float FixedDeltaTime = 0.02f;
 
         /// <summary>Prazo do segundo jogador depois que o primeiro chega à porta.</summary>
-        public const float PartnerWindowSeconds = 45f;
+        public static float PartnerWindowSeconds => BalanceConfig.Current.PartnerWindowSeconds;
 
         /// <summary>Duração máxima de uma partida.</summary>
-        public const float MatchTimeLimitSeconds = 300f;
+        public static float MatchTimeLimitSeconds => BalanceConfig.Current.MatchTimeLimitSeconds;
 
         public const float LiftSpeed = 5f;
         public const float GateOpenDelay = 1.2f;
@@ -1255,6 +1255,13 @@ namespace HealthyRace.Level
             var fatigue = player.GetComponent<FatigueComponent>();
             if (fatigue != null)
             {
+                var balance = BalanceConfig.Current;
+                fatigue.Configure(
+                    balance.FatigueDurationSeconds,
+                    balance.FatigueRecoveryWellbeing,
+                    balance.FatigueTriggerThreshold,
+                    balance.FatigueRearmThreshold
+                );
                 fatigue.StateChanged += state =>
                 {
                     if (state == FatigueState.Fatigued)
@@ -1420,7 +1427,6 @@ namespace HealthyRace.Level
                 20,
                 _playerOneHud,
                 _playerTwoHud,
-                null,
                 scoreConfig: Scoring.ScoreConfig.CreateForRace(TargetTimeSeconds),
                 secondFinishLine: _playerTwoDoor,
                 requireBothAtDoors: false,

@@ -229,7 +229,7 @@ namespace HealthyRace.Tests.PlayMode
             Assert.That(movement.IsSluggish, Is.True);
             Assert.That(movement.EffectiveMoveSpeed, Is.LessThan(normal * 0.8f));
             yield return new WaitForSeconds(
-                HealthyRace.Collectibles.FoodData.UltraProcessedSlowSeconds + 0.2f
+                HealthyRace.Core.BalanceConfig.Current.UltraSlowSeconds + 0.2f
             );
             Assert.That(movement.IsSluggish, Is.False, "o peso passa");
         }
@@ -268,11 +268,8 @@ namespace HealthyRace.Tests.PlayMode
 
             var bots = new[]
             {
-                new RouteBot(
-                    bootstrap.PlayerOne,
-                    longRoute,
-                    "P1 longo",
-                    c => LevelRoutes.Find(grid, c, d => grid[d.x, d.y] == LevelGrid.DoorOne)
+                new RouteBot(bootstrap.PlayerOne, longRoute, "P1 longo", c =>
+                    LevelRoutes.Find(grid, c, d => grid[d.x, d.y] == LevelGrid.DoorOne)
                 ),
                 new RouteBot(
                     bootstrap.PlayerTwo,

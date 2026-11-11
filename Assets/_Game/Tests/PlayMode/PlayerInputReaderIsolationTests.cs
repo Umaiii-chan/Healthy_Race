@@ -80,10 +80,6 @@ namespace HealthyRace.Tests.PlayMode
             Assert.That(playerOneJumpCount, Is.EqualTo(2));
             Assert.That(playerTwoJumpCount, Is.Zero);
             Release(keyboard.spaceKey);
-
-            Press(keyboard.eKey);
-            Assert.That(_playerOneReader.InteractPressed, Is.True);
-            Assert.That(_playerTwoReader.InteractPressed, Is.False);
         }
 
         [Test]
@@ -105,10 +101,6 @@ namespace HealthyRace.Tests.PlayMode
             Assert.That(_playerTwoReader.JumpPressed, Is.True);
             Assert.That(_playerOneReader.JumpPressed, Is.False);
             Release(keyboard.upArrowKey);
-
-            Press(keyboard.rightCtrlKey);
-            Assert.That(_playerTwoReader.InteractPressed, Is.True);
-            Assert.That(_playerOneReader.InteractPressed, Is.False);
         }
 
         private static PlayerInputReader CreateReader(

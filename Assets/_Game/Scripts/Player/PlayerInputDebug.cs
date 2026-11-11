@@ -13,7 +13,6 @@ namespace HealthyRace.Player
         [SerializeField, Min(0f)]
         private float _debugMoveSpeed = 3f;
 
-        private int _interactPressCount;
         private int _jumpPressCount;
         private PlayerInputReader _playerInputReader;
         private SpriteRenderer _spriteRenderer;
@@ -43,7 +42,6 @@ namespace HealthyRace.Player
             }
 
             _playerInputReader.JumpPerformed -= HandleJump;
-            _playerInputReader.InteractPerformed -= HandleInteract;
         }
 
         private void OnEnable()
@@ -54,7 +52,6 @@ namespace HealthyRace.Player
             }
 
             _playerInputReader.JumpPerformed += HandleJump;
-            _playerInputReader.InteractPerformed += HandleInteract;
         }
 
         private void OnGUI()
@@ -66,9 +63,7 @@ namespace HealthyRace.Player
 
             var isPlayerOne = _playerInputReader.PlayerInputId == PlayerInputId.Player1;
             var x = isPlayerOne ? 16f : Screen.width - 276f;
-            var controls = isPlayerOne
-                ? "A / D | W or Space | E"
-                : "Left / Right | Up | Right Ctrl";
+            var controls = isPlayerOne ? "A / D | W or Space" : "Left / Right | Up";
 
             GUI.Box(new Rect(x, 84f, 260f, 118f), _playerInputReader.PlayerInputId.ToString());
             GUI.Label(
@@ -76,11 +71,7 @@ namespace HealthyRace.Player
                 $"Move X: {_playerInputReader.MoveInput.x:0.0}"
             );
             GUI.Label(new Rect(x + 12f, 132f, 236f, 20f), $"Jump pressed: {_jumpPressCount}");
-            GUI.Label(
-                new Rect(x + 12f, 154f, 236f, 20f),
-                $"Interact pressed: {_interactPressCount}"
-            );
-            GUI.Label(new Rect(x + 12f, 176f, 236f, 20f), controls);
+            GUI.Label(new Rect(x + 12f, 154f, 236f, 20f), controls);
         }
 
         private void Update()
@@ -97,11 +88,6 @@ namespace HealthyRace.Player
                 new Vector2(0.5f, 0.5f),
                 1f
             );
-        }
-
-        private void HandleInteract()
-        {
-            _interactPressCount++;
         }
 
         private void HandleJump()

@@ -6,7 +6,6 @@ Healthy Race é para dois jogadores no mesmo teclado.
 | --- | --- | --- |
 | Andar | `A` / `D` | `←` / `→` |
 | Pular | `W` ou `Espaço` | `↑` |
-| Interagir | `E` | `Ctrl` direito |
 
 | Ação geral | Tecla |
 | --- | --- |
@@ -15,7 +14,7 @@ Healthy Race é para dois jogadores no mesmo teclado.
 
 ## Dicas
 
-- **Alavancas** são acionadas encostando nelas; não é preciso apertar Interagir.
+- **Alavancas** são acionadas encostando nelas.
 - **Elevador:** fique em cima da plataforma e ele sobe sozinho. Se o outro jogador estiver
   subindo, espere: o elevador volta quando fica vazio.
 - **Pulo com tolerância:** dá para pular um instante depois de sair da beira e apertar o
