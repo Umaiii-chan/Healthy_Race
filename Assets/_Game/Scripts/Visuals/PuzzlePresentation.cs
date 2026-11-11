@@ -1,4 +1,3 @@
-using HealthyRace.Puzzles;
 using UnityEngine;
 
 namespace HealthyRace.Visuals
@@ -22,9 +21,6 @@ namespace HealthyRace.Visuals
 
         [SerializeField]
         private VisualCatalog _catalog;
-
-        [SerializeField]
-        private PressureButton _source;
 
         [SerializeField]
         private PuzzleVisualKind _kind;
@@ -58,38 +54,6 @@ namespace HealthyRace.Visuals
                 _restPosition = _art.transform.localPosition;
             }
         }
-
-        public void Bind(PressureButton source)
-        {
-            Unsubscribe();
-            _source = source;
-            if (isActiveAndEnabled)
-                Subscribe();
-        }
-
-        private void OnEnable() => Subscribe();
-
-        private void OnDisable() => Unsubscribe();
-
-        private void OnDestroy() => Unsubscribe();
-
-        private void Subscribe()
-        {
-            if (_source == null)
-                return;
-            _source.OnPressedStateChanged -= OnPressed;
-            _source.OnPressedStateChanged += OnPressed;
-            OnPressed(_source.IsPressed);
-        }
-
-        private void Unsubscribe()
-        {
-            if (_source != null)
-                _source.OnPressedStateChanged -= OnPressed;
-        }
-
-        private void OnPressed(bool pressed) =>
-            Present(pressed ? PuzzleAppearance.Active : PuzzleAppearance.Inactive);
 
         public void Present(PuzzleAppearance state)
         {

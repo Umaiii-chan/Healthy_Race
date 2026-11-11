@@ -104,13 +104,11 @@ namespace HealthyRace.Tests.PlayMode
 
             yield return null;
 
-            var p1ValueText = System.Array.Find(
-                p1HudGo.GetComponentsInChildren<Text>(true),
-                t => t.name == "WellbeingValue"
+            var p1ValueText = System.Array.Find(p1HudGo.GetComponentsInChildren<Text>(true), t =>
+                t.name == "WellbeingValue"
             );
-            var p2ValueText = System.Array.Find(
-                p2HudGo.GetComponentsInChildren<Text>(true),
-                t => t.name == "WellbeingValue"
+            var p2ValueText = System.Array.Find(p2HudGo.GetComponentsInChildren<Text>(true), t =>
+                t.name == "WellbeingValue"
             );
 
             Assert.That(p1ValueText.text, Does.Contain("80 / 100"));
@@ -142,13 +140,11 @@ namespace HealthyRace.Tests.PlayMode
             p1Wb.SetValue(5);
             yield return null;
 
-            var p1StateText = System.Array.Find(
-                p1HudGo.GetComponentsInChildren<Text>(true),
-                t => t.name == "FatigueState"
+            var p1StateText = System.Array.Find(p1HudGo.GetComponentsInChildren<Text>(true), t =>
+                t.name == "FatigueState"
             );
-            var p2StateText = System.Array.Find(
-                p2HudGo.GetComponentsInChildren<Text>(true),
-                t => t.name == "FatigueState"
+            var p2StateText = System.Array.Find(p2HudGo.GetComponentsInChildren<Text>(true), t =>
+                t.name == "FatigueState"
             );
 
             Assert.That(
