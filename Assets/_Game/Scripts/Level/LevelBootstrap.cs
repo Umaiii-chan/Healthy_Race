@@ -131,6 +131,7 @@ namespace HealthyRace.Level
         private MatchHUD _matchHud;
         private SharedCameraController _cameraController;
         private MatchCompletionController _matchController;
+        private MatchRecorder _recorder;
         private MatchResultsPanel _resultsPanel;
         private GameScreens _screens;
 
@@ -813,7 +814,9 @@ namespace HealthyRace.Level
                 {
                     AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
                     // quem puxou (o mais perto da alavanca) ganha os pontos do mecanismo
-                    _matchController?.RegisterPuzzleSolved(ClosestPlayer(lever.transform.position));
+                    var puller = ClosestPlayer(lever.transform.position);
+                    _matchController?.RegisterPuzzleSolved(puller);
+                    _recorder?.Lever(puller);
                     StartCoroutine(OpenGateAfterDelay(door));
                 };
                 _gates.Add((lever, door));
@@ -976,6 +979,16 @@ namespace HealthyRace.Level
             {
                 hud.RegisterFoodCollected(collectible.FoodData);
                 hud.AddScore(collectible.FoodData.BasePoints);
+            }
+
+            if (_recorder != null && collector != null)
+            {
+                _recorder.Food(
+                    hud == _playerOneHud ? 1 : 2,
+                    collectible.FoodData.Id,
+                    healthy,
+                    collector.CurrentValue
+                );
             }
 
             if (_visualCatalog != null)
@@ -1432,8 +1445,18 @@ namespace HealthyRace.Level
                 requireBothAtDoors: false,
                 timeLimitSeconds: MatchTimeLimitSeconds
             );
+            StartRecording(p1Wellbeing, p2Wellbeing, p1Fatigue, p2Fatigue);
             _matchController.MatchConcluded += results =>
             {
+                RecordResults(results, p1Fatigue, p2Fatigue);
+                foreach (var result in new[] { results.Player1, results.Player2 })
+                {
+                    if (!result.IsDnf)
+                    {
+                        SaveGame.RecordFinish(_grid.LevelNumber, result.FinishTime);
+                    }
+                }
+
                 AudioService.Instance.PlaySfx(
                     results.WinnerPlayerIndex == 0 ? AudioClipId.Sfx_Tie : AudioClipId.Sfx_Victory
                 );
@@ -1445,6 +1468,95 @@ namespace HealthyRace.Level
                     ToResultData(results.Player2, _playerTwoHud, p2Fatigue)
                 );
             };
+        }
+
+        // =====================================================================
+        // Registro de partida (playtest)
+        // =====================================================================
+        private void StartRecording(
+            WellbeingComponent p1Wellbeing,
+            WellbeingComponent p2Wellbeing,
+            FatigueComponent p1Fatigue,
+            FatigueComponent p2Fatigue
+        )
+        {
+            if (!MatchRecorder.Enabled)
+            {
+                return;
+            }
+
+            _recorder = gameObject.AddComponent<MatchRecorder>();
+            var p1Movement = _playerOne.GetComponent<PlayerMovement>();
+            var p2Movement = _playerTwo.GetComponent<PlayerMovement>();
+            _recorder.Begin(
+                _grid,
+                TargetTimeSeconds,
+                () => _matchController != null ? _matchController.Elapsed : 0f,
+                _playerOne.transform,
+                _playerTwo.transform,
+                i => (i == 1 ? p1Wellbeing : p2Wellbeing)?.CurrentValue ?? 0,
+                i => (i == 1 ? p1Movement : p2Movement)?.IsSluggish ?? false
+            );
+            if (p1Fatigue != null)
+            {
+                p1Fatigue.StateChanged += state =>
+                {
+                    if (state == FatigueState.Fatigued)
+                        _recorder?.Fatigue(1);
+                };
+            }
+
+            if (p2Fatigue != null)
+            {
+                p2Fatigue.StateChanged += state =>
+                {
+                    if (state == FatigueState.Fatigued)
+                        _recorder?.Fatigue(2);
+                };
+            }
+
+            foreach (var spike in _spikes)
+            {
+                spike.PlayerPenalized += (player, _) => _recorder?.Spike(player);
+            }
+
+            _matchController.PlayerFinished += (player, seconds) =>
+                _recorder?.Finish(player, seconds);
+        }
+
+        private void RecordResults(
+            MatchResultData results,
+            FatigueComponent p1Fatigue,
+            FatigueComponent p2Fatigue
+        )
+        {
+            if (_recorder == null)
+            {
+                return;
+            }
+
+            foreach (
+                var (result, hud, fatigue) in new[]
+                {
+                    (results.Player1, _playerOneHud, p1Fatigue),
+                    (results.Player2, _playerTwoHud, p2Fatigue),
+                }
+            )
+            {
+                _recorder.Result(
+                    result.PlayerIndex,
+                    !result.IsDnf,
+                    result.FinishTime,
+                    result.Placement,
+                    result.Score.FinalScore,
+                    result.FinalWellbeing,
+                    hud != null ? hud.HealthyFoodCount : 0,
+                    hud != null ? hud.UltraProcessedFoodCount : 0,
+                    fatigue != null ? fatigue.FatigueEpisodeCount : 0
+                );
+            }
+
+            _recorder.End(results.WinnerPlayerIndex);
         }
 
         private static PlayerResultData ToResultData(
