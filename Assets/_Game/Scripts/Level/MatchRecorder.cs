@@ -117,6 +117,8 @@ namespace HealthyRace.Level
                 .Field("fase", grid.LevelNumber)
                 .Field("nome", grid.LevelName)
                 .Field("tempo_alvo", targetTimeSeconds)
+                .Field("largura", grid.Width)
+                .Field("altura", grid.Height)
                 .Field("versao", Application.version)
                 .Field("data", DateTime.Now.ToString("s", CultureInfo.InvariantCulture))
                 .Write();

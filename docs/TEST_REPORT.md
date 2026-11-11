@@ -1,18 +1,27 @@
-# Relatório de testes — versão 1.0.0
+# Relatório de testes — versão 1.0.1
 
-Data: 10/11/2026. Editor: Unity 6000.3.23f1, Windows 11, modo batch (sem som).
+Data: 11/11/2026. Editor: Unity 6000.3.23f1, Windows 11, modo batch (sem som).
 
 ## Resumo
 
 | Suíte | Testes | Passaram | Falharam |
 | --- | --- | --- | --- |
-| EditMode | 233 | 233 | 0 |
-| PlayMode | 91 | 91 | 0 |
+| EditMode | 243 | 243 | 0 |
+| PlayMode | 83 | 83 | 0 |
 | Build Windows 64-bit (Mono) | — | sucesso | — |
 
 No GitHub, o CI roda lint de Markdown e YAML, formatação de C# (CSharpier) e validação do
 repositório. Os testes do Unity no CI ficam pulados enquanto o repositório não tiver a
 licença (`UNITY_LICENSE`); os números acima são da execução local.
+
+## Mudança na contagem desde a 1.0.0
+
+A 1.0.0 tinha 233 testes EditMode e 91 PlayMode. Na 1.0.1:
+
+- **saíram 18 testes** do protótipo cooperativo removido (caixa empurrável, botão de pressão,
+  controlador cooperativo e a cena `VerticalSlice_Core`): 10 EditMode e 8 PlayMode;
+- **entraram 20 testes EditMode**: distância igual para P1 e P2 nas 10 fases (10), balanceamento
+  em asset (3), progresso pela rota, registro de partida e progresso salvo (7).
 
 ## O que é testado
 
@@ -47,18 +56,18 @@ longo mais rápido).
 
 | Fase | Nome | Longo (P1) | Curto (P2) | Pontos longo | Pontos curto |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Corrida do Equilíbrio | 125,0 s | 140,6 s | 5980 | -3050 |
-| 2 | Horta Suspensa | 95,5 s | 115,7 s | 4810 | -2742 |
-| 3 | Pomar das Alavancas | 127,9 s | 139,4 s | 6460 | -3039 |
-| 4 | Estufa dos Espinhos | 138,6 s | 153,0 s | 5730 | -3064 |
-| 5 | Ponte de Folhas | 142,1 s | 166,9 s | 4860 | -5448 |
-| 6 | Feira Livre | 159,2 s | 176,5 s | 6590 | -3676 |
-| 7 | Torre das Trepadeiras | 133,3 s | 163,1 s | 6210 | -3551 |
-| 8 | Mercado Comprido | 131,4 s | 146,3 s | 4890 | -2807 |
-| 9 | Labirinto da Lama | 176,8 s | 185,2 s | 4640 | -4037 |
-| 10 | Grande Final | 173,6 s | 209,0 s | 7540 | -4346 |
+| 1 | Corrida do Equilíbrio | 125,7 s | 141,4 s | 5980 | -3058 |
+| 2 | Horta Suspensa | 96,2 s | 116,1 s | 4810 | -2747 |
+| 3 | Pomar das Alavancas | 128,6 s | 139,7 s | 6460 | -3043 |
+| 4 | Estufa dos Espinhos | 139,3 s | 153,3 s | 5730 | -3067 |
+| 5 | Ponte de Folhas | 142,7 s | 167,1 s | 4860 | -5450 |
+| 6 | Feira Livre | 159,9 s | 176,9 s | 6589 | -3679 |
+| 7 | Torre das Trepadeiras | 133,9 s | 163,5 s | 6210 | -3554 |
+| 8 | Mercado Comprido | 132,1 s | 146,9 s | 4890 | -2811 |
+| 9 | Labirinto da Lama | 177,4 s | 185,6 s | 4640 | -4040 |
+| 10 | Grande Final | 174,2 s | 209,1 s | 7540 | -4346 |
 
-Partindo de Bem-Estar zero, na Fase 1: longo 126,4 s, curto 141,2 s.
+Partindo de Bem-Estar zero, na Fase 1: longo 127,1 s, curto 141,5 s.
 
 ## Defeitos encontrados pelo robô e corrigidos
 
