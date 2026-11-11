@@ -93,10 +93,15 @@ namespace HealthyRace.UI
             _view.Hide();
         }
 
-        public void ShowResults(string winner, PlayerResultData p1, PlayerResultData p2)
+        public void ShowResults(
+            string winner,
+            PlayerResultData p1,
+            PlayerResultData p2,
+            string reason = null
+        )
         {
             _matchConcluded = true;
-            _view.RenderResults(winner, p1, p2);
+            _view.RenderResults(winner, p1, p2, reason);
             _view.SetCommandVisible(VisualCommand.Next, GameFlow.HasNextLevel);
             ShowScreen(VisualScreen.Results);
         }

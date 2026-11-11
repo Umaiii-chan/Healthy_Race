@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_Food_Carrot
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Collectibles.FoodData
   _id: carrot
-  _displayName: Carrot
+  _displayName: Cenoura
   _category: 0
   _basePoints: 120
   _wellbeingDelta: 12

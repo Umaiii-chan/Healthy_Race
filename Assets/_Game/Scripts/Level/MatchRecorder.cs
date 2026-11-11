@@ -153,7 +153,8 @@ namespace HealthyRace.Level
             int wellbeing,
             int healthyCount,
             int ultraCount,
-            int fatigueEpisodes
+            int fatigueEpisodes,
+            int stars = 0
         )
         {
             Record("resultado")
@@ -166,6 +167,7 @@ namespace HealthyRace.Level
                 .Field("saudaveis", healthyCount)
                 .Field("ultra", ultraCount)
                 .Field("fadigas", fatigueEpisodes)
+                .Field("estrelas", stars)
                 .Write();
         }
 

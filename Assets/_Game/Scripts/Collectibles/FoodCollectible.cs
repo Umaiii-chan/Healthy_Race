@@ -38,6 +38,9 @@ namespace HealthyRace.Collectibles
 
         public int CollectorCount => _collectors.Count;
 
+        /// <summary>A última coleta encerrou a queda do lanche de quem coletou.</summary>
+        public bool LastCollectionCuredCrash { get; private set; }
+
         /// <summary>Dispara a cada coleta, com quem coletou.</summary>
         public event Action<FoodCollectible, WellbeingComponent> Collected;
 
@@ -115,6 +118,7 @@ namespace HealthyRace.Collectibles
 
             wellbeing.ApplyDelta(_foodData.WellbeingDelta);
             // lanche: pico agora, queda depois; fruta e água acordam da queda
+            LastCollectionCuredCrash = false;
             var movement = other.GetComponentInParent<PlayerMovement>();
             if (movement != null)
             {
@@ -124,7 +128,7 @@ namespace HealthyRace.Collectibles
                 }
                 else if (_foodData.EndsCrash)
                 {
-                    movement.CureCrash();
+                    LastCollectionCuredCrash = movement.CureCrash();
                 }
             }
 

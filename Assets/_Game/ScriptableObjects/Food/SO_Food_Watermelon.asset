@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_Food_Watermelon
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Collectibles.FoodData
   _id: watermelon
-  _displayName: Watermelon
+  _displayName: Melancia
   _category: 0
   _basePoints: 100
   _wellbeingDelta: 10

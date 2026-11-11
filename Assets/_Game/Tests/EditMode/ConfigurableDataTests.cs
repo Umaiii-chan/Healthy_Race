@@ -48,14 +48,14 @@ namespace HealthyRace.Tests.EditMode
 
             Assert.That(apple, Is.Not.Null);
             Assert.That(apple.Id, Is.EqualTo("apple"));
-            Assert.That(apple.DisplayName, Is.EqualTo("Apple"));
+            Assert.That(apple.DisplayName, Is.EqualTo("Maçã"));
             Assert.That(apple.Category, Is.EqualTo(FoodCategory.Healthy));
             Assert.That(apple.BasePoints, Is.EqualTo(100));
             Assert.That(apple.WellbeingDelta, Is.EqualTo(10));
 
             Assert.That(burger, Is.Not.Null);
             Assert.That(burger.Id, Is.EqualTo("burger"));
-            Assert.That(burger.DisplayName, Is.EqualTo("Burger"));
+            Assert.That(burger.DisplayName, Is.EqualTo("Hambúrguer"));
             Assert.That(burger.Category, Is.EqualTo(FoodCategory.UltraProcessed));
             Assert.That(burger.BasePoints, Is.EqualTo(0));
             Assert.That(burger.WellbeingDelta, Is.EqualTo(-18));
@@ -80,7 +80,7 @@ namespace HealthyRace.Tests.EditMode
 
             Assert.That(soda, Is.Not.Null);
             Assert.That(soda.Id, Is.EqualTo("soda"));
-            Assert.That(soda.DisplayName, Is.EqualTo("Soda"));
+            Assert.That(soda.DisplayName, Is.EqualTo("Refrigerante"));
             Assert.That(soda.Category, Is.EqualTo(FoodCategory.UltraProcessed));
             Assert.That(soda.BasePoints, Is.EqualTo(0));
             Assert.That(soda.WellbeingDelta, Is.EqualTo(-12));

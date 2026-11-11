@@ -132,6 +132,7 @@ namespace HealthyRace.Level
         private SharedCameraController _cameraController;
         private MatchCompletionController _matchController;
         private MatchRecorder _recorder;
+        private RaceCountdown _countdown;
         private MatchResultsPanel _resultsPanel;
         private GameScreens _screens;
 
@@ -145,6 +146,7 @@ namespace HealthyRace.Level
         public MatchHUD MatchHud => _matchHud;
         public SharedCameraController CameraController => _cameraController;
         public MatchCompletionController MatchController => _matchController;
+        public RaceCountdown Countdown => _countdown;
         public MatchResultsPanel ResultsPanel => _resultsPanel;
         public GameScreens Screens => _screens;
         public VisualCatalog VisualCatalog => _visualCatalog;
@@ -992,6 +994,21 @@ namespace HealthyRace.Level
                 hud.AddScore(collectible.FoodData.BasePoints);
             }
 
+            if (collector != null)
+            {
+                var data = collectible.FoodData;
+                var effect =
+                    data.StartsRush ? "PICO!"
+                    : collectible.LastCollectionCuredCrash ? "ACORDOU!"
+                    : string.Empty;
+                PickupPopup.Spawn(
+                    _levelParent,
+                    collector.transform.position + Vector3.up * 1.5f,
+                    PickupPopup.Compose(data.DisplayName, data.WellbeingDelta, effect),
+                    healthy ? PickupPopup.HealthyColor : PickupPopup.SnackColor
+                );
+            }
+
             if (_recorder != null && collector != null)
             {
                 _recorder.Food(
@@ -1286,6 +1303,7 @@ namespace HealthyRace.Level
                     balance.FatigueTriggerThreshold,
                     balance.FatigueRearmThreshold
                 );
+                fatigue.WarningSeconds = balance.FatigueWarningSeconds;
                 fatigue.StateChanged += state =>
                 {
                     if (state == FatigueState.Fatigued)
@@ -1457,6 +1475,13 @@ namespace HealthyRace.Level
                 timeLimitSeconds: MatchTimeLimitSeconds
             );
             StartRecording(p1Wellbeing, p2Wellbeing, p1Fatigue, p2Fatigue);
+            _countdown = gameObject.AddComponent<RaceCountdown>();
+            _countdown.Begin(
+                canvasObject.transform,
+                _matchController,
+                _playerOne.GetComponent<PlayerController>(),
+                _playerTwo.GetComponent<PlayerController>()
+            );
             _matchController.MatchConcluded += results =>
             {
                 RecordResults(results, p1Fatigue, p2Fatigue);
@@ -1476,7 +1501,10 @@ namespace HealthyRace.Level
                         ? "EMPATE!"
                         : $"P{results.WinnerPlayerIndex} VENCEU!",
                     ToResultData(results.Player1, _playerOneHud, p1Fatigue),
-                    ToResultData(results.Player2, _playerTwoHud, p2Fatigue)
+                    ToResultData(results.Player2, _playerTwoHud, p2Fatigue),
+                    BalanceConfig.Current.VictoryByArrival
+                        ? Scoring.RaceOutcome.Describe(results.Race)
+                        : null
                 );
             };
         }
@@ -1563,7 +1591,8 @@ namespace HealthyRace.Level
                     result.FinalWellbeing,
                     hud != null ? hud.HealthyFoodCount : 0,
                     hud != null ? hud.UltraProcessedFoodCount : 0,
-                    fatigue != null ? fatigue.FatigueEpisodeCount : 0
+                    fatigue != null ? fatigue.FatigueEpisodeCount : 0,
+                    result.Stars
                 );
             }
 
@@ -1586,7 +1615,9 @@ namespace HealthyRace.Level
                 FatigueEpisodes = fatigue != null ? fatigue.FatigueEpisodeCount : 0,
                 Progress = result.IsDnf ? 0f : 1f,
             };
-            return result.Score.ToVisualResultData(hudData, result.FinishTime, !result.IsDnf);
+            var data = result.Score.ToVisualResultData(hudData, result.FinishTime, !result.IsDnf);
+            data.Stars = result.Stars;
+            return data;
         }
 
         // =====================================================================

@@ -104,6 +104,43 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Fatigue_WithWarning_LetsThePlayerMoveUntilTheStop()
+        {
+            CreateGround();
+            CreatePlayer(
+                "Fatigue Warning Player",
+                new Vector2(0f, 0.5f),
+                out var controller,
+                out var movement,
+                out var wellbeing,
+                out var fatigue
+            );
+
+            fatigue.Configure(0.3f, 15, 20, 25);
+            fatigue.WarningSeconds = 0.4f;
+            var warned = 0f;
+            fatigue.WarningStarted += seconds => warned = seconds;
+            wellbeing.SetValue(100);
+            yield return WaitForGrounded(movement);
+
+            wellbeing.SetValue(20);
+            Assert.That(fatigue.State, Is.EqualTo(FatigueState.Fatigued));
+            Assert.That(fatigue.IsWarning, Is.True);
+            Assert.That(warned, Is.EqualTo(0.4f));
+            Assert.That(controller.IsMovementEnabled, Is.True, "no aviso o jogador ainda anda");
+            Assert.That(fatigue.FatigueEpisodeCount, Is.EqualTo(1));
+
+            yield return new WaitForSeconds(0.5f);
+            Assert.That(fatigue.IsWarning, Is.False);
+            Assert.That(controller.IsMovementEnabled, Is.False, "depois do aviso vem a parada");
+
+            yield return new WaitForSeconds(0.4f);
+            Assert.That(fatigue.State, Is.EqualTo(FatigueState.Normal));
+            Assert.That(controller.IsMovementEnabled, Is.True);
+            Assert.That(wellbeing.CurrentValue, Is.EqualTo(35));
+        }
+
+        [UnityTest]
         public IEnumerator Fatigue_CrossingThresholdInAir_DelaysUntilGrounded_InPlayMode()
         {
             CreateGround();

@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _partnerWindowSeconds: 45
   _matchTimeLimitSeconds: 300
+  _countdownSeconds: 3
+  _victoryByArrival: 1
+  _starWellbeingThreshold: 60
   _pointsPerLever: 150
   _maxTimeBonus: 600
   _firstPlaceArrivalBonus: 500
@@ -28,7 +31,8 @@ MonoBehaviour:
   _crashSeconds: 4
   _crashExtraPerChain: 2
   _crashMaxSeconds: 8
-  _fatigueDurationSeconds: 2
+  _fatigueDurationSeconds: 1.2
+  _fatigueWarningSeconds: 1
   _fatigueRecoveryWellbeing: 15
   _fatigueTriggerThreshold: 20
   _fatigueRearmThreshold: 25

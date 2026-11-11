@@ -208,6 +208,46 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Countdown_HoldsPlayersAndClock_UntilGo()
+        {
+            RaceCountdown.ForceEnabled = true;
+            try
+            {
+                yield return LoadLevel();
+                var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+                var countdown = bootstrap.Countdown;
+                var movement = bootstrap.PlayerOne.GetComponent<PlayerMovement>();
+                var start = bootstrap.PlayerOne.transform.position.x;
+
+                Assert.That(countdown.IsCounting, Is.True);
+                Assert.That(countdown.CurrentText, Is.EqualTo("3"));
+                Assert.That(movement.IsMovementEnabled, Is.False);
+                movement.SetHorizontalInput(1f);
+                yield return new WaitForSeconds(0.5f);
+                Assert.That(
+                    bootstrap.PlayerOne.transform.position.x,
+                    Is.EqualTo(start).Within(0.05f),
+                    "ninguém anda antes do JÁ!"
+                );
+                Assert.That(
+                    bootstrap.MatchController.Elapsed,
+                    Is.Zero,
+                    "o relógio espera a largada"
+                );
+
+                yield return new WaitForSeconds(RaceCountdown.Seconds);
+                Assert.That(countdown.IsCounting, Is.False);
+                Assert.That(movement.IsMovementEnabled, Is.True);
+                Assert.That(bootstrap.MatchController.Elapsed, Is.GreaterThan(0f));
+                Assert.That(bootstrap.MatchController.Elapsed, Is.LessThan(1.2f));
+            }
+            finally
+            {
+                RaceCountdown.ForceEnabled = false;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator Snack_GivesARush_ThenACrash_ThatPasses()
         {
             yield return LoadLevel();

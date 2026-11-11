@@ -15,7 +15,7 @@ namespace HealthyRace.Tests.EditMode
         }
 
         [Test]
-        public void Asset_LoadsFromResources_WithTheV1Values()
+        public void Asset_LoadsFromResources_WithTheCurrentValues()
         {
             BalanceConfig.Use(null);
             var asset = Resources.Load<BalanceConfig>(BalanceConfig.ResourcePath);
@@ -31,7 +31,10 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(asset.RushSeconds, Is.EqualTo(2f));
             Assert.That(asset.CrashMultiplier, Is.EqualTo(0.6f));
             Assert.That(asset.CrashSeconds, Is.EqualTo(4f));
-            Assert.That(asset.FatigueDurationSeconds, Is.EqualTo(2f));
+            Assert.That(asset.FatigueDurationSeconds, Is.EqualTo(1.2f));
+            Assert.That(asset.FatigueWarningSeconds, Is.EqualTo(1f));
+            Assert.That(asset.VictoryByArrival, Is.True);
+            Assert.That(asset.CountdownSeconds, Is.EqualTo(3f));
             Assert.That(asset.FatigueTriggerThreshold, Is.EqualTo(20));
         }
 

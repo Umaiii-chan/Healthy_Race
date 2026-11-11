@@ -23,6 +23,9 @@ namespace HealthyRace.Visuals
         private Text _winner;
 
         [SerializeField]
+        private Text _reason;
+
+        [SerializeField]
         private Text[] _results;
 
         [SerializeField]
@@ -61,9 +64,11 @@ namespace HealthyRace.Visuals
             VisualCommand[] commands,
             Slider music,
             Slider effects,
-            Toggle reduceFlashes
+            Toggle reduceFlashes,
+            Text reason = null
         )
         {
+            _reason = reason;
             _screens = screens;
             _clock = clock;
             _window = window;
@@ -146,9 +151,19 @@ namespace HealthyRace.Visuals
                 : string.Empty;
         }
 
-        public void RenderResults(string winner, PlayerResultData p1, PlayerResultData p2)
+        public void RenderResults(
+            string winner,
+            PlayerResultData p1,
+            PlayerResultData p2,
+            string reason = null
+        )
         {
             _winner.text = winner;
+            if (_reason != null && !string.IsNullOrEmpty(reason))
+            {
+                _reason.text = reason;
+            }
+
             _results[0].text = VisualUiFormat.Result(p1);
             _results[1].text = VisualUiFormat.Result(p2);
         }

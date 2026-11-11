@@ -1058,7 +1058,7 @@ namespace HealthyRace.Editor.Visuals
                 Cream,
                 TextAnchor.MiddleCenter
             );
-            Label(
+            var reason = Label(
                 result,
                 "As escolhas contam até a chegada.",
                 250,
@@ -1165,7 +1165,8 @@ namespace HealthyRace.Editor.Visuals
                 Commands.ToArray(),
                 music,
                 effects,
-                toggle
+                toggle,
+                reason
             );
             view.Show(VisualScreen.Gameplay);
             view.RenderRace(0, 0, null);
