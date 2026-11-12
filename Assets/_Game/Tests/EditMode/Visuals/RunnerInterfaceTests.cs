@@ -105,8 +105,10 @@ namespace HealthyRace.Tests.EditMode.Visuals
         }
 
         [Test]
-        public void Menu_ShowsZuriAndTom_AndNoSprout()
+        public void MenuScreen_IsOnlyTheTitle_AndLetsClicksThrough()
         {
+            // Menu 2: quem aparece no menu são os próprios jogadores, na estufa jogável.
+            // A tela do prefab é só o letreiro, por cima do palco.
             var catalog = Catalog();
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 PrefabFolder + "PF_VIS_Screens.prefab"
@@ -114,20 +116,22 @@ namespace HealthyRace.Tests.EditMode.Visuals
             var menu = prefab.GetComponent<RaceScreenView>().ScreenRoot(VisualScreen.MainMenu);
             Assert.That(menu, Is.Not.Null);
 
-            var images = menu.GetComponentsInChildren<Image>(true);
-            var one = images.Single(image => image.name == "Runner_P1");
-            var two = images.Single(image => image.name == "Runner_P2");
-            Assert.That(one.sprite, Is.SameAs(catalog.RunnerPose(1)));
-            Assert.That(two.sprite, Is.SameAs(catalog.RunnerPose(2)));
-            // os dois correm para o mesmo lado: ninguém espelhado (o número da regata inverteria)
-            Assert.That(one.rectTransform.localScale.x, Is.GreaterThan(0f));
-            Assert.That(two.rectTransform.localScale.x, Is.GreaterThan(0f));
-
-            var sprouts = images
+            Assert.That(menu.GetComponentsInChildren<Button>(true), Is.Empty);
+            var graphics = menu.GetComponentsInChildren<Graphic>(true);
+            Assert.That(
+                graphics.Where(graphic => graphic.raycastTarget).Select(graphic => graphic.name),
+                Is.Empty,
+                "nada no letreiro pode tapar o clique nas placas do palco"
+            );
+            var sprouts = menu.GetComponentsInChildren<Image>(true)
                 .Where(image => catalog.Characters.Contains(image.sprite))
                 .Select(image => image.name)
                 .ToArray();
             Assert.That(sprouts, Is.Empty, "o menu não mostra mais os brotos");
+            Assert.That(
+                menu.GetComponentsInChildren<Text>(true).Select(text => text.text),
+                Has.Some.EqualTo("HEALTHY").And.Some.EqualTo("RACE")
+            );
         }
 
         [Test]
