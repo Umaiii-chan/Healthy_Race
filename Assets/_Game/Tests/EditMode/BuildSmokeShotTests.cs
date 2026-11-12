@@ -43,6 +43,20 @@ namespace HealthyRace.Tests.EditMode
             Assert.That(seconds, Is.EqualTo(2.5f));
         }
 
+        [Test]
+        public void Menu_IsAskedByName()
+        {
+            var asked = BuildSmokeShot.TryParse(
+                new[] { "-smoke-shot", "menu", "menu.png" },
+                out var level,
+                out var path,
+                out _
+            );
+            Assert.That(asked, Is.True);
+            Assert.That(level, Is.EqualTo(BuildSmokeShot.MenuLevel));
+            Assert.That(path, Is.EqualTo("menu.png"));
+        }
+
         [TestCase("0")]
         [TestCase("99")]
         [TestCase("fase")]

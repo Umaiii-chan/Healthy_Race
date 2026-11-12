@@ -8,7 +8,7 @@ namespace HealthyRace.Core
     /// <summary>
     /// Foto de dentro da build, para conferir o que o jogador vê de fato: abre uma fase,
     /// espera, salva a tela e fecha o jogo. Só age quando a build é iniciada com
-    /// <c>-smoke-shot &lt;fase&gt; &lt;arquivo.png&gt; [segundos]</c>; sem o argumento não faz nada.
+    /// <c>-smoke-shot &lt;fase|menu&gt; &lt;arquivo.png&gt; [segundos]</c>; sem o argumento não faz nada.
     ///
     /// Existe porque teste de Editor não vê diferença de shader entre Editor e build: os
     /// membros dos corredores já ficaram invisíveis na fase sem nenhum teste acusar.
@@ -17,6 +17,8 @@ namespace HealthyRace.Core
     {
         public const string Argument = "-smoke-shot";
         public const float DefaultSeconds = 4.5f;
+        public const string MenuKeyword = "menu";
+        public const int MenuLevel = 0;
 
         /// <summary>O pedido de foto na linha de comando, se houver e estiver completo.</summary>
         public static bool TryParse(
@@ -35,12 +37,18 @@ namespace HealthyRace.Core
                 return false;
             }
 
-            if (
+            // "menu" no lugar do número fotografa o menu: vale como fase 0
+            if (args[index + 1] == MenuKeyword)
+            {
+                level = MenuLevel;
+            }
+            else if (
                 !int.TryParse(args[index + 1], out level)
                 || level < 1
                 || level > GameFlow.LevelCount
             )
             {
+                level = 0;
                 return false;
             }
 
@@ -96,7 +104,15 @@ namespace HealthyRace.Core
 
             private static IEnumerator Shoot(int level, string path, float seconds)
             {
-                GameFlow.LoadLevel(level);
+                if (level == MenuLevel)
+                {
+                    GameFlow.LoadMenu();
+                }
+                else
+                {
+                    GameFlow.LoadLevel(level);
+                }
+
                 yield return new WaitForSecondsRealtime(seconds);
                 ScreenCapture.CaptureScreenshot(path);
                 // a captura é gravada no fim do quadro seguinte
