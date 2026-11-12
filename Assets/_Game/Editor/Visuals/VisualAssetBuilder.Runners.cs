@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace HealthyRace.Editor.Visuals
 {
@@ -174,6 +175,8 @@ namespace HealthyRace.Editor.Visuals
                 BuildRunner(spec, sprites, BuildRunnerAnimations(spec));
             }
 
+            UseRunnersInLevels();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
@@ -183,6 +186,23 @@ namespace HealthyRace.Editor.Visuals
                     + (Runners.Length * RunnerStates.Length)
                     + " clipes salvos."
             );
+        }
+
+        /// <summary>Aponta as 10 fases para Zuri (P1) e Tom (P2).</summary>
+        private static void UseRunnersInLevels()
+        {
+            var one = LoadRequired<GameObject>(PlayerOneVisualPath);
+            var two = LoadRequired<GameObject>(PlayerTwoVisualPath);
+            foreach (var (_, scenePath) in LevelScenes)
+            {
+                var scene = EditorSceneManager.OpenScene(scenePath);
+                var level = Object.FindFirstObjectByType<HealthyRace.Level.LevelBootstrap>();
+                if (level == null)
+                    throw new InvalidOperationException("Fase sem LevelBootstrap: " + scenePath);
+                Assign(level, "_playerOneVisualPrefab", one);
+                Assign(level, "_playerTwoVisualPrefab", two);
+                EditorSceneManager.SaveScene(scene);
+            }
         }
 
         private static Dictionary<string, Sprite> ImportRunnerSheet()
@@ -374,7 +394,12 @@ namespace HealthyRace.Editor.Visuals
                 }
             );
             rig.SetWellbeing(1f);
-            root.AddComponent<Animator>().runtimeAnimatorController = controller;
+            var animator = root.AddComponent<Animator>();
+            animator.runtimeAnimatorController = controller;
+            // sem etiqueta "P1/P2": a silhueta, a cor e o número da regata já dizem quem é quem
+            var presentation = root.AddComponent<PlayerPresentation>();
+            presentation.Configure(_catalog, null, null, null, animator, spec.Player);
+            presentation.ConfigureRunner(rig);
             return SavePrefab(root);
         }
     }

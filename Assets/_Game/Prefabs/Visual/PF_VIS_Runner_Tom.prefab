@@ -1063,6 +1063,7 @@ GameObject:
   - component: {fileID: 5116928998220264152}
   - component: {fileID: 8589772177806383472}
   - component: {fileID: 3902618444056566653}
+  - component: {fileID: 4728281444318167798}
   m_Layer: 0
   m_Name: PF_VIS_Runner_Tom
   m_TagString: Untagged
@@ -1140,6 +1141,29 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4728281444318167798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4209821255948764298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8875187e0e5a8944895d2435a36deead, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Visuals.PlayerPresentation
+  _catalog: {fileID: 11400000, guid: a5731bf23b531a74c9515c5433614d51, type: 2}
+  _body: {fileID: 0}
+  _identity: {fileID: 0}
+  _badge: {fileID: 0}
+  _animator: {fileID: 3902618444056566653}
+  _player: 2
+  _wellbeing: {fileID: 0}
+  _fatigue: {fileID: 0}
+  _controller: {fileID: 0}
+  _rig: {fileID: 0}
+  _runner: {fileID: 8589772177806383472}
 --- !u!1 &4249570727934432981
 GameObject:
   m_ObjectHideFlags: 0

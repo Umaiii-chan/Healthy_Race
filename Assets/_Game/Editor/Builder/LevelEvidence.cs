@@ -62,6 +62,16 @@ namespace HealthyRace.Editor.Build
                 typeof(LevelBootstrap)
                     .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
                     .Invoke(bootstrap, null);
+                // fora do modo de jogo os membros em curva não se redesenham sozinhos
+                foreach (
+                    var rig in Object.FindObjectsByType<HealthyRace.Visuals.RunnerRig>(
+                        FindObjectsSortMode.None
+                    )
+                )
+                {
+                    rig.RebuildLimbs();
+                }
+
                 CaptureViews(bootstrap, folder, wholeName, quarters);
             }
             finally
@@ -167,7 +177,12 @@ namespace HealthyRace.Editor.Build
         {
             var target = new RenderTexture(size.x, size.y, 24, RenderTextureFormat.ARGB32);
             camera.targetTexture = target;
+            // sem isto, a primeira captura depois de uma variante nova de shader sai sem
+            // os membros dos corredores (o Editor compila em segundo plano e pula o desenho)
+            var asyncCompilation = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
             camera.Render();
+            ShaderUtil.allowAsyncCompilation = asyncCompilation;
             var previous = RenderTexture.active;
             RenderTexture.active = target;
             var texture = new Texture2D(size.x, size.y, TextureFormat.RGBA32, false);

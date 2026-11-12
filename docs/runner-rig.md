@@ -1,8 +1,9 @@
 # Rig dos corredores (Zuri e Tom)
 
 Rig de membros em curva aprovado na folha de modelos
-(`docs/arte/folha-de-modelos-zuri-tom-2026-11-11.html`, "Rig 1"). Está **em construção**: os
-prefabs e os clipes existem e são testados, mas o jogo ainda usa o rig dos brotos (`CharacterRig`).
+(`docs/arte/folha-de-modelos-zuri-tom-2026-11-11.html`, "Rig 1"). **As 10 fases já usam Zuri
+(jogador 1) e Tom (jogador 2)** no lugar dos brotos. O retrato do HUD e o menu ainda mostram os
+brotos, e as peças são provisórias (ver o fim desta nota).
 
 ## O que existe
 
@@ -24,7 +25,8 @@ python tools/art/build_runner_rig.py --preview previa.png
 
 Depois, no Unity: menu `Healthy Race › Visuals › Build runner rig (Zuri e Tom)` (ou
 `-executeMethod HealthyRace.Editor.Visuals.VisualAssetBuilder.BuildRunners`), que importa a folha,
-escreve os clipes e monta os prefabs. Para conferir:
+escreve os clipes, monta os prefabs e aponta as 10 cenas de fase para eles
+(`UseRunnersInLevels`). Para conferir:
 
 - `Healthy Race › Evidence › Capture runners (Zuri e Tom)` grava `docs/evidence/character/Runners.png`
   (poses, rostos, faixa e lado);
@@ -74,15 +76,34 @@ para não cobrir o rosto.
 
 O rosto não é animado pelos clipes: quem troca é `RunnerRig.SetFace`, a partir do estado do jogo.
 
+## Ligação ao jogo
+
+`PlayerPresentation` aceita os dois rigs. Com um `RunnerRig` ligado (`ConfigureRunner`), a cada
+quadro ela:
+
+- vira o personagem para o lado da entrada (`SetFacing`); parado, mantém o último lado;
+- repassa o Bem-Estar para a faixa de cabeça (`SetWellbeing`). Corpo e pele não mudam com o
+  estado;
+- escolhe a animação (`RunnerAnimationFor`): o número de `VisualAction`, trocado por `Rush` (12)
+  ou `Crash` (13) quando o personagem está correndo sob efeito do lanche;
+- escolhe o rosto (`RunnerFaceFor`): vitória → olho arregalado; derrota e fadiga → esforço;
+  queda → sonolento; pico → arregalado; empurrar, pular e interagir → esforço; resto → neutro.
+
+O personagem pisca sozinho sobre o rosto neutro. Com "reduzir movimento" ligado ele não pisca e
+nunca fica de olhos fechados.
+
+O rig dos brotos (`CharacterRig`) continua no projeto, com seus testes, porque o HUD e o menu
+ainda usam os retratos deles; só saiu das fases.
+
 ## O que é provisório e o que falta
 
 - **As peças são desenho por código**, nas proporções da folha de modelos, para o rig funcionar
   e ser testado. O desenho final é do ilustrador, nas mesmas células e com os mesmos pivôs.
 - **As animações são um primeiro passe**, escritas por números e conferidas em pranchas de
-  quadros parados. Ninguém as viu em movimento nem dentro do jogo.
-- **Não ligado ao jogo:** `PlayerPresentation` ainda usa `CharacterRig`. Falta trocar, tirar as
-  cinco peles de corpo, ligar o Bem-Estar a `RunnerRig.SetWellbeing` e acionar `Rush` e `Crash`
-  a partir do estado do lanche.
+  quadros parados. Os testes PlayMode conferem que elas tocam na fase (o pé sai do chão na
+  corrida, pico e queda trocam de estado), mas ninguém as viu em movimento com os próprios olhos.
+- **HUD e menu ainda com os brotos:** os retratos do HUD e os personagens do menu não foram
+  trocados.
 - **Número espelhado:** o número da regata faz parte do tronco e sai invertido quando o
   personagem vira para a esquerda.
 - **Braço curto na corrida:** com a mão perto do ombro o arco bate no limite e o braço encurta.

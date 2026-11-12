@@ -64,11 +64,22 @@ namespace HealthyRace.Visuals
         [SerializeField]
         private Transform[] _targets = new Transform[0];
 
+        /// <summary>Duração de uma piscada.</summary>
+        public const float BlinkSeconds = 0.12f;
+
         private RunnerFace _currentFace;
+        private float _blinkUntil = -1f;
+        private float _nextBlink;
 
         public int Facing { get; private set; } = 1;
 
+        /// <summary>Rosto pedido pelo jogo (a piscada não muda este valor).</summary>
         public RunnerFace Face => _currentFace;
+
+        public bool IsBlinking => Time.time < _blinkUntil;
+
+        /// <summary>Com movimento reduzido o personagem não pisca.</summary>
+        public bool ReduceMotion { get; set; }
 
         public Sprite FaceSprite => _face != null ? _face.sprite : null;
 
@@ -118,7 +129,41 @@ namespace HealthyRace.Visuals
         public void SetFace(RunnerFace face)
         {
             _currentFace = face;
-            var index = (int)face;
+            ShowFace();
+        }
+
+        /// <summary>Fecha os olhos por um instante; só vale sobre o rosto neutro.</summary>
+        public void Blink()
+        {
+            _blinkUntil = Time.time + BlinkSeconds;
+            ShowFace();
+        }
+
+        private void Update()
+        {
+            if (ReduceMotion)
+            {
+                _blinkUntil = -1f;
+            }
+            else if (Time.time >= _nextBlink)
+            {
+                _nextBlink = Time.time + Random.Range(2.4f, 5f);
+                if (_currentFace == RunnerFace.Neutral)
+                {
+                    _blinkUntil = Time.time + BlinkSeconds;
+                }
+            }
+
+            ShowFace();
+        }
+
+        private void ShowFace()
+        {
+            var shown =
+                _currentFace == RunnerFace.Neutral && IsBlinking && !ReduceMotion
+                    ? RunnerFace.Blink
+                    : _currentFace;
+            var index = (int)shown;
             if (_face != null && _faces != null && index < _faces.Length && _faces[index] != null)
             {
                 _face.sprite = _faces[index];
