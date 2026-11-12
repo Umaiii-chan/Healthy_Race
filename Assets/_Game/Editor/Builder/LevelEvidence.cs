@@ -44,6 +44,172 @@ namespace HealthyRace.Editor.Build
             Debug.Log($"LEVEL_EVIDENCE_COMPLETE: {levels.Length} level overviews saved.");
         }
 
+        /// <summary>
+        /// O menu jogável nos dois momentos: as placas de escolha (com o letreiro por cima)
+        /// e o "Prontos?", com os vasos e a escolha de fase.
+        /// </summary>
+        [MenuItem("Healthy Race/Evidence/Capture menu")]
+        public static void CaptureMenu()
+        {
+            const string folder = "docs/evidence/menu";
+            EditorSceneManager.OpenScene(
+                HealthyRace.Editor.Visuals.VisualAssetBuilder.MenuScenePath
+            );
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+            var previousGravity = Physics2D.gravity;
+            var previousFrameRate = Application.targetFrameRate;
+            try
+            {
+                typeof(LevelBootstrap)
+                    .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(bootstrap, null);
+                foreach (
+                    var rig in Object.FindObjectsByType<HealthyRace.Visuals.RunnerRig>(
+                        FindObjectsSortMode.None
+                    )
+                )
+                {
+                    rig.RebuildLimbs();
+                }
+
+                var world = bootstrap.CameraController.GetComponent<Camera>();
+                var canvas = bootstrap.Screens.View.GetComponent<Canvas>();
+                var ui = new GameObject("UiCamera").AddComponent<Camera>();
+                ui.cullingMask = 1 << UiLayer;
+                ui.orthographic = true;
+                foreach (var t in canvas.GetComponentsInChildren<Transform>(true))
+                {
+                    t.gameObject.layer = UiLayer;
+                }
+
+                world.cullingMask &= ~(1 << UiLayer);
+                world.rect = new Rect(0f, 0f, 1f, 1f);
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = ui;
+                canvas.planeDistance = 1f;
+                ui.clearFlags = CameraClearFlags.SolidColor;
+                ui.backgroundColor = new Color(0f, 0f, 0f, 0f);
+
+                Directory.CreateDirectory(folder);
+                var grid = bootstrap.Grid;
+                var center = new Vector2(grid.Width, grid.Height) * 0.5f;
+                var half = Mathf.Max(grid.Height * 0.5f, grid.Width * 0.5f * Size.y / Size.x);
+
+                Canvas.ForceUpdateCanvases();
+                var stage = RenderWorld(world, Size, center, half);
+                var title = RenderUi(ui, canvas);
+                Save(Compose(stage, title), folder, "menu-escolha");
+
+                bootstrap.MenuStage.EnterReady();
+                Canvas.ForceUpdateCanvases();
+                Save(RenderWorld(world, Size, center, half), folder, "menu-prontos");
+            }
+            finally
+            {
+                Physics2D.gravity = previousGravity;
+                Application.targetFrameRate = previousFrameRate;
+            }
+
+            Debug.Log("MENU_EVIDENCE_COMPLETE: 2 PNG renders saved.");
+        }
+
+        /// <summary>
+        /// A tela de resultado (Resultado 3) com uma corrida de exemplo: o jogador 2 lidera
+        /// três andares e o jogador 1 vira no quarto, com o impulso do lanche.
+        /// </summary>
+        [MenuItem("Healthy Race/Evidence/Capture result screen")]
+        public static void CaptureResult()
+        {
+            const string folder = "docs/evidence/resultado";
+            EditorSceneManager.OpenScene(ScenePath);
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+            var previousGravity = Physics2D.gravity;
+            var previousFrameRate = Application.targetFrameRate;
+            try
+            {
+                typeof(LevelBootstrap)
+                    .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(bootstrap, null);
+                var view = bootstrap.Screens.View;
+                var catalog = AssetDatabase.LoadAssetAtPath<HealthyRace.Visuals.VisualCatalog>(
+                    HealthyRace.Editor.Visuals.VisualAssetBuilder.CatalogPath
+                );
+                var leads = new[]
+                {
+                    0f,
+                    0.01f,
+                    0.02f,
+                    0.025f,
+                    0.03f,
+                    0.02f,
+                    0f,
+                    -0.02f,
+                    -0.035f,
+                    -0.045f,
+                    -0.05f,
+                    -0.055f,
+                    -0.06f,
+                    -0.065f,
+                    -0.07f,
+                    -0.06f,
+                    -0.04f,
+                    -0.01f,
+                    0.06f,
+                    0.11f,
+                    0.105f,
+                    0.1f,
+                    0.095f,
+                    0.09f,
+                };
+                view.Show(HealthyRace.Visuals.VisualScreen.Results);
+                var board = HealthyRace.UI.RaceResultBoard.Show(
+                    view.ScreenRoot(HealthyRace.Visuals.VisualScreen.Results),
+                    new HealthyRace.UI.RaceResultBoard.Data
+                    {
+                        Winner = 1,
+                        Outcome = "P1 chegou 3,2 s antes.",
+                        Story = "O impulso do lanche no 4º andar colocou P1 na frente.",
+                        StarsOne = 3,
+                        StarsTwo = 2,
+                        Leads = leads,
+                        HasTurn = true,
+                        Turn = 0.76f,
+                        TurnWithRush = true,
+                        Floors = 5,
+                        ColorOne = catalog.IdentityColor(1),
+                        ColorTwo = catalog.IdentityColor(2),
+                        WinnerPose = catalog.RunnerPose(1),
+                    }
+                );
+
+                var canvas = view.GetComponent<Canvas>();
+                var ui = new GameObject("UiCamera").AddComponent<Camera>();
+                ui.cullingMask = 1 << UiLayer;
+                ui.orthographic = true;
+                foreach (var t in canvas.GetComponentsInChildren<Transform>(true))
+                {
+                    t.gameObject.layer = UiLayer;
+                }
+
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = ui;
+                canvas.planeDistance = 1f;
+                ui.clearFlags = CameraClearFlags.SolidColor;
+                ui.backgroundColor = Color.black;
+                Directory.CreateDirectory(folder);
+                Save(RenderUi(ui, canvas), folder, "resultado-resumo");
+                board.ShowDetails(true);
+                Save(RenderUi(ui, canvas), folder, "resultado-detalhes");
+            }
+            finally
+            {
+                Physics2D.gravity = previousGravity;
+                Application.targetFrameRate = previousFrameRate;
+            }
+
+            Debug.Log("RESULT_EVIDENCE_COMPLETE: 2 PNG renders saved.");
+        }
+
         private static void CaptureScene(
             string scenePath,
             string folder,
@@ -62,6 +228,16 @@ namespace HealthyRace.Editor.Build
                 typeof(LevelBootstrap)
                     .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
                     .Invoke(bootstrap, null);
+                // fora do modo de jogo os membros em curva não se redesenham sozinhos
+                foreach (
+                    var rig in Object.FindObjectsByType<HealthyRace.Visuals.RunnerRig>(
+                        FindObjectsSortMode.None
+                    )
+                )
+                {
+                    rig.RebuildLimbs();
+                }
+
                 CaptureViews(bootstrap, folder, wholeName, quarters);
             }
             finally
@@ -167,7 +343,15 @@ namespace HealthyRace.Editor.Build
         {
             var target = new RenderTexture(size.x, size.y, 24, RenderTextureFormat.ARGB32);
             camera.targetTexture = target;
+            // sem isto, a primeira captura depois de uma variante nova de shader sai sem
+            // os membros dos corredores (o Editor compila em segundo plano e pula o desenho)
+            var asyncCompilation = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            // o primeiro quadro de uma textura recém-importada sai com a textura trocada:
+            // um quadro de aquecimento, descartado, e depois o que vale
             camera.Render();
+            camera.Render();
+            ShaderUtil.allowAsyncCompilation = asyncCompilation;
             var previous = RenderTexture.active;
             RenderTexture.active = target;
             var texture = new Texture2D(size.x, size.y, TextureFormat.RGBA32, false);

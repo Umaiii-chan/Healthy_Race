@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5411dbbd2842c79488fd977fd49c83b5, type: 3}
+  m_Name: SO_HudKit
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.UI.HudKit
+  Sign: {fileID: 21300000, guid: 0804098cbb6760f4bb858670e09f22b4, type: 3}
+  LeafOn: {fileID: 21300000, guid: b159c305aae41b64195caba54126cec8, type: 3}
+  LeafOff: {fileID: 21300000, guid: 34f442f6d4753a540a7dce6afe482d94, type: 3}
+  Clock: {fileID: 21300000, guid: c85b20d426bf2d04ca94b9f99f32310e, type: 3}
+  Vine: {fileID: 21300000, guid: f0acbcf763bf0b2458499d25964080df, type: 3}
+  Goal: {fileID: 21300000, guid: f71efe85ebd9135458fa26480b04a5a7, type: 3}
+  Disk: {fileID: 21300000, guid: 770747196ed289749b5b28ba6a9173b8, type: 3}
+  RingInk: {fileID: 21300000, guid: 333658cad05e6894991c072d473c6162, type: 3}
+  RingFill: {fileID: 21300000, guid: 44dc7d78d0feea94798b52d9c5e9f512, type: 3}
+  Tag: {fileID: 21300000, guid: 3f6965e595f6e73418c16f054cbfa9bf, type: 3}
+  Pad: {fileID: 21300000, guid: 515898e50afb66e4e85ee5fb8de36004, type: 3}
+  StarOn: {fileID: 21300000, guid: 3484b12239b6e5e43b72dbb133f3c0ba, type: 3}
+  StarOff: {fileID: 21300000, guid: 24d6656f23e35c2408713be3612ec8ed, type: 3}
+  Portraits:
+  - {fileID: -1623961819, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -714461509, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -391697702, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: 1481112588, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: 611241918, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: 1453704536, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -1650164152, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -96638807, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -1854699224, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -1126618120, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}

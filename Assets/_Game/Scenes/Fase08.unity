@@ -171,8 +171,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 26be8e16b5485004ea620fecff957e9c, type: 2}
   - {fileID: 11400000, guid: beb2e2442cef92b44a22208f54be37fb, type: 2}
   _visualCatalog: {fileID: 11400000, guid: a5731bf23b531a74c9515c5433614d51, type: 2}
-  _playerOneVisualPrefab: {fileID: 5770368573529694904, guid: aaa27583a59d9954ba68c2011bcc2f5a, type: 3}
-  _playerTwoVisualPrefab: {fileID: 3600848854465078626, guid: 15f7f19656bc9dc4e82b5bee25a73807, type: 3}
+  _playerOneVisualPrefab: {fileID: 2843811375193954690, guid: f9fa1ef5eb4df2e448a3f250654bb0c4, type: 3}
+  _playerTwoVisualPrefab: {fileID: 4209821255948764298, guid: 0a14f774d34dc1747b876034301787a3, type: 3}
   _screensPrefab: {fileID: 8193277210385806417, guid: 583ae726f87d23a4aa22777e1c61fad5, type: 3}
   _inputActions: {fileID: -944628639613478452, guid: 45e818f4b89d7984c88e2dabb9989360, type: 3}
 --- !u!4 &405975807

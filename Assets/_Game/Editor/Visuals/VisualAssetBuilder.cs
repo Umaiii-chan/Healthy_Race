@@ -25,6 +25,7 @@ namespace HealthyRace.Editor.Visuals
         public const string CatalogPath = Root + "Art/VisualAtlas/SO_VisualCatalog.asset";
         public const string ScenePath = Root + "Scenes/Test/VisualTest.unity";
         public const string MenuScenePath = Root + "Scenes/MainMenu.unity";
+        public const string MenuMapPath = Root + "Levels/Menu.txt";
         public const string Phase1ScenePath = Root + "Scenes/Phase1_CorridaDoEquilibrio.unity";
         public const string ScreensPrefabPath = Root + "Prefabs/Visual/PF_VIS_Screens.prefab";
         public const string InputActionsPath = Root + "Input/HealthyRaceInputActions.inputactions";
@@ -296,13 +297,8 @@ namespace HealthyRace.Editor.Visuals
             _fill = CreateShape("SP_Fill", false);
             var ui = BuildUi();
 
-            var menuScene = EditorSceneManager.NewScene(
-                NewSceneSetup.EmptyScene,
-                NewSceneMode.Single
-            );
-            var menu = new GameObject("MainMenu").AddComponent<MainMenuBootstrap>();
-            Assign(menu, "_screensPrefab", ui);
-            EditorSceneManager.SaveScene(menuScene, MenuScenePath);
+            // o menu é um trecho jogável da estufa: a mesma montagem das fases, com o mapa de menu
+            BuildLevelScene(MenuMapPath, MenuScenePath);
 
             var phaseScene = EditorSceneManager.OpenScene(Phase1ScenePath);
             var phase = Object.FindFirstObjectByType<LevelBootstrap>();
@@ -464,113 +460,30 @@ namespace HealthyRace.Editor.Visuals
 
         private static void BuildMenu(GameObject screen)
         {
+            // Menu 2: a tela é só o letreiro. As opções são as placas penduradas do palco
+            // jogável (MenuStage), que fica atrás desta tela: por isso nada aqui bloqueia clique.
             var menu = screen.transform;
             var background = screen.GetComponent<Image>();
-            background.sprite = _catalog.Background;
-            background.color = Color.white;
+            background.sprite = null;
+            background.color = Color.clear;
 
-            // Alimentos saudáveis flutuando no céu, em volta do título.
-            Decor(menu, "Food_Banana", _catalog.Foods[1], 930, 70, 150, 14, 3.1f, 0.4f, 5);
-            Decor(menu, "Food_Apple", _catalog.Foods[0], 790, 250, 170, 16, 2.6f, 1.3f, -6);
-            Decor(menu, "Food_Carrot", _catalog.Foods[5], 1040, 300, 130, 12, 2.9f, 2.2f, 7);
-            Decor(menu, "Food_Broccoli", _catalog.Foods[6], 880, 470, 130, 13, 3.3f, 3.0f, -5);
-            Decor(menu, "Food_Water", _catalog.Foods[8], 1085, 520, 105, 11, 2.7f, 4.1f, 4);
-            Decor(menu, "Food_Strawberry", _catalog.Foods[4], 690, 590, 105, 12, 3.0f, 5.2f, -7);
-
-            // Título.
-            Bold(Label(menu, "HEALTHY", 108, 48, 1000, 190, 150, Cream), Ink, 3.5f);
-            Bold(Label(menu, "RACE", 108, 196, 760, 250, 210, Leaf), Ink, 4f);
-            Chip(menu, "CORRIDA DO EQUILÍBRIO", 118, 462, 560, 58, 28, Ink, Leaf);
             Bold(
-                Label(
-                    menu,
-                    "Duas pessoas. Um percurso.\nCada escolha muda a corrida.",
-                    122,
-                    536,
-                    640,
-                    96,
-                    32,
-                    Ink
-                )
+                Label(menu, "HEALTHY", 460, 30, 1000, 130, 104, Cream, TextAnchor.MiddleCenter),
+                Ink,
+                3.5f
             );
-
-            // Dupla de corredores no gramado.
-            var runnerOne = Decor(
-                menu,
-                "Runner_P1",
-                _catalog.Characters[0],
-                150,
-                650,
-                360,
-                10,
-                1.7f,
-                0f
-            );
-            runnerOne.raycastTarget = false;
-            var runnerTwo = Decor(
-                menu,
-                "Runner_P2",
-                _catalog.Characters[0],
-                430,
-                670,
-                340,
-                10,
-                1.7f,
-                1.6f
-            );
-            runnerTwo.rectTransform.localScale = new Vector3(-1, 1, 1);
-            Chip(menu, "P1", 280, 1018, 100, 44, 26, _catalog.PlayerOne, Color.white);
-            Chip(menu, "P2", 550, 1022, 100, 44, 26, _catalog.PlayerTwo, Color.white);
-
-            // O contraponto: quem só come ultraprocessado fica para trás.
-            Decor(menu, "Runner_Salo", _catalog.Characters[4], 900, 770, 240, 5, 2.8f, 2.4f);
-            Decor(menu, "Food_Burger", _catalog.Foods[10], 1100, 830, 110, 8, 3.4f, 0.9f, 6);
-            Decor(menu, "Food_Donut", _catalog.Foods[14], 800, 910, 100, 8, 3.1f, 2.7f, -6);
-            Decor(menu, "Food_Soda", _catalog.Foods[12], 1125, 950, 90, 7, 2.9f, 4.4f, 5);
-
-            // Cartão de ações.
-            var card = Box(menu, "MenuCard", 1250, 200, 560, 620);
-            Rounded(Panel(card, new Color32(21, 40, 35, 225)));
             Bold(
-                Label(
-                    card,
-                    "PRONTOS PARA CORRER?",
-                    40,
-                    28,
-                    480,
-                    40,
-                    24,
-                    Leaf,
-                    TextAnchor.MiddleCenter
-                )
+                Label(menu, "RACE", 460, 132, 1000, 180, 150, Leaf, TextAnchor.MiddleCenter),
+                Ink,
+                4f
             );
-            Button(card, "JOGAR", 40, 90, 480, VisualCommand.Play, 112, 48, Leaf);
-            Button(card, "Como jogar", 40, 230, 480, VisualCommand.Controls, 68, 28);
-            Button(card, "Áudio", 40, 316, 480, VisualCommand.Audio, 68, 28);
-            Button(card, "Sair", 40, 402, 480, VisualCommand.Quit, 68, 28);
-            Label(
-                card,
-                "MULTIPLAYER LOCAL  •  2 JOGADORES",
-                40,
-                500,
-                480,
-                36,
-                21,
-                Cream,
-                TextAnchor.MiddleCenter
-            );
-            Label(
-                card,
-                "Mouse ou setas + Enter",
-                40,
-                546,
-                480,
-                32,
-                19,
-                new Color(Cream.r, Cream.g, Cream.b, 0.7f),
-                TextAnchor.MiddleCenter
-            );
-            Chip(menu, "ODS 3  •  SAÚDE E BEM-ESTAR", 1250, 850, 560, 56, 24, Cream, Ink);
+            Chip(menu, "Ande até a placa e pule para escolher", 560, 1006, 800, 54, 26, Ink, Cream);
+            Chip(menu, "ODS 3  •  SAÚDE E BEM-ESTAR", 1500, 1016, 380, 40, 17, Cream, Ink);
+
+            foreach (var graphic in screen.GetComponentsInChildren<Graphic>(true))
+            {
+                graphic.raycastTarget = false;
+            }
         }
 
         private static void ImportAtlas()
@@ -1087,7 +1000,7 @@ namespace HealthyRace.Editor.Visuals
             row.childForceExpandWidth = false;
             row.childForceExpandHeight = false;
             Button(actions, "Próxima fase", 0, 0, 430, VisualCommand.Next, 72, 30, Leaf);
-            Button(actions, "Jogar novamente", 0, 0, 430, VisualCommand.Restart, 72, 30);
+            Button(actions, "Revanche", 0, 0, 430, VisualCommand.Restart, 72, 30);
             Button(actions, "Menu", 0, 0, 430, VisualCommand.Menu, 72, 30);
             var controls = screens[5].transform;
             Label(controls, "COMO JOGAR", 250, 90, 1420, 100, 64, Cream, TextAnchor.MiddleCenter);

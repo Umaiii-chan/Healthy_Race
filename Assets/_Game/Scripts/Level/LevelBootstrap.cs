@@ -42,7 +42,7 @@ namespace HealthyRace.Level
         public const float GateOpenDelay = 1.2f;
 
         /// <summary>Altura da faixa do HUD, em pixels de referência (1080p).</summary>
-        public const float HudBandPixels = 64f;
+        public const float HudBandPixels = GreenhouseHud.BandPixels;
 
         /// <summary>A câmera mostra no mínimo esta altura de fase (uma tela).</summary>
         public const float MinimumViewHeight = 18f;
@@ -129,6 +129,9 @@ namespace HealthyRace.Level
         private PlayerHUD _playerOneHud;
         private PlayerHUD _playerTwoHud;
         private MatchHUD _matchHud;
+        private GreenhouseHud _greenhouseHud;
+        private RaceResultBoard _resultBoard;
+        private readonly Scoring.RaceTrace _trace = new();
         private SharedCameraController _cameraController;
         private MatchCompletionController _matchController;
         private MatchRecorder _recorder;
@@ -144,6 +147,22 @@ namespace HealthyRace.Level
         public PlayerHUD PlayerOneHud => _playerOneHud;
         public PlayerHUD PlayerTwoHud => _playerTwoHud;
         public MatchHUD MatchHud => _matchHud;
+
+        /// <summary>HUD da estufa (placas, folhas, relógio e trepadeira); nulo sem as peças.</summary>
+        public GreenhouseHud GreenhouseHud => _greenhouseHud;
+
+        /// <summary>Liderança registrada ao longo da corrida.</summary>
+        public Scoring.RaceTrace Trace => _trace;
+
+        /// <summary>Quadro da tela de resultado; nulo até a corrida acabar.</summary>
+        public RaceResultBoard ResultBoard => _resultBoard;
+
+        private static bool IsRushing(GameObject player)
+        {
+            var movement = player != null ? player.GetComponent<PlayerMovement>() : null;
+            return movement != null && movement.IsRushing;
+        }
+
         public SharedCameraController CameraController => _cameraController;
         public MatchCompletionController MatchController => _matchController;
         public RaceCountdown Countdown => _countdown;
@@ -205,9 +224,13 @@ namespace HealthyRace.Level
             CreateHazards();
             CreateLifts();
             CreateLeverGates();
-            CreateFoods();
-            CreateCheckpoints();
-            CreateDoorsAndSpawns();
+            if (!IsMenu)
+            {
+                CreateFoods();
+                CreateCheckpoints();
+                CreateDoorsAndSpawns();
+            }
+
             CreateSigns();
             CreateDecor();
 
@@ -217,13 +240,23 @@ namespace HealthyRace.Level
             _bestHeight[2] = _spawnTwo.y;
 
             CreateCamera();
-            CreateHud();
+            if (IsMenu)
+            {
+                CreateMenuStage();
+            }
+            else
+            {
+                CreateHud();
+            }
+
             CollectDebugLabels();
         }
 
         private void Start()
         {
-            AudioService.Instance.PlayMusic(AudioClipId.Music_Level01);
+            AudioService.Instance.PlayMusic(
+                IsMenu ? AudioClipId.Music_Menu : AudioClipId.Music_Level01
+            );
         }
 
         private void OnDestroy()
@@ -251,6 +284,17 @@ namespace HealthyRace.Level
 
             UpdateProgress(1, _playerOne, _playerOneHud, _playerOneDoor);
             UpdateProgress(2, _playerTwo, _playerTwoHud, _playerTwoDoor);
+            if (_matchController != null)
+            {
+                // quem está na frente, para o gráfico da tela de resultado
+                _trace.Record(
+                    _matchController.Elapsed,
+                    GetProgress(1),
+                    GetProgress(2),
+                    IsRushing(_playerOne),
+                    IsRushing(_playerTwo)
+                );
+            }
         }
 
         // =====================================================================
@@ -359,6 +403,161 @@ namespace HealthyRace.Level
                 );
                 foliage.color = FoliageTint;
                 _foliage = foliage.gameObject.AddComponent<ParallaxLayer>();
+            }
+
+            CreateGreenhouseDepth(parent);
+        }
+
+        /// <summary>Peças do Cenário 3; nulo sem o kit, e aí vale a arte anterior.</summary>
+        private static SceneryKit Scenery
+        {
+            get
+            {
+                var kit = SceneryKit.Load();
+                return kit != null && kit.IsComplete ? kit : null;
+            }
+        }
+
+        /// <summary>
+        /// Profundidade da estufa (Cenário 3): um marco em silhueta por fase, uma faixa de
+        /// luz pintada que aponta para a saída e vasos pendurados no teto. Tudo no valor do
+        /// fundo, para não competir com o que se joga.
+        /// </summary>
+        private void CreateGreenhouseDepth(Transform parent)
+        {
+            var kit = Scenery;
+            if (kit == null)
+            {
+                return;
+            }
+
+            var size = new Vector2(_grid.Width, _grid.Height);
+            var landmark = kit.LandmarkFor(_grid.LevelNumber);
+            if (landmark != null)
+            {
+                var mark = SpriteObject(
+                    "Marco",
+                    parent,
+                    landmark,
+                    new Vector2(size.x * 0.6f, size.y * 0.48f),
+                    -39
+                );
+                var scale = size.y * 0.66f / landmark.bounds.size.y;
+                mark.transform.localScale = new Vector3(scale, scale, 1f);
+                mark.color = new Color(0.56f, 0.74f, 0.66f, 0.5f);
+            }
+
+            var exit = _grid.Cells(LevelGrid.DoorOne).Concat(_grid.Cells(LevelGrid.DoorTwo));
+            if (exit.Any())
+            {
+                // a faixa desce do alto, do lado de dentro da fase, até a porta
+                var door = exit.First();
+                var fromRight = door.x < size.x * 0.5f;
+                var beam = SpriteObject(
+                    "LuzPintada",
+                    parent,
+                    kit.Light,
+                    new Vector2(
+                        door.x + 0.5f + (fromRight ? 1f : -1f) * size.y * 0.14f,
+                        size.y * 0.5f
+                    ),
+                    -38
+                );
+                Fit(beam, new Vector2(size.y * 0.5f, size.y));
+                beam.flipX = !fromRight;
+                beam.color = new Color(1f, 1f, 1f, 0.26f);
+            }
+
+            for (var x = 7; x < _grid.Width - 6; x += 11)
+            {
+                var top = _grid.Height - 1;
+                while (top > 0 && _grid[x, top] == LevelGrid.Solid)
+                {
+                    top--;
+                }
+
+                // só onde há vão livre embaixo do teto para o vaso pender
+                if (_grid[x, top] != LevelGrid.Empty || _grid[x, top - 1] != LevelGrid.Empty)
+                {
+                    continue;
+                }
+
+                var pot = SpriteObject(
+                    "VasoPendurado",
+                    parent,
+                    kit.HangingPot,
+                    new Vector2(x + 0.5f, top + 1f - kit.HangingPot.bounds.size.y * 0.45f),
+                    -34
+                );
+                pot.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            }
+        }
+
+        /// <summary>
+        /// Placa sem texto (Cenário 3): na bifurcação, seta e alimento de cada caminho; na
+        /// alavanca, o desenho do puxão. Devolve falso para qualquer outro texto.
+        /// </summary>
+        private bool TryCreatePictureSign(Transform parent, Vector2 basePosition, string text)
+        {
+            var kit = Scenery;
+            if (kit == null)
+            {
+                return false;
+            }
+
+            Sprite art;
+            if (text.Contains("CURTO"))
+            {
+                art = text.Contains("←") ? kit.ForkLeft : kit.ForkRight;
+            }
+            else if (text.Contains("ALAVANCA"))
+            {
+                art = kit.LeverSign;
+            }
+            else
+            {
+                return false;
+            }
+
+            // a base fica onde ficava a da placa de texto
+            SpriteObject(
+                "Placa",
+                parent,
+                art,
+                basePosition + Vector2.up * art.bounds.size.y * 0.5f,
+                -12
+            );
+            return true;
+        }
+
+        /// <summary>Cabo tracejado amarelo da alavanca ao portão: liga a causa ao efeito.</summary>
+        private void CreateCable(Transform parent, Vector2 from, Vector2 to)
+        {
+            if (Scenery == null)
+            {
+                return;
+            }
+
+            var delta = to - from;
+            var length = delta.magnitude;
+            if (length < 0.6f)
+            {
+                return;
+            }
+
+            var angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            for (var distance = 0.5f; distance < length - 0.25f; distance += 0.34f)
+            {
+                var dash = SpriteObject(
+                    "Cabo",
+                    parent,
+                    PlaceholderSpriteFactory.Square,
+                    from + delta / length * distance,
+                    -32
+                );
+                dash.color = new Color32(0xFF, 0xC8, 0x3D, 255);
+                dash.transform.localScale = new Vector3(0.18f, 0.055f, 1f);
+                dash.transform.rotation = Quaternion.Euler(0f, 0f, angle);
             }
         }
 
@@ -606,6 +805,12 @@ namespace HealthyRace.Level
                             -29
                         );
                         Fit(sign, new Vector2(1.1f, 0.42f));
+                        if (Scenery != null)
+                        {
+                            // sem texto: o selo do lanche com o raio do impulso
+                            sign.sprite = Scenery.FastBadge;
+                            Fit(sign, new Vector2(0.8f, 0.8f));
+                        }
                     }
                 }
             }
@@ -648,6 +853,15 @@ namespace HealthyRace.Level
                 );
                 base0.color = new Color(0.27f, 0.29f, 0.33f);
                 base0.transform.localScale = new Vector3(1f, PlankThickness, 1f);
+                if (Scenery != null)
+                {
+                    // pontas claras sobre a faixa de perigo, vermelha e branca
+                    art.sprite = Scenery.Spikes;
+                    Fit(art, new Vector2(0.96f, 0.5f));
+                    base0.sprite = Scenery.Hazard;
+                    base0.color = Color.white;
+                    Fit(base0, new Vector2(1f, PlankThickness));
+                }
                 CreateWorldLabel("ESPINHOS", spikes.transform, new Vector2(0f, 0.6f), Color.red);
             }
 
@@ -738,6 +952,12 @@ namespace HealthyRace.Level
                 renderer.sprite = Art.Lift != null ? Art.Lift : PlaceholderSpriteFactory.Square;
                 renderer.drawMode =
                     Art.Lift != null ? SpriteDrawMode.Sliced : SpriteDrawMode.Simple;
+                if (Scenery != null)
+                {
+                    renderer.sprite = Scenery.Lift;
+                    renderer.drawMode = SpriteDrawMode.Sliced;
+                }
+
                 renderer.size = new Vector2(width, LiftThickness + 0.05f);
                 renderer.sortingOrder = -6;
                 var platform = lift.AddComponent<ActivatedPlatform>();
@@ -799,9 +1019,26 @@ namespace HealthyRace.Level
                 collider.size = new Vector2(0.45f, height);
                 var renderer = gate.AddComponent<SpriteRenderer>();
                 renderer.sprite = Art.Gate != null ? Art.Gate : PlaceholderSpriteFactory.Square;
+                if (Scenery != null)
+                {
+                    renderer.sprite = Scenery.Gate;
+                }
+
                 renderer.drawMode = SpriteDrawMode.Tiled;
                 renderer.size = new Vector2(0.5f, height);
                 renderer.sortingOrder = -3;
+                if (Scenery != null)
+                {
+                    // a capa listrada sobe e desce com a grade
+                    var cap = SpriteObject(
+                        "Capa",
+                        gate.transform,
+                        Scenery.GateCap,
+                        new Vector2(gx + 0.5f, cell.y + height - 0.12f),
+                        -2
+                    );
+                    Fit(cap, new Vector2(0.8f, 0.3f));
+                }
                 var door = gate.AddComponent<PuzzleDoor>();
                 door.Configure(Vector2.zero, 4f, instantMotion: true);
                 CreateWorldLabel(
@@ -812,6 +1049,11 @@ namespace HealthyRace.Level
                 );
 
                 var lever = CreateLever(parent, new Vector2(cell.x + 0.5f, cell.y + 0.75f));
+                CreateCable(
+                    parent,
+                    new Vector2(cell.x + 0.5f, cell.y + 0.4f),
+                    new Vector2(gx + 0.5f, cell.y + height - 0.12f)
+                );
                 lever.OnActivated += () =>
                 {
                     AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
@@ -896,6 +1138,27 @@ namespace HealthyRace.Level
                     : PlaceholderSpriteFactory.Square;
             baseRenderer.sortingOrder = -1;
             Fit(baseRenderer, new Vector2(0.8f, 0.5f));
+            if (Scenery != null)
+            {
+                // mecanismo amarelo, pomo vermelho: o que se aciona tem sempre a mesma cor
+                baseRenderer.sprite = Scenery.LeverBase;
+                Fit(baseRenderer, new Vector2(0.8f, 0.5f));
+                handleRenderer.color = new Color32(0x1E, 0x2A, 0x22, 255);
+                var knob = new GameObject("Pomo");
+                knob.transform.SetParent(handle.transform, false);
+                knob.transform.localPosition = new Vector2(0f, 0.5f);
+                var knobRenderer = knob.AddComponent<SpriteRenderer>();
+                knobRenderer.sprite = Scenery.Knob;
+                knobRenderer.sortingOrder = -1;
+                // a haste é um quadrado esticado: o pomo desfaz a escala dela
+                var knobSize = Scenery.Knob.bounds.size;
+                var stretch = handle.transform.localScale;
+                knob.transform.localScale = new Vector3(
+                    0.36f / (knobSize.x * stretch.x),
+                    0.36f / (knobSize.y * stretch.y),
+                    1f
+                );
+            }
 
             var lever = leverObject.AddComponent<Lever>();
             lever.Configure(handle.transform, baseRenderer, isToggleable: false);
@@ -1173,6 +1436,11 @@ namespace HealthyRace.Level
 
         private void CreateSign(Transform parent, Vector2 basePosition, string text)
         {
+            if (TryCreatePictureSign(parent, basePosition, text))
+            {
+                return;
+            }
+
             const float lineHeight = 0.5f;
             const float characterWidth = 0.27f;
             var lines = text.Split('\n');
@@ -1282,6 +1550,12 @@ namespace HealthyRace.Level
                 {
                     spriteRenderer.enabled = false;
                 }
+
+                if (presentation != null && presentation.Runner != null)
+                {
+                    // corredor humano: sem halo nem folha na cabeça
+                    player.GetComponent<PlayerVisualController>()?.HidePlaceholders();
+                }
             }
             else if (spriteRenderer != null)
             {
@@ -1332,6 +1606,39 @@ namespace HealthyRace.Level
             return player;
         }
 
+        /// <summary>
+        /// Mapa de menu (tema "modo menu"): a estufa jogável, sem corrida. Tem piso,
+        /// jogadores e câmera como uma fase, mas no lugar do HUD entram as placas.
+        /// </summary>
+        public bool IsMenu =>
+            _grid != null && _grid.Theme.TryGetValue("modo", out var mode) && mode == "menu";
+
+        /// <summary>Palco do menu jogável; nulo numa fase de corrida.</summary>
+        public MenuStage MenuStage => _menuStage;
+
+        private MenuStage _menuStage;
+
+        private void CreateMenuStage()
+        {
+            // sem HUD não há faixa reservada: a câmera usa a tela inteira
+            var view = Camera.main;
+            if (view != null)
+            {
+                view.rect = new Rect(0f, 0f, 1f, 1f);
+            }
+
+            _screens = GameScreens.Create(_screensPrefab, _inputActions, false, transform);
+            _menuStage = MenuStage.Create(
+                transform,
+                _screens,
+                _playerOne,
+                _playerTwo,
+                new Vector2(_grid.Width * 0.5f, Mathf.Floor(_spawnOne.y)),
+                PlayerColor(1),
+                PlayerColor(2)
+            );
+        }
+
         private void CreateCamera()
         {
             _cameraController = LevelCameraSetup.Create(
@@ -1375,6 +1682,15 @@ namespace HealthyRace.Level
                 PlayerColor(2),
                 p2Wellbeing,
                 p2Fatigue
+            );
+
+            _greenhouseHud = GreenhouseHud.Create(
+                canvasObject.transform,
+                _matchHud,
+                _playerOneHud,
+                _playerTwoHud,
+                PlayerColor(1),
+                PlayerColor(2)
             );
 
             _screens = GameScreens.Create(_screensPrefab, _inputActions, true, transform);
@@ -1441,6 +1757,51 @@ namespace HealthyRace.Level
                         ? Scoring.RaceOutcome.Describe(results.Race)
                         : null
                 );
+
+                if (_screens != null)
+                {
+                    var race = results.Race;
+                    var floors = Mathf.Clamp(
+                        _grid
+                            .Signs.Where(sign => sign.Text.Contains("CURTO"))
+                            .Select(sign => Mathf.RoundToInt(sign.Position.y))
+                            .Distinct()
+                            .Count(),
+                        3,
+                        8
+                    );
+                    var turned = _trace.TryLastLeadChange(out var turn, out _, out var withRush);
+                    _resultBoard = RaceResultBoard.Show(
+                        _screens.View.ScreenRoot(VisualScreen.Results),
+                        new RaceResultBoard.Data
+                        {
+                            Winner = results.WinnerPlayerIndex,
+                            Outcome = Scoring.RaceOutcome.Describe(race),
+                            Story = _trace.Describe(results.WinnerPlayerIndex, floors),
+                            StarsOne = ToResultData(
+                                results.Player1,
+                                _playerOneHud,
+                                p1Fatigue
+                            ).Stars,
+                            StarsTwo = ToResultData(
+                                results.Player2,
+                                _playerTwoHud,
+                                p2Fatigue
+                            ).Stars,
+                            Leads = _trace.Leads(24),
+                            HasTurn = turned,
+                            Turn = turn,
+                            TurnWithRush = withRush,
+                            Floors = floors,
+                            ColorOne = PlayerColor(1),
+                            ColorTwo = PlayerColor(2),
+                            WinnerPose =
+                                _visualCatalog != null && results.WinnerPlayerIndex != 0
+                                    ? _visualCatalog.RunnerPose(results.WinnerPlayerIndex)
+                                    : null,
+                        }
+                    );
+                }
             };
         }
 
@@ -1566,7 +1927,7 @@ namespace HealthyRace.Level
             }
 
             return playerIndex == 2
-                ? new Color(0.75f, 0.42f, 0.92f)
+                ? new Color32(0xF2, 0x99, 0x4A, 255)
                 : new Color(0.19f, 0.56f, 0.94f);
         }
 

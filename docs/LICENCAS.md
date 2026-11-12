@@ -10,7 +10,7 @@ distribuir uma build final, nenhuma linha pode ficar como "a confirmar".**
 | Personagem articulado (partes do rig) | `Assets/_Game/Art/Characters/SP_CharacterRig.png` | Gerado por código: `tools/art/build_character_rig.py` (Pillow) | Do projeto | OK |
 | Estufa, terreno, placas, parallax | `Assets/_Game/Art/Environment/Greenhouse/`, `Arena/` | Gerados por código: `tools/art/build_greenhouse.py`, `build_environment.py` | Do projeto | OK |
 | Primitivas de UI e efeitos (estrela, coração, gota, anel) | `Assets/_Game/Art/UI/Visual/*.asset`, `Art/VFX/Visual/*.asset` | Criadas no Editor pelo `VisualAssetBuilder` | Do projeto | OK |
-| **Alimentos em pixel art usados na fase** | `Assets/_Game/Art/Collectibles/spr_food_*.png` (18) | Entraram no commit `a3e3592` (FOOD-01, 20/09/2026), sem registro de origem | **A confirmar** | **Pendente.** Serão trocados pelos do atlas (direção de arte A); até lá, confirmar a origem |
+| Alimentos usados na fase | `Assets/_Game/Art/Collectibles/spr_food_*.png` (18) | Arte própria, desenhada por código em `tools/art/build_kit.py` (11/11/2026). Substituiu os sprites em pixel art que entraram no commit `a3e3592` sem registro de origem | Própria do projeto | Resolvido: os arquivos de origem não confirmada saíram do repositório atual (continuam no histórico do git) |
 | **Músicas** | `Assets/_Game/Audio/Music/mus_menu.wav`, `mus_level01.wav` | Entraram no commit `85847c8` (AUDIO-01), sem registro de origem | **A confirmar** | **Pendente** |
 | **Efeitos sonoros** | `Assets/_Game/Audio/SFX/*.wav` (16) | Commit `85847c8`, sem registro de origem | **A confirmar** | **Pendente** |
 | Som sintético de reserva | Gerado em tempo de execução (`AudioService.CreateSyntheticFallback`) | Código do projeto | Do projeto | OK |

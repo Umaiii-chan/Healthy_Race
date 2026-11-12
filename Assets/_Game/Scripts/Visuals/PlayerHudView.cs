@@ -115,7 +115,7 @@ namespace HealthyRace.Visuals
             var appearance = VisualCatalog.AppearanceFor(data.Wellbeing);
             _identity.text = data.Player == 2 ? "P2  ◆" : "P1  ●";
             _identity.color = _catalog.IdentityColor(data.Player);
-            _portrait.sprite = _catalog.Character(appearance);
+            _portrait.sprite = _catalog.Portrait(data.Player, appearance);
             _bar.fillAmount = Mathf.Clamp01(data.Wellbeing / 100f);
             _bar.color =
                 appearance >= WellbeingAppearance.Critical
