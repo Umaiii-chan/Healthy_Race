@@ -1550,6 +1550,12 @@ namespace HealthyRace.Level
                 {
                     spriteRenderer.enabled = false;
                 }
+
+                if (presentation != null && presentation.Runner != null)
+                {
+                    // corredor humano: sem halo nem folha na cabeça
+                    player.GetComponent<PlayerVisualController>()?.HidePlaceholders();
+                }
             }
             else if (spriteRenderer != null)
             {

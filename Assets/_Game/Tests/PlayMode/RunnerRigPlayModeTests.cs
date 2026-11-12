@@ -79,6 +79,19 @@ namespace HealthyRace.Tests.PlayMode
                 Is.Null,
                 "o broto saiu das fases"
             );
+            // O visual provisório do jogador (halo verde e folha na cabeça) só nasce com o
+            // jogo rodando: tudo o que se desenha no jogador tem de ser do corredor.
+            foreach (var player in new[] { bootstrap.PlayerOne, bootstrap.PlayerTwo })
+            {
+                var strays = player
+                    .GetComponentsInChildren<SpriteRenderer>()
+                    .Where(renderer =>
+                        renderer.enabled && renderer.GetComponentInParent<RunnerRig>() == null
+                    )
+                    .Select(renderer => renderer.name)
+                    .ToArray();
+                Assert.That(strays, Is.Empty, player.name + " com visual provisório à vista");
+            }
 
             var movement = TakeControl(bootstrap.PlayerOne);
             movement.SetHorizontalInput(-1f);
