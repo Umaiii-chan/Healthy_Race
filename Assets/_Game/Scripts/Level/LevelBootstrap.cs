@@ -209,9 +209,13 @@ namespace HealthyRace.Level
             CreateHazards();
             CreateLifts();
             CreateLeverGates();
-            CreateFoods();
-            CreateCheckpoints();
-            CreateDoorsAndSpawns();
+            if (!IsMenu)
+            {
+                CreateFoods();
+                CreateCheckpoints();
+                CreateDoorsAndSpawns();
+            }
+
             CreateSigns();
             CreateDecor();
 
@@ -221,13 +225,23 @@ namespace HealthyRace.Level
             _bestHeight[2] = _spawnTwo.y;
 
             CreateCamera();
-            CreateHud();
+            if (IsMenu)
+            {
+                CreateMenuStage();
+            }
+            else
+            {
+                CreateHud();
+            }
+
             CollectDebugLabels();
         }
 
         private void Start()
         {
-            AudioService.Instance.PlayMusic(AudioClipId.Music_Level01);
+            AudioService.Instance.PlayMusic(
+                IsMenu ? AudioClipId.Music_Menu : AudioClipId.Music_Level01
+            );
         }
 
         private void OnDestroy()
@@ -1558,6 +1572,39 @@ namespace HealthyRace.Level
             }
 
             return player;
+        }
+
+        /// <summary>
+        /// Mapa de menu (tema "modo menu"): a estufa jogável, sem corrida. Tem piso,
+        /// jogadores e câmera como uma fase, mas no lugar do HUD entram as placas.
+        /// </summary>
+        public bool IsMenu =>
+            _grid != null && _grid.Theme.TryGetValue("modo", out var mode) && mode == "menu";
+
+        /// <summary>Palco do menu jogável; nulo numa fase de corrida.</summary>
+        public MenuStage MenuStage => _menuStage;
+
+        private MenuStage _menuStage;
+
+        private void CreateMenuStage()
+        {
+            // sem HUD não há faixa reservada: a câmera usa a tela inteira
+            var view = Camera.main;
+            if (view != null)
+            {
+                view.rect = new Rect(0f, 0f, 1f, 1f);
+            }
+
+            _screens = GameScreens.Create(_screensPrefab, _inputActions, false, transform);
+            _menuStage = MenuStage.Create(
+                transform,
+                _screens,
+                _playerOne,
+                _playerTwo,
+                new Vector2(_grid.Width * 0.5f, Mathf.Floor(_spawnOne.y)),
+                PlayerColor(1),
+                PlayerColor(2)
+            );
         }
 
         private void CreateCamera()

@@ -24,6 +24,9 @@ namespace HealthyRace.UI
         public Sprite RingFill;
         public Sprite Tag;
 
+        /// <summary>Vaso do "Prontos?" do menu; branco, tingido na cor do jogador.</summary>
+        public Sprite Pad;
+
         /// <summary>Cinco retratos por jogador, um por faixa de Bem-Estar; jogador 1 primeiro.</summary>
         public Sprite[] Portraits = new Sprite[PortraitsPerPlayer * 2];
 
@@ -49,7 +52,8 @@ namespace HealthyRace.UI
             && Disk != null
             && RingInk != null
             && RingFill != null
-            && Tag != null;
+            && Tag != null
+            && Pad != null;
 
         /// <summary>Retrato do jogador na faixa dada (0 = saudável … 4 = no fim), ou nulo.</summary>
         public Sprite Portrait(int player, int appearance)

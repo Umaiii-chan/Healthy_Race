@@ -44,6 +44,75 @@ namespace HealthyRace.Editor.Build
             Debug.Log($"LEVEL_EVIDENCE_COMPLETE: {levels.Length} level overviews saved.");
         }
 
+        /// <summary>
+        /// O menu jogável nos dois momentos: as placas de escolha (com o letreiro por cima)
+        /// e o "Prontos?", com os vasos e a escolha de fase.
+        /// </summary>
+        [MenuItem("Healthy Race/Evidence/Capture menu")]
+        public static void CaptureMenu()
+        {
+            const string folder = "docs/evidence/menu";
+            EditorSceneManager.OpenScene(
+                HealthyRace.Editor.Visuals.VisualAssetBuilder.MenuScenePath
+            );
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+            var previousGravity = Physics2D.gravity;
+            var previousFrameRate = Application.targetFrameRate;
+            try
+            {
+                typeof(LevelBootstrap)
+                    .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(bootstrap, null);
+                foreach (
+                    var rig in Object.FindObjectsByType<HealthyRace.Visuals.RunnerRig>(
+                        FindObjectsSortMode.None
+                    )
+                )
+                {
+                    rig.RebuildLimbs();
+                }
+
+                var world = bootstrap.CameraController.GetComponent<Camera>();
+                var canvas = bootstrap.Screens.View.GetComponent<Canvas>();
+                var ui = new GameObject("UiCamera").AddComponent<Camera>();
+                ui.cullingMask = 1 << UiLayer;
+                ui.orthographic = true;
+                foreach (var t in canvas.GetComponentsInChildren<Transform>(true))
+                {
+                    t.gameObject.layer = UiLayer;
+                }
+
+                world.cullingMask &= ~(1 << UiLayer);
+                world.rect = new Rect(0f, 0f, 1f, 1f);
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = ui;
+                canvas.planeDistance = 1f;
+                ui.clearFlags = CameraClearFlags.SolidColor;
+                ui.backgroundColor = new Color(0f, 0f, 0f, 0f);
+
+                Directory.CreateDirectory(folder);
+                var grid = bootstrap.Grid;
+                var center = new Vector2(grid.Width, grid.Height) * 0.5f;
+                var half = Mathf.Max(grid.Height * 0.5f, grid.Width * 0.5f * Size.y / Size.x);
+
+                Canvas.ForceUpdateCanvases();
+                var stage = RenderWorld(world, Size, center, half);
+                var title = RenderUi(ui, canvas);
+                Save(Compose(stage, title), folder, "menu-escolha");
+
+                bootstrap.MenuStage.EnterReady();
+                Canvas.ForceUpdateCanvases();
+                Save(RenderWorld(world, Size, center, half), folder, "menu-prontos");
+            }
+            finally
+            {
+                Physics2D.gravity = previousGravity;
+                Application.targetFrameRate = previousFrameRate;
+            }
+
+            Debug.Log("MENU_EVIDENCE_COMPLETE: 2 PNG renders saved.");
+        }
+
         private static void CaptureScene(
             string scenePath,
             string folder,

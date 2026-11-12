@@ -423,6 +423,15 @@ HUD_PIECES = {
         128,
     ),
     "hud_tag": (hud_tag, 96, 48),
+    # vaso do "Prontos?": prato branco, tingido no jogo com a cor do jogador
+    "menu_pad": (
+        lambda: f'<ellipse cx="132" cy="34" rx="124" ry="24" fill="{INK}"/>'
+        f'<ellipse cx="130" cy="30" rx="124" ry="24" fill="#fff" stroke="{INK}" '
+        'stroke-width="6"/>'
+        '<ellipse cx="130" cy="27" rx="96" ry="14" fill="#000" opacity=".12"/>',
+        260,
+        60,
+    ),
 }
 
 
