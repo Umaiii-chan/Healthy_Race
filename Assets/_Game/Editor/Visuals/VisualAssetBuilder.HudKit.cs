@@ -54,6 +54,8 @@ namespace HealthyRace.Editor.Visuals
             // etiqueta fatiada: 16 unidades de borda, desenhadas a 2 px por unidade
             kit.Tag = KitSprite("hud_tag", new Vector4(32f, 32f, 32f, 32f));
             kit.Pad = KitSprite("menu_pad");
+            kit.StarOn = KitSprite("ui_star_on");
+            kit.StarOff = KitSprite("ui_star_off");
             kit.Portraits = (Sprite[])_catalog.RunnerPortraits.Clone();
             EditorUtility.SetDirty(kit);
 

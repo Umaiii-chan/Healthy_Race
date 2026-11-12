@@ -403,8 +403,28 @@ def hud_tag():
     )
 
 
+def star(fill):
+    """Estrela de cinco pontas, para a tela de resultado."""
+    import math
+
+    points = []
+    for index in range(10):
+        radius = 27 if index % 2 == 0 else 11.5
+        angle = -math.pi / 2 + index * math.pi / 5
+        points.append(f"{32 + radius * math.cos(angle):.2f},{35 + radius * math.sin(angle):.2f}")
+    d = "M" + " L".join(points) + " Z"
+    return (
+        f'<path d="{d}" fill="{INK}" stroke="{INK}" stroke-width="5" '
+        'stroke-linejoin="round" transform="translate(1.5,2.2)"/>'
+        f'<path d="{d}" fill="{fill}" stroke="{INK}" stroke-width="4" '
+        'stroke-linejoin="round"/>'
+    )
+
+
 # nome: (desenho, largura, altura), em unidades do desenho
 HUD_PIECES = {
+    "ui_star_on": (lambda: star("#FFD23F"), 64, 68),
+    "ui_star_off": (lambda: star("#B9B6A8"), 64, 68),
     "hud_sign": (hud_sign, 482, 124),
     "hud_leaf_on": (lambda: leaf(32, 34, 20, 2.0, "#4CC23E"), 64, 64),
     "hud_leaf_off": (lambda: leaf(32, 34, 20, 2.0, "#C9B48F"), 64, 64),

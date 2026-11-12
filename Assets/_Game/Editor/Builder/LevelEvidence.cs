@@ -113,6 +113,103 @@ namespace HealthyRace.Editor.Build
             Debug.Log("MENU_EVIDENCE_COMPLETE: 2 PNG renders saved.");
         }
 
+        /// <summary>
+        /// A tela de resultado (Resultado 3) com uma corrida de exemplo: o jogador 2 lidera
+        /// três andares e o jogador 1 vira no quarto, com o impulso do lanche.
+        /// </summary>
+        [MenuItem("Healthy Race/Evidence/Capture result screen")]
+        public static void CaptureResult()
+        {
+            const string folder = "docs/evidence/resultado";
+            EditorSceneManager.OpenScene(ScenePath);
+            var bootstrap = Object.FindFirstObjectByType<LevelBootstrap>();
+            var previousGravity = Physics2D.gravity;
+            var previousFrameRate = Application.targetFrameRate;
+            try
+            {
+                typeof(LevelBootstrap)
+                    .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(bootstrap, null);
+                var view = bootstrap.Screens.View;
+                var catalog = AssetDatabase.LoadAssetAtPath<HealthyRace.Visuals.VisualCatalog>(
+                    HealthyRace.Editor.Visuals.VisualAssetBuilder.CatalogPath
+                );
+                var leads = new[]
+                {
+                    0f,
+                    0.01f,
+                    0.02f,
+                    0.025f,
+                    0.03f,
+                    0.02f,
+                    0f,
+                    -0.02f,
+                    -0.035f,
+                    -0.045f,
+                    -0.05f,
+                    -0.055f,
+                    -0.06f,
+                    -0.065f,
+                    -0.07f,
+                    -0.06f,
+                    -0.04f,
+                    -0.01f,
+                    0.06f,
+                    0.11f,
+                    0.105f,
+                    0.1f,
+                    0.095f,
+                    0.09f,
+                };
+                view.Show(HealthyRace.Visuals.VisualScreen.Results);
+                var board = HealthyRace.UI.RaceResultBoard.Show(
+                    view.ScreenRoot(HealthyRace.Visuals.VisualScreen.Results),
+                    new HealthyRace.UI.RaceResultBoard.Data
+                    {
+                        Winner = 1,
+                        Outcome = "P1 chegou 3,2 s antes.",
+                        Story = "O impulso do lanche no 4º andar colocou P1 na frente.",
+                        StarsOne = 3,
+                        StarsTwo = 2,
+                        Leads = leads,
+                        HasTurn = true,
+                        Turn = 0.76f,
+                        TurnWithRush = true,
+                        Floors = 5,
+                        ColorOne = catalog.IdentityColor(1),
+                        ColorTwo = catalog.IdentityColor(2),
+                        WinnerPose = catalog.RunnerPose(1),
+                    }
+                );
+
+                var canvas = view.GetComponent<Canvas>();
+                var ui = new GameObject("UiCamera").AddComponent<Camera>();
+                ui.cullingMask = 1 << UiLayer;
+                ui.orthographic = true;
+                foreach (var t in canvas.GetComponentsInChildren<Transform>(true))
+                {
+                    t.gameObject.layer = UiLayer;
+                }
+
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = ui;
+                canvas.planeDistance = 1f;
+                ui.clearFlags = CameraClearFlags.SolidColor;
+                ui.backgroundColor = Color.black;
+                Directory.CreateDirectory(folder);
+                Save(RenderUi(ui, canvas), folder, "resultado-resumo");
+                board.ShowDetails(true);
+                Save(RenderUi(ui, canvas), folder, "resultado-detalhes");
+            }
+            finally
+            {
+                Physics2D.gravity = previousGravity;
+                Application.targetFrameRate = previousFrameRate;
+            }
+
+            Debug.Log("RESULT_EVIDENCE_COMPLETE: 2 PNG renders saved.");
+        }
+
         private static void CaptureScene(
             string scenePath,
             string folder,

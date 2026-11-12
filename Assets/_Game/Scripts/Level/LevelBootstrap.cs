@@ -130,6 +130,8 @@ namespace HealthyRace.Level
         private PlayerHUD _playerTwoHud;
         private MatchHUD _matchHud;
         private GreenhouseHud _greenhouseHud;
+        private RaceResultBoard _resultBoard;
+        private readonly Scoring.RaceTrace _trace = new();
         private SharedCameraController _cameraController;
         private MatchCompletionController _matchController;
         private MatchRecorder _recorder;
@@ -148,6 +150,19 @@ namespace HealthyRace.Level
 
         /// <summary>HUD da estufa (placas, folhas, relógio e trepadeira); nulo sem as peças.</summary>
         public GreenhouseHud GreenhouseHud => _greenhouseHud;
+
+        /// <summary>Liderança registrada ao longo da corrida.</summary>
+        public Scoring.RaceTrace Trace => _trace;
+
+        /// <summary>Quadro da tela de resultado; nulo até a corrida acabar.</summary>
+        public RaceResultBoard ResultBoard => _resultBoard;
+
+        private static bool IsRushing(GameObject player)
+        {
+            var movement = player != null ? player.GetComponent<PlayerMovement>() : null;
+            return movement != null && movement.IsRushing;
+        }
+
         public SharedCameraController CameraController => _cameraController;
         public MatchCompletionController MatchController => _matchController;
         public RaceCountdown Countdown => _countdown;
@@ -269,6 +284,17 @@ namespace HealthyRace.Level
 
             UpdateProgress(1, _playerOne, _playerOneHud, _playerOneDoor);
             UpdateProgress(2, _playerTwo, _playerTwoHud, _playerTwoDoor);
+            if (_matchController != null)
+            {
+                // quem está na frente, para o gráfico da tela de resultado
+                _trace.Record(
+                    _matchController.Elapsed,
+                    GetProgress(1),
+                    GetProgress(2),
+                    IsRushing(_playerOne),
+                    IsRushing(_playerTwo)
+                );
+            }
         }
 
         // =====================================================================
@@ -1725,6 +1751,51 @@ namespace HealthyRace.Level
                         ? Scoring.RaceOutcome.Describe(results.Race)
                         : null
                 );
+
+                if (_screens != null)
+                {
+                    var race = results.Race;
+                    var floors = Mathf.Clamp(
+                        _grid
+                            .Signs.Where(sign => sign.Text.Contains("CURTO"))
+                            .Select(sign => Mathf.RoundToInt(sign.Position.y))
+                            .Distinct()
+                            .Count(),
+                        3,
+                        8
+                    );
+                    var turned = _trace.TryLastLeadChange(out var turn, out _, out var withRush);
+                    _resultBoard = RaceResultBoard.Show(
+                        _screens.View.ScreenRoot(VisualScreen.Results),
+                        new RaceResultBoard.Data
+                        {
+                            Winner = results.WinnerPlayerIndex,
+                            Outcome = Scoring.RaceOutcome.Describe(race),
+                            Story = _trace.Describe(results.WinnerPlayerIndex, floors),
+                            StarsOne = ToResultData(
+                                results.Player1,
+                                _playerOneHud,
+                                p1Fatigue
+                            ).Stars,
+                            StarsTwo = ToResultData(
+                                results.Player2,
+                                _playerTwoHud,
+                                p2Fatigue
+                            ).Stars,
+                            Leads = _trace.Leads(24),
+                            HasTurn = turned,
+                            Turn = turn,
+                            TurnWithRush = withRush,
+                            Floors = floors,
+                            ColorOne = PlayerColor(1),
+                            ColorTwo = PlayerColor(2),
+                            WinnerPose =
+                                _visualCatalog != null && results.WinnerPlayerIndex != 0
+                                    ? _visualCatalog.RunnerPose(results.WinnerPlayerIndex)
+                                    : null,
+                        }
+                    );
+                }
             };
         }
 

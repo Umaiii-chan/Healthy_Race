@@ -27,6 +27,10 @@ namespace HealthyRace.UI
         /// <summary>Vaso do "Prontos?" do menu; branco, tingido na cor do jogador.</summary>
         public Sprite Pad;
 
+        /// <summary>Estrelas da tela de resultado: conquistada e não conquistada.</summary>
+        public Sprite StarOn;
+        public Sprite StarOff;
+
         /// <summary>Cinco retratos por jogador, um por faixa de Bem-Estar; jogador 1 primeiro.</summary>
         public Sprite[] Portraits = new Sprite[PortraitsPerPlayer * 2];
 

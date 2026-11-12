@@ -1000,7 +1000,7 @@ namespace HealthyRace.Editor.Visuals
             row.childForceExpandWidth = false;
             row.childForceExpandHeight = false;
             Button(actions, "Próxima fase", 0, 0, 430, VisualCommand.Next, 72, 30, Leaf);
-            Button(actions, "Jogar novamente", 0, 0, 430, VisualCommand.Restart, 72, 30);
+            Button(actions, "Revanche", 0, 0, 430, VisualCommand.Restart, 72, 30);
             Button(actions, "Menu", 0, 0, 430, VisualCommand.Menu, 72, 30);
             var controls = screens[5].transform;
             Label(controls, "COMO JOGAR", 250, 90, 1420, 100, 64, Cream, TextAnchor.MiddleCenter);

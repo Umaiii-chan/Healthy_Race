@@ -23,6 +23,8 @@ MonoBehaviour:
   RingFill: {fileID: 21300000, guid: 44dc7d78d0feea94798b52d9c5e9f512, type: 3}
   Tag: {fileID: 21300000, guid: 3f6965e595f6e73418c16f054cbfa9bf, type: 3}
   Pad: {fileID: 21300000, guid: 515898e50afb66e4e85ee5fb8de36004, type: 3}
+  StarOn: {fileID: 21300000, guid: 3484b12239b6e5e43b72dbb133f3c0ba, type: 3}
+  StarOff: {fileID: 21300000, guid: 24d6656f23e35c2408713be3612ec8ed, type: 3}
   Portraits:
   - {fileID: -1623961819, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
   - {fileID: -714461509, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
