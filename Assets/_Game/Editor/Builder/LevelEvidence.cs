@@ -181,6 +181,9 @@ namespace HealthyRace.Editor.Build
             // os membros dos corredores (o Editor compila em segundo plano e pula o desenho)
             var asyncCompilation = ShaderUtil.allowAsyncCompilation;
             ShaderUtil.allowAsyncCompilation = false;
+            // o primeiro quadro de uma textura recém-importada sai com a textura trocada:
+            // um quadro de aquecimento, descartado, e depois o que vale
+            camera.Render();
             camera.Render();
             ShaderUtil.allowAsyncCompilation = asyncCompilation;
             var previous = RenderTexture.active;

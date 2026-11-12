@@ -1,0 +1,585 @@
+fileFormatVersion: 2
+guid: 67c680cc69b4f0a429ee321d41bf1549
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8240480240101770015
+    second: SP_FoodIcons_0
+  - first:
+      213: -1188128237585727529
+    second: SP_FoodIcons_1
+  - first:
+      213: -3125383781483610677
+    second: SP_FoodIcons_2
+  - first:
+      213: 7371399537989940077
+    second: SP_FoodIcons_3
+  - first:
+      213: -448515555394673917
+    second: SP_FoodIcons_4
+  - first:
+      213: -556369587584170246
+    second: SP_FoodIcons_5
+  - first:
+      213: 111577937307225712
+    second: SP_FoodIcons_6
+  - first:
+      213: 2514685029782003139
+    second: SP_FoodIcons_7
+  - first:
+      213: 1063923951834582309
+    second: SP_FoodIcons_8
+  - first:
+      213: -5578780166456878731
+    second: SP_FoodIcons_9
+  - first:
+      213: 3642318988839534449
+    second: SP_FoodIcons_10
+  - first:
+      213: 3558641116382773837
+    second: SP_FoodIcons_11
+  - first:
+      213: -9070828329993499227
+    second: SP_FoodIcons_12
+  - first:
+      213: -2626473014782333011
+    second: SP_FoodIcons_13
+  - first:
+      213: -5559962327440620986
+    second: SP_FoodIcons_14
+  - first:
+      213: 8247952724259589856
+    second: SP_FoodIcons_15
+  - first:
+      213: 4823385796122392851
+    second: SP_FoodIcons_16
+  - first:
+      213: -8612735789575872566
+    second: SP_FoodIcons_17
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SP_FoodIcons_0
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 547
+        width: 195
+        height: 200
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ecbb1ea1eee3ad80800000000000000
+      internalID: -8240480240101770015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_1
+      rect:
+        serializedVersion: 2
+        x: 317
+        y: 511
+        width: 141
+        height: 205
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7df7713b9abe28fe0800000000000000
+      internalID: -1188128237585727529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_2
+      rect:
+        serializedVersion: 2
+        x: 542
+        y: 544
+        width: 208
+        height: 148
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcdf6ed720860a4d0800000000000000
+      internalID: -3125383781483610677
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_3
+      rect:
+        serializedVersion: 2
+        x: 812
+        y: 547
+        width: 172
+        height: 194
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d637e5f03d87c4660800000000000000
+      internalID: 7371399537989940077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_4
+      rect:
+        serializedVersion: 2
+        x: 1094
+        y: 511
+        width: 131
+        height: 234
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 303a67c8a7d86c9f0800000000000000
+      internalID: -448515555394673917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_5
+      rect:
+        serializedVersion: 2
+        x: 1307
+        y: 548
+        width: 213
+        height: 115
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af60730dec06748f0800000000000000
+      internalID: -556369587584170246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_6
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 255
+        width: 180
+        height: 220
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07ec7f5fa876c8100800000000000000
+      internalID: 111577937307225712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_7
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 255
+        width: 192
+        height: 180
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cd162216b4f5e220800000000000000
+      internalID: 2514685029782003139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_8
+      rect:
+        serializedVersion: 2
+        x: 594
+        y: 291
+        width: 99
+        height: 197
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52d41218231d3ce00800000000000000
+      internalID: 1063923951834582309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_9
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 255
+        width: 216
+        height: 134
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 579d75a0ff03492b0800000000000000
+      internalID: -5578780166456878731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_10
+      rect:
+        serializedVersion: 2
+        x: 1055
+        y: 295
+        width: 201
+        height: 157
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17fb07092dd1c8230800000000000000
+      internalID: 3642318988839534449
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_11
+      rect:
+        serializedVersion: 2
+        x: 1304
+        y: 302
+        width: 216
+        height: 106
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d424819ad35d26130800000000000000
+      internalID: 3558641116382773837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_12
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 0
+        width: 160
+        height: 197
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ad003471b1fd1280800000000000000
+      internalID: -9070828329993499227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_13
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 0
+        width: 188
+        height: 186
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dafefbd65b4ec8bd0800000000000000
+      internalID: -2626473014782333011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_14
+      rect:
+        serializedVersion: 2
+        x: 575
+        y: 32
+        width: 137
+        height: 207
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 642095c98bb07d2b0800000000000000
+      internalID: -5559962327440620986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_15
+      rect:
+        serializedVersion: 2
+        x: 785
+        y: 36
+        width: 230
+        height: 101
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ee45bd9d4d967270800000000000000
+      internalID: 8247952724259589856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_16
+      rect:
+        serializedVersion: 2
+        x: 1051
+        y: 0
+        width: 209
+        height: 193
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3193a8083db10f240800000000000000
+      internalID: 4823385796122392851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SP_FoodIcons_17
+      rect:
+        serializedVersion: 2
+        x: 1343
+        y: 32
+        width: 143
+        height: 225
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: acf590e7e6a697880800000000000000
+      internalID: -8612735789575872566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SP_FoodIcons_0: -8240480240101770015
+      SP_FoodIcons_1: -1188128237585727529
+      SP_FoodIcons_10: 3642318988839534449
+      SP_FoodIcons_11: 3558641116382773837
+      SP_FoodIcons_12: -9070828329993499227
+      SP_FoodIcons_13: -2626473014782333011
+      SP_FoodIcons_14: -5559962327440620986
+      SP_FoodIcons_15: 8247952724259589856
+      SP_FoodIcons_16: 4823385796122392851
+      SP_FoodIcons_17: -8612735789575872566
+      SP_FoodIcons_2: -3125383781483610677
+      SP_FoodIcons_3: 7371399537989940077
+      SP_FoodIcons_4: -448515555394673917
+      SP_FoodIcons_5: -556369587584170246
+      SP_FoodIcons_6: 111577937307225712
+      SP_FoodIcons_7: 2514685029782003139
+      SP_FoodIcons_8: 1063923951834582309
+      SP_FoodIcons_9: -5578780166456878731
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

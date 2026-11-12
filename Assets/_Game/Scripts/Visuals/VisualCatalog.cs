@@ -139,7 +139,9 @@ namespace HealthyRace.Visuals
         public Sprite Ring;
         public Material SpriteMaterial;
         public Color PlayerOne = new Color32(49, 142, 240, 255);
-        public Color PlayerTwo = new Color32(192, 106, 235, 255);
+
+        // laranja do Tom (Art Bible, seção 7): separa do azul do jogador 1 também em cinza
+        public Color PlayerTwo = new Color32(0xF2, 0x99, 0x4A, 255);
 
         public static readonly string[] FoodIds =
         {

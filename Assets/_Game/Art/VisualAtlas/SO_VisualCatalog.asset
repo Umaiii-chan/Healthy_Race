@@ -141,4 +141,4 @@ MonoBehaviour:
   Ring: {fileID: 21300000, guid: a0ac34d1ca597d54eaea9b4a4fdff852, type: 2}
   SpriteMaterial: {fileID: 2100000, guid: 357ab54b5c245b94f900ffe5a741d6f1, type: 2}
   PlayerOne: {r: 0.19215687, g: 0.5568628, b: 0.9411765, a: 1}
-  PlayerTwo: {r: 0.7529412, g: 0.41568628, b: 0.92156863, a: 1}
+  PlayerTwo: {r: 0.9490196, g: 0.6, b: 0.2901961, a: 1}
