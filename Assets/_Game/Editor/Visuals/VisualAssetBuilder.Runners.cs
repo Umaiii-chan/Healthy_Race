@@ -22,6 +22,8 @@ namespace HealthyRace.Editor.Visuals
         public const string RunnerSheetPath = Root + "Art/Characters/SP_RunnerRig.png";
         public const string RunnerPrefabFolder = Root + "Prefabs/Visual/";
 
+        public const string RunnerLimbMaterialPath = Root + "Art/Characters/MAT_HoseLimb.mat";
+
         public const float RunnerArmWidth = 0.09f;
         public const float RunnerLegWidth = 0.11f;
 
@@ -169,12 +171,15 @@ namespace HealthyRace.Editor.Visuals
                     "Catálogo visual ausente: rode 'Build owned visual assets' antes."
                 );
             _material = _catalog.SpriteMaterial;
+            _limbMaterial = RunnerLimbMaterial();
             var sprites = ImportRunnerSheet();
             foreach (var spec in Runners)
             {
                 BuildRunner(spec, sprites, BuildRunnerAnimations(spec));
             }
 
+            AssetDatabase.SaveAssets();
+            BuildRunnerPortraits();
             UseRunnersInLevels();
 
             AssetDatabase.SaveAssets();
@@ -186,6 +191,34 @@ namespace HealthyRace.Editor.Visuals
                     + (Runners.Length * RunnerStates.Length)
                     + " clipes salvos."
             );
+        }
+
+        private static Material _limbMaterial;
+
+        /// <summary>
+        /// Material dos membros em curva, com o shader próprio. As peças em sprite seguem
+        /// com o material de sprite do catálogo.
+        /// </summary>
+        private static Material RunnerLimbMaterial()
+        {
+            var shader = Shader.Find(HoseLimb.ShaderName);
+            if (shader == null)
+                throw new InvalidOperationException(
+                    "Shader dos membros ausente: " + HoseLimb.ShaderName
+                );
+            var material = AssetDatabase.LoadAssetAtPath<Material>(RunnerLimbMaterialPath);
+            if (material == null)
+            {
+                material = new Material(shader) { name = "MAT_HoseLimb" };
+                AssetDatabase.CreateAsset(material, RunnerLimbMaterialPath);
+            }
+            else if (material.shader != shader)
+            {
+                material.shader = shader;
+                EditorUtility.SetDirty(material);
+            }
+
+            return material;
         }
 
         /// <summary>Aponta as 10 fases para Zuri (P1) e Tom (P2).</summary>
@@ -280,7 +313,7 @@ namespace HealthyRace.Editor.Visuals
         {
             var limb = Bone(parent, name, Vector2.zero).gameObject.AddComponent<HoseLimb>();
             limb.SetInk(RunnerInk, 0.012f, 0.026f);
-            limb.SetMaterial(_material);
+            limb.SetMaterial(_limbMaterial);
             // sem malha no prefab: ela é refeita em tempo de execução
             limb.Configure(anchor, target, length, width, fill, bend, rebuild: false);
             limb.SortingOrder = order;

@@ -24,8 +24,12 @@ namespace HealthyRace.Visuals
         /// <summary>De onde vem a luz (cima, um pouco à esquerda), em espaço de mundo.</summary>
         public static readonly Vector2 LightDirection = new Vector2(-0.45f, 1f).normalized;
 
-        private const string SpriteShader = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
-        private const string FallbackShader = "Sprites/Default";
+        /// <summary>
+        /// Shader próprio do membro: cor por vértice. O shader de sprite do URP não serve
+        /// numa malha comum, porque depende de valores que só um SpriteRenderer define
+        /// (ver <c>Art/Shaders/SH_HoseLimb.shader</c>).
+        /// </summary>
+        public const string ShaderName = "HealthyRace/HoseLimb";
 
         private static Material _sharedMaterial;
 
@@ -56,7 +60,7 @@ namespace HealthyRace.Visuals
         [SerializeField, Min(0f), Tooltip("Contorno no lado do peso.")]
         private float _inkHeavy = 0.024f;
 
-        [SerializeField, Tooltip("Material de sprite; sem ele usa o padrão do pipeline.")]
+        [SerializeField, Tooltip("Material do membro; sem ele usa o shader HealthyRace/HoseLimb.")]
         private Material _material;
 
         private readonly List<Vector3> _vertices = new();
@@ -203,7 +207,7 @@ namespace HealthyRace.Visuals
         {
             if (_sharedMaterial == null)
             {
-                var shader = Shader.Find(SpriteShader) ?? Shader.Find(FallbackShader);
+                var shader = Shader.Find(ShaderName);
                 if (shader != null)
                 {
                     _sharedMaterial = new Material(shader) { name = "HoseLimb" };

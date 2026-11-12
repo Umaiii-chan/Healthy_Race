@@ -2,8 +2,8 @@
 
 Rig de membros em curva aprovado na folha de modelos
 (`docs/arte/folha-de-modelos-zuri-tom-2026-11-11.html`, "Rig 1"). **As 10 fases já usam Zuri
-(jogador 1) e Tom (jogador 2)** no lugar dos brotos. O retrato do HUD e o menu ainda mostram os
-brotos, e as peças são provisórias (ver o fim desta nota).
+(jogador 1) e Tom (jogador 2)** no lugar dos brotos, e o menu principal também. As peças são
+provisórias (ver o fim desta nota).
 
 ## O que existe
 
@@ -11,7 +11,9 @@ brotos, e as peças são provisórias (ver o fim desta nota).
 | --- | --- | --- |
 | `HoseCurve` | `Scripts/Visuals/HoseCurve.cs` | Geometria: arco de círculo entre âncora e alvo, com comprimento fixo. O arco para em 200°; com o alvo perto demais o membro encurta em vez de se enrolar |
 | `HoseLimb` | `Scripts/Visuals/HoseLimb.cs` | Desenha o membro em malha, com pontas redondas e contorno fino no lado da luz e grosso no lado do peso. Refaz a malha em `LateUpdate`, depois do Animator |
+| Shader do membro | `Art/Shaders/SH_HoseLimb.shader`, `Art/Characters/MAT_HoseLimb.mat` | Cor por vértice, sem textura. O membro **não pode** usar o shader de sprite (ver "Por que o membro tem shader próprio") |
 | `RunnerRig` | `Scripts/Visuals/RunnerRig.cs` | Vira o personagem, troca o rosto (5) e posiciona as pontas da faixa de cabeça conforme o Bem-Estar |
+| Retratos e poses | `Art/Characters/SP_RunnerPortraits.png` | Por personagem: 5 retratos de cabeça (um por faixa de Bem-Estar) e 1 pose de corrida de corpo inteiro. Render dos próprios prefabs, com fundo transparente |
 | Folha de peças | `Art/Characters/SP_RunnerRig.png` | 13 peças × 2 personagens, 256 px por célula e por unidade |
 | Prefabs | `Prefabs/Visual/PF_VIS_Runner_Zuri.prefab`, `..._Tom.prefab` | Montados pelo construtor, com `Animator` |
 | Clipes | `Animations/Visual/Runner/AN_RUN_<Nome>_<Estado>.anim` | 14 por personagem, escritos em código (`VisualAssetBuilder.RunnerClips.cs`) |
@@ -25,8 +27,11 @@ python tools/art/build_runner_rig.py --preview previa.png
 
 Depois, no Unity: menu `Healthy Race › Visuals › Build runner rig (Zuri e Tom)` (ou
 `-executeMethod HealthyRace.Editor.Visuals.VisualAssetBuilder.BuildRunners`), que importa a folha,
-escreve os clipes, monta os prefabs e aponta as 10 cenas de fase para eles
-(`UseRunnersInLevels`). Para conferir:
+escreve os clipes, monta os prefabs, renderiza a folha de retratos e poses e aponta as 10 cenas
+de fase para os prefabs (`UseRunnersInLevels`). Depois rode `Healthy Race › Visuals › Build
+screens and game flow` (`VisualAssetBuilder.BuildFlow`), que refaz o prefab de telas: é ele que
+põe as poses no menu. Só os retratos, sem refazer os prefabs: `Build runner portraits (Zuri e
+Tom)` (`VisualAssetBuilder.BuildRunnerPortraitSheet`). Para conferir:
 
 - `Healthy Race › Evidence › Capture runners (Zuri e Tom)` grava `docs/evidence/character/Runners.png`
   (poses, rostos, faixa e lado);
@@ -92,8 +97,41 @@ quadro ela:
 O personagem pisca sozinho sobre o rosto neutro. Com "reduzir movimento" ligado ele não pisca e
 nunca fica de olhos fechados.
 
-O rig dos brotos (`CharacterRig`) continua no projeto, com seus testes, porque o HUD e o menu
-ainda usam os retratos deles; só saiu das fases.
+### Interface
+
+- **Menu principal:** Zuri e Tom de corpo inteiro, correndo para o mesmo lado
+  (`VisualCatalog.RunnerPose`). O terceiro personagem, o broto "salo" ao lado dos lanches, saiu:
+  comida não muda o corpo de ninguém.
+- **Retrato:** `VisualCatalog.Portrait(jogador, faixa)` devolve a cabeça do personagem com as
+  pontas da faixa na altura do Bem-Estar; o rosto e a pele são os mesmos nos cinco. Quem usa hoje
+  é só `PlayerHudView`, o HUD-modelo do prefab de telas (visto na galeria de teste).
+- **O HUD das fases não tem retrato.** O que aparece durante a corrida é `PlayerHUD`
+  (`Scripts/UI`), só texto e barras, montado por código. Pôr o retrato nele é parte do redesenho
+  do HUD, que ainda não foi feito.
+
+O rig dos brotos (`CharacterRig`) continua no projeto, com seus testes e a galeria de teste
+(`Scenes/Test/VisualTest.unity`); saiu das fases e do menu.
+
+## Por que o membro tem shader próprio
+
+O shader de sprite do URP (`Sprite-Unlit-Default`) multiplica a cor por `unity_SpriteColor` e
+espelha a posição por `unity_SpriteProps`. Esses dois valores são por objeto e só um
+`SpriteRenderer` os define. O membro é uma malha comum (`MeshRenderer`): com aquele shader ele
+herda o que sobrou do desenho anterior, e **aparece ou some conforme a ordem de desenho do
+quadro**.
+
+Foi assim que os membros falharam, sempre em silêncio, sem erro nem aviso:
+
+- na Fase 1, Zuri e Tom apareciam sem braços nem pernas, com os tênis soltos (a captura
+  `docs/evidence/fase-01` do commit `fc76927` mostra isso);
+- na folha de retratos, a pose de corpo inteiro saía sem membros;
+- nas pranchas de poses, com muitos personagens, os membros apareciam.
+
+Com `HealthyRace/HoseLimb` (cor por vértice, passes `Universal2D` e `UniversalForward`) o membro
+não depende de nada que outro objeto tenha deixado. Os testes
+`RunnerInterfaceTests.Limbs_UseTheirOwnShader_NotTheSpriteOne` e
+`Limbs_AreDrawn_AloneAndAmongTheSprites` guardam isso: o primeiro pelo nome do shader, o segundo
+fotografando o prefab e contando a tinta na área de cada membro.
 
 ## O que é provisório e o que falta
 
@@ -102,22 +140,30 @@ ainda usam os retratos deles; só saiu das fases.
 - **As animações são um primeiro passe**, escritas por números e conferidas em pranchas de
   quadros parados. Os testes PlayMode conferem que elas tocam na fase (o pé sai do chão na
   corrida, pico e queda trocam de estado), mas ninguém as viu em movimento com os próprios olhos.
-- **HUD e menu ainda com os brotos:** os retratos do HUD e os personagens do menu não foram
-  trocados.
+- **Cor do jogador 2:** o Tom é laranja (como na folha de modelos e na Art Bible), mas a
+  identidade do jogador 2 no jogo ainda é roxa (`VisualCatalog.PlayerTwo` e a cor do HUD em
+  `LevelBootstrap`). A etiqueta "P2" do menu fica roxa embaixo de um personagem laranja.
+- **Braço da frente cobre o número:** parado, o braço pende na frente da regata.
 - **Número espelhado:** o número da regata faz parte do tronco e sai invertido quando o
   personagem vira para a esquerda.
 - **Braço curto na corrida:** com a mão perto do ombro o arco bate no limite e o braço encurta.
 - **Tênis afunda no impacto:** o achatamento da raiz no `Land` leva o tornozelo abaixo da altura
   de repouso por um instante (o rig antigo fazia o mesmo com as pernas).
 
-## Armadilha das capturas
+## Armadilhas das capturas
 
-Na primeira vez que uma variante de shader é usada, o Editor compila em segundo plano e pula o
-desenho daquele objeto. Uma captura de quadro único saía sem braços e pernas. As ferramentas de
-captura desligam `ShaderUtil.allowAsyncCompilation` durante o render. Isso é do Editor; numa
-build as variantes já vêm compiladas, mas o rig novo ainda não foi visto rodando em build.
+Duas falhas antigas das capturas foram atribuídas a outras causas antes de o problema do shader
+aparecer. As duas proteções continuam no código, mas **não foi refeito o teste para saber se
+ainda são necessárias** com o shader próprio:
 
-Segunda armadilha: com mais de ~80 personagens na mesma imagem, parte das malhas dos membros
-deixa de ser desenhada (as pernas das últimas linhas sumiam, qualquer que fosse o clipe). A causa
-exata não foi identificada; não depende da posição na cena. Por isso a prancha de animações sai em
-duas páginas de 56 personagens. No jogo há dois personagens na tela.
+- **Compilação de shader em segundo plano.** Na primeira vez que uma variante de shader é usada,
+  o Editor compila em segundo plano e pula o desenho daquele objeto. As ferramentas de captura
+  desligam `ShaderUtil.allowAsyncCompilation` durante o render. Isso é do Editor; numa build as
+  variantes já vêm compiladas.
+- **Muitos personagens na mesma imagem.** Com mais de ~80 personagens parte dos membros deixava
+  de ser desenhada, qualquer que fosse o clipe. O sintoma é o mesmo do shader de sprite (membro
+  some conforme o que mais está na cena), então é provável que a causa fosse a mesma. A prancha
+  de animações segue saindo em duas páginas de 56 personagens.
+
+A folha de retratos recorta o fundo sem depender do alfa do alvo de render: fotografa a cena
+sobre preto e sobre branco, e a diferença entre as duas fotos dá a transparência de cada pixel.

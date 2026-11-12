@@ -494,14 +494,14 @@ namespace HealthyRace.Editor.Visuals
                 )
             );
 
-            // Dupla de corredores no gramado.
+            // Zuri e Tom no gramado, os dois correndo para o mesmo lado.
             var runnerOne = Decor(
                 menu,
                 "Runner_P1",
-                _catalog.Characters[0],
-                150,
-                650,
-                360,
+                _catalog.RunnerPose(1),
+                130,
+                640,
+                380,
                 10,
                 1.7f,
                 0f
@@ -510,20 +510,19 @@ namespace HealthyRace.Editor.Visuals
             var runnerTwo = Decor(
                 menu,
                 "Runner_P2",
-                _catalog.Characters[0],
-                430,
-                670,
-                340,
+                _catalog.RunnerPose(2),
+                410,
+                650,
+                380,
                 10,
                 1.7f,
                 1.6f
             );
-            runnerTwo.rectTransform.localScale = new Vector3(-1, 1, 1);
+            runnerTwo.raycastTarget = false;
             Chip(menu, "P1", 280, 1018, 100, 44, 26, _catalog.PlayerOne, Color.white);
             Chip(menu, "P2", 550, 1022, 100, 44, 26, _catalog.PlayerTwo, Color.white);
 
-            // O contraponto: quem só come ultraprocessado fica para trás.
-            Decor(menu, "Runner_Salo", _catalog.Characters[4], 900, 770, 240, 5, 2.8f, 2.4f);
+            // Os lanches ficam sem personagem ao lado: comida não muda o corpo de ninguém.
             Decor(menu, "Food_Burger", _catalog.Foods[10], 1100, 830, 110, 8, 3.4f, 0.9f, 6);
             Decor(menu, "Food_Donut", _catalog.Foods[14], 800, 910, 100, 8, 3.1f, 2.7f, -6);
             Decor(menu, "Food_Soda", _catalog.Foods[12], 1125, 950, 90, 7, 2.9f, 4.4f, 5);

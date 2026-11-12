@@ -114,6 +114,15 @@ namespace HealthyRace.Visuals
     {
         public Sprite[] Characters = new Sprite[5];
 
+        /// <summary>
+        /// Retratos de Zuri e Tom para a interface: cinco por jogador, um por faixa de
+        /// Bem-Estar (muda só a faixa de cabeça), jogador 1 primeiro.
+        /// </summary>
+        public Sprite[] RunnerPortraits = new Sprite[10];
+
+        /// <summary>Zuri e Tom de corpo inteiro, correndo, para as telas. Jogador 1 primeiro.</summary>
+        public Sprite[] RunnerPoses = new Sprite[2];
+
         /// <summary>Partes do personagem articulado, uma pele por estado de Bem-Estar.</summary>
         public CharacterSkin[] Skins = new CharacterSkin[5];
 
@@ -198,6 +207,29 @@ namespace HealthyRace.Visuals
         public Color IdentityColor(int player) => player == 2 ? PlayerTwo : PlayerOne;
 
         public Sprite Character(WellbeingAppearance appearance) => Characters[(int)appearance];
+
+        /// <summary>
+        /// Retrato do jogador na faixa de Bem-Estar dada. Sem os retratos dos corredores
+        /// (catálogo antigo), cai no sprite do broto.
+        /// </summary>
+        public Sprite Portrait(int player, WellbeingAppearance appearance)
+        {
+            var index = (player == 2 ? 5 : 0) + (int)appearance;
+            var portrait =
+                RunnerPortraits != null && index < RunnerPortraits.Length
+                    ? RunnerPortraits[index]
+                    : null;
+            return portrait != null ? portrait : Character(appearance);
+        }
+
+        /// <summary>Corredor de corpo inteiro do jogador; sem ele, o broto saudável.</summary>
+        public Sprite RunnerPose(int player)
+        {
+            var index = player == 2 ? 1 : 0;
+            var pose =
+                RunnerPoses != null && index < RunnerPoses.Length ? RunnerPoses[index] : null;
+            return pose != null ? pose : Characters[0];
+        }
 
         public bool TryGetSkin(WellbeingAppearance appearance, out CharacterSkin skin)
         {
