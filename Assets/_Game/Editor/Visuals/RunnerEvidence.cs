@@ -83,22 +83,120 @@ namespace HealthyRace.Editor.Visuals
                 }
             }
 
-            var width = Shots.Length * ColumnStep;
-            var height = rows.Length * RowStep;
+            Render(Shots.Length, rows.Length, ColumnStep, RowStep, PixelsPerUnit, "Runners.png");
+            Debug.Log("RUNNER_EVIDENCE_COMPLETE: " + (rows.Length * Shots.Length) + " poses.");
+        }
+
+        // estado, rosto e Bem-Estar com que cada animação é mostrada
+        private static readonly (string State, RunnerFace Face, float Wellbeing)[] AnimationRows =
+        {
+            ("Idle", RunnerFace.Neutral, 1f),
+            ("Move", RunnerFace.Neutral, 1f),
+            ("Jump", RunnerFace.Effort, 1f),
+            ("Fall", RunnerFace.Rush, 0.8f),
+            ("Land", RunnerFace.Effort, 0.8f),
+            ("Push", RunnerFace.Effort, 0.6f),
+            ("Interact", RunnerFace.Neutral, 1f),
+            ("Eat", RunnerFace.Neutral, 1f),
+            ("Fatigue", RunnerFace.Sleepy, 0.1f),
+            ("Recover", RunnerFace.Neutral, 0.4f),
+            ("Victory", RunnerFace.Rush, 1f),
+            ("Defeat", RunnerFace.Sleepy, 0f),
+            (RunnerRig.RushState, RunnerFace.Rush, 0.8f),
+            (RunnerRig.CrashState, RunnerFace.Sleepy, 0.4f),
+        };
+
+        private const int AnimationColumns = 8;
+        private const float AnimationColumnStep = 1.35f;
+        private const float AnimationRowStep = 1.95f;
+
+        /// <summary>
+        /// Prancha de quadros das animações de cada corredor: uma linha por estado, com o
+        /// clipe amostrado em instantes igualmente espaçados. Um arquivo por personagem.
+        /// </summary>
+        [MenuItem("Healthy Race/Evidence/Capture runner animations")]
+        public static void CaptureAnimations()
+        {
+            // Com mais de ~80 personagens na mesma imagem o renderizador 2D deixa de
+            // desenhar parte das malhas dos membros: cada prancha sai em duas páginas.
+            const int rowsPerPage = 7;
+            foreach (var spec in VisualAssetBuilder.Runners)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                    VisualAssetBuilder.RunnerPrefabPath(spec)
+                );
+                for (var page = 0; page * rowsPerPage < AnimationRows.Length; page++)
+                {
+                    EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                    var rows = Mathf.Min(rowsPerPage, AnimationRows.Length - page * rowsPerPage);
+                    // a segunda página fica longe da origem de propósito: confere que o
+                    // desenho dos membros não depende da posição na cena
+                    var origin = new Vector2(page * 37f, -page * 53f);
+                    for (var row = 0; row < rows; row++)
+                    {
+                        var (state, face, wellbeing) = AnimationRows[page * rowsPerPage + row];
+                        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(
+                            VisualAssetBuilder.RunnerClipPath(spec, state)
+                        );
+                        for (var col = 0; col < AnimationColumns; col++)
+                        {
+                            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                            instance.transform.position = new Vector3(
+                                origin.x + col * AnimationColumnStep,
+                                origin.y - row * AnimationRowStep,
+                                0f
+                            );
+                            var rig = instance.GetComponent<RunnerRig>();
+                            rig.SetFace(face);
+                            rig.SetWellbeing(wellbeing);
+                            // clipe que repete: não amostra o último instante, igual ao primeiro
+                            var span = clip.isLooping ? AnimationColumns : AnimationColumns - 1;
+                            clip.SampleAnimation(instance, clip.length * col / span);
+                            rig.RebuildLimbs();
+                        }
+                    }
+
+                    Render(
+                        AnimationColumns,
+                        rows,
+                        AnimationColumnStep,
+                        AnimationRowStep,
+                        150,
+                        "Runner-" + spec.Name + "-Animations-" + (page + 1) + ".png",
+                        origin
+                    );
+                }
+            }
+
+            Debug.Log("RUNNER_ANIMATION_EVIDENCE_COMPLETE: " + AnimationRows.Length + " estados.");
+        }
+
+        private static void Render(
+            int columns,
+            int rows,
+            float columnStep,
+            float rowStep,
+            int pixelsPerUnit,
+            string file,
+            Vector2 origin = default
+        )
+        {
+            var width = columns * columnStep;
+            var height = rows * rowStep;
             var camera = new GameObject("Camera", typeof(Camera)).GetComponent<Camera>();
             camera.orthographic = true;
             camera.orthographicSize = height * 0.5f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color32(0xE8, 0xF1, 0xE4, 255);
             camera.transform.position = new Vector3(
-                (Shots.Length - 1) * ColumnStep * 0.5f,
-                -(rows.Length - 1) * RowStep * 0.5f + 0.2f,
+                origin.x + (columns - 1) * columnStep * 0.5f,
+                origin.y - (rows - 1) * rowStep * 0.5f + 0.2f,
                 -10f
             );
 
             var size = new Vector2Int(
-                Mathf.RoundToInt(width * PixelsPerUnit),
-                Mathf.RoundToInt(height * PixelsPerUnit)
+                Mathf.RoundToInt(width * pixelsPerUnit),
+                Mathf.RoundToInt(height * pixelsPerUnit)
             );
             var renderTarget = new RenderTexture(size.x, size.y, 24) { antiAliasing = 4 };
             camera.targetTexture = renderTarget;
@@ -114,17 +212,16 @@ namespace HealthyRace.Editor.Visuals
             texture.ReadPixels(new Rect(0, 0, size.x, size.y), 0, 0);
             texture.Apply();
             Directory.CreateDirectory(OutputPath);
-            File.WriteAllBytes(OutputPath + "/Runners.png", texture.EncodeToPNG());
+            File.WriteAllBytes(OutputPath + "/" + file, texture.EncodeToPNG());
             RenderTexture.active = previous;
             camera.targetTexture = null;
             Object.DestroyImmediate(texture);
             renderTarget.Release();
             Object.DestroyImmediate(renderTarget);
-            Debug.Log("RUNNER_EVIDENCE_COMPLETE: " + (rows.Length * Shots.Length) + " poses.");
         }
 
         /// <summary>
-        /// Uma passada de corrida montada à mão (ainda não há clipes): pé da frente
+        /// Uma passada de corrida montada à mão, para a prancha de poses: pé da frente
         /// adiantado, pé de trás recolhido, braços em oposição e tronco inclinado.
         /// Os alvos estão na ordem do rig: mão de trás, pé de trás, pé da frente, mão da frente.
         /// </summary>

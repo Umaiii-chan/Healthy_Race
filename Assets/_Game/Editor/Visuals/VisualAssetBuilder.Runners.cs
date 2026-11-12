@@ -14,7 +14,7 @@ namespace HealthyRace.Editor.Visuals
     /// Zuri e Tom, os corredores humanos de membros em curva: importa a folha de peças
     /// provisórias gerada por <c>tools/art/build_runner_rig.py</c> e monta um prefab por
     /// personagem. As medidas abaixo repetem PARTS e RIGS daquele script. Mudou lá, mude
-    /// aqui. Ainda não há clipes: os alvos de mão e pé ficam na pose de repouso.
+    /// aqui. Os clipes estão em <c>VisualAssetBuilder.RunnerClips.cs</c>.
     /// </summary>
     public static partial class VisualAssetBuilder
     {
@@ -171,12 +171,18 @@ namespace HealthyRace.Editor.Visuals
             var sprites = ImportRunnerSheet();
             foreach (var spec in Runners)
             {
-                BuildRunner(spec, sprites);
+                BuildRunner(spec, sprites, BuildRunnerAnimations(spec));
             }
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("RUNNER_BUILD_COMPLETE: " + Runners.Length + " prefabs de corredor salvos.");
+            Debug.Log(
+                "RUNNER_BUILD_COMPLETE: "
+                    + Runners.Length
+                    + " prefabs de corredor e "
+                    + (Runners.Length * RunnerStates.Length)
+                    + " clipes salvos."
+            );
         }
 
         private static Dictionary<string, Sprite> ImportRunnerSheet()
@@ -261,7 +267,11 @@ namespace HealthyRace.Editor.Visuals
             return limb;
         }
 
-        private static GameObject BuildRunner(RunnerSpec spec, Dictionary<string, Sprite> sprites)
+        private static GameObject BuildRunner(
+            RunnerSpec spec,
+            Dictionary<string, Sprite> sprites,
+            RuntimeAnimatorController controller
+        )
         {
             Sprite Art(string part) => sprites[RunnerSpriteName(spec, part)];
 
@@ -364,6 +374,7 @@ namespace HealthyRace.Editor.Visuals
                 }
             );
             rig.SetWellbeing(1f);
+            root.AddComponent<Animator>().runtimeAnimatorController = controller;
             return SavePrefab(root);
         }
     }

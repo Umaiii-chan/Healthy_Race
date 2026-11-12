@@ -1062,6 +1062,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5116928998220264152}
   - component: {fileID: 8589772177806383472}
+  - component: {fileID: 3902618444056566653}
   m_Layer: 0
   m_Name: PF_VIS_Runner_Tom
   m_TagString: Untagged
@@ -1117,6 +1118,28 @@ MonoBehaviour:
   - {fileID: 2734423589297740628}
   - {fileID: 8062088078364267184}
   - {fileID: 8935834076936943601}
+--- !u!95 &3902618444056566653
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4209821255948764298}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: bdfd5e895e5deb94dbb479030fb18f1d, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &4249570727934432981
 GameObject:
   m_ObjectHideFlags: 0

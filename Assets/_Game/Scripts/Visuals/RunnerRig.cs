@@ -26,6 +26,17 @@ namespace HealthyRace.Visuals
     [DisallowMultipleComponent]
     public sealed class RunnerRig : MonoBehaviour
     {
+        /// <summary>Estado de animação do pico do lanche (não existe no rig dos brotos).</summary>
+        public const string RushState = "Rush";
+
+        /// <summary>Estado de animação da queda do lanche.</summary>
+        public const string CrashState = "Crash";
+
+        /// <summary>Número de ação do pico no controlador: vem depois dos 12 de <see cref="VisualAction"/>.</summary>
+        public const int RushAction = 12;
+
+        public const int CrashAction = 13;
+
         /// <summary>Ângulo das duas pontas da faixa com Bem-Estar cheio (levantadas).</summary>
         public static readonly Vector2 TailsUp = new(-32f, -8f);
 
