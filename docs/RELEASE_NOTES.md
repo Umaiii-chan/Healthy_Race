@@ -1,5 +1,26 @@
 # Notas da versão
 
+## Em desenvolvimento — regras novas (Fase B do roadmap)
+
+Não lançada. Só deve ser mesclada depois do teste com pessoas na 1.0.1 (decisão D0).
+
+- **Lanche com pico e queda** (D2): impulso de 2 s e depois sonolência de 4 s; encadear renova o
+  pico e alonga a queda. Com Bem-Estar baixo, o pico encurta e a queda alonga. Sai o efeito "pesado".
+- **Fruta, água ou refeição acordam** da queda na hora.
+- **Comida por jogador** (D3): cada item pode ser pego uma vez por jogador; depois da primeira
+  coleta ele fica apagado, na cor de quem falta.
+- **Vence quem chega primeiro** (D1), com desempate por Bem-Estar e fadigas se chegarem no mesmo
+  instante; até **3 estrelas** por jogador (chegada, Bem-Estar ≥ 60, tempo-alvo). A tela de
+  resultado diz em uma frase por que a corrida terminou assim.
+- **Contagem de largada** "3, 2, 1, JÁ!"; o tempo de chegada passa a usar o relógio da partida.
+- **Fadiga anunciada:** 1 s de aviso com o jogador ainda andando, depois 1,2 s de parada.
+- **Feedback de coleta:** nome do alimento em português, mudança de Bem-Estar e efeito sobem do
+  personagem.
+- **Ainda não feito desta fase:** cesta dourada disputada, bifurcação com ícones e prévia de
+  câmera, P1 e P2 com silhuetas diferentes, correção de quina, pulo variável e câmera com limite.
+- **Em aberto:** para o robô, o atalho comendo tudo ainda é mais rápido que o longo na maioria
+  das fases; ver `TEST_REPORT.md`.
+
 ## 1.0.1 — build de playtest (Fase A do roadmap)
 
 Mesmas regras da 1.0.0, preparada para o teste com pessoas (decisão D0 de

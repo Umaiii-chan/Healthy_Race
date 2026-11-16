@@ -1,4 +1,4 @@
-# Relatório de testes — versão 1.0.1
+# Relatório de testes — regras novas (em desenvolvimento, sobre a 1.0.1)
 
 Data: 11/11/2026. Editor: Unity 6000.3.23f1, Windows 11, modo batch (sem som).
 
@@ -6,13 +6,19 @@ Data: 11/11/2026. Editor: Unity 6000.3.23f1, Windows 11, modo batch (sem som).
 
 | Suíte | Testes | Passaram | Falharam |
 | --- | --- | --- | --- |
-| EditMode | 243 | 243 | 0 |
-| PlayMode | 84 | 84 | 0 |
+| EditMode | 254 | 254 | 0 |
+| PlayMode | 87 | 87 | 0 |
 | Build Windows 64-bit (Mono) | — | sucesso | — |
 
 No GitHub, o CI roda lint de Markdown e YAML, formatação de C# (CSharpier) e validação do
 repositório. Os testes do Unity no CI ficam pulados enquanto o repositório não tiver a
 licença (`UNITY_LICENSE`); os números acima são da execução local.
+
+## Mudança na contagem desde a 1.0.1
+
+A 1.0.1 tinha 243 testes EditMode e 84 PlayMode. Com as regras novas entraram 11 EditMode
+(efeito do lanche, vitória pela chegada e estrelas, chegada simultânea, texto de coleta) e 3
+PlayMode (contagem de largada, comida por jogador, aviso de fadiga).
 
 ## Mudança na contagem desde a 1.0.0
 
@@ -53,23 +59,32 @@ A 1.0.0 tinha 233 testes EditMode e 91 PlayMode. Na 1.0.1:
 
 ## Corridas medidas
 
-Tempos de jogo do robô (ele para no centro de cada tile antes de pular; uma pessoa faz o
-longo mais rápido).
+Regras novas (ainda não mescladas): lanche com pico e queda dependentes do Bem-Estar, comida
+por jogador, vitória pela chegada. O robô leva o P1 pelo caminho longo e o P2 pelo curto comendo
+**todos** os lanches. Ele para no centro de cada tile antes de pular, então o tempo do longo é
+pessimista: uma pessoa faz o longo mais rápido.
 
-| Fase | Nome | Longo (P1) | Curto (P2) | Pontos longo | Pontos curto |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Corrida do Equilíbrio | 125,7 s | 141,4 s | 5980 | -3058 |
-| 2 | Horta Suspensa | 96,2 s | 116,1 s | 4810 | -2747 |
-| 3 | Pomar das Alavancas | 128,6 s | 139,7 s | 6460 | -3043 |
-| 4 | Estufa dos Espinhos | 139,3 s | 153,3 s | 5730 | -3067 |
-| 5 | Ponte de Folhas | 142,7 s | 167,1 s | 4860 | -5450 |
-| 6 | Feira Livre | 159,9 s | 176,9 s | 6589 | -3679 |
-| 7 | Torre das Trepadeiras | 133,9 s | 163,5 s | 6210 | -3554 |
-| 8 | Mercado Comprido | 132,1 s | 146,9 s | 4890 | -2811 |
-| 9 | Labirinto da Lama | 177,4 s | 185,6 s | 4640 | -4040 |
-| 10 | Grande Final | 174,2 s | 209,1 s | 7540 | -4346 |
+| Fase | Nome | Longo (P1) | Curto, todos os lanches (P2) | Curto − longo |
+| --- | --- | --- | --- | --- |
+| 1 | Corrida do Equilíbrio | 124,9 s | 110,1 s | -14,8 s |
+| 2 | Horta Suspensa | 95,3 s | 88,7 s | -6,6 s |
+| 3 | Pomar das Alavancas | 126,3 s | 109,0 s | -17,3 s |
+| 4 | Estufa dos Espinhos | 135,3 s | 122,1 s | -13,2 s |
+| 5 | Ponte de Folhas | 144,2 s | 120,6 s | -23,6 s |
+| 6 | Feira Livre | 158,3 s | 134,0 s | -24,3 s |
+| 7 | Torre das Trepadeiras | 134,3 s | 129,3 s | -5,0 s |
+| 8 | Mercado Comprido | 133,0 s | 132,3 s | -0,7 s |
+| 9 | Labirinto da Lama | 172,7 s | 172,5 s | -0,2 s |
+| 10 | Grande Final | 174,2 s | 175,3 s | +1,1 s |
 
-Partindo de Bem-Estar zero, na Fase 1: longo 127,1 s, curto 141,5 s.
+Partindo de Bem-Estar zero, na Fase 1: longo 125,4 s, curto 119,0 s.
+
+**Leitura:** para o robô, comer todos os lanches ainda chega de 0 a 24 s antes do longo em 9 das
+10 fases. Com os valores iniciais da proposta (sem depender do Bem-Estar) a vantagem era de 9 a
+43 s; o ajuste reduziu, não eliminou. Como o longo do robô é mais lento que o de uma pessoa, este
+número **não decide** o balanceamento: os parâmetros do lanche em `Resources/SO_Balance` são
+experimentais e devem ser calibrados com os tempos humanos do playtest de linha de base
+(`docs/PLAYTEST.md`).
 
 ## Defeitos encontrados pelo robô e corrigidos
 

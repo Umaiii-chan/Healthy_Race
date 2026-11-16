@@ -29,6 +29,9 @@ namespace HealthyRace.Visuals
         public int UltraPenalty;
         public int FatiguePenalty;
         public int UnfinishedPenalty;
+
+        /// <summary>Estrelas da fase (0 a 3).</summary>
+        public int Stars;
     }
 
     public enum VisualScreen
@@ -77,7 +80,7 @@ namespace HealthyRace.Visuals
         }
 
         public static string Result(PlayerResultData data) =>
-            $"SCORE FINAL\n{Number(data.Player.Score)}\n\n"
+            $"ESTRELAS  {data.Stars} de 3\n\nPontos  {Number(data.Player.Score)}\n\n"
             + $"Alimentos saudáveis / ultra     {data.Player.HealthyFoods} / {data.Player.UltraProcessedFoods}\n"
             + $"Bem-Estar     {data.Player.Wellbeing}/100\nFadigas     {data.Player.FatigueEpisodes}\n"
             + $"Tempo     {(data.Finished ? Clock(data.Seconds) : "Não concluiu")}\n\n"

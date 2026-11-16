@@ -48,8 +48,8 @@ namespace HealthyRace.Tests.Visuals
                 .SelectMany(r => r.GetComponentsInChildren<RaceScreenView>())
                 .Single();
             screen.Show(VisualScreen.MainMenu);
-            var play = screen.GetComponentsInChildren<Button>().Single(b => b.name == "JOGAR");
-            play.onClick.Invoke();
+            // o menu não tem mais botão Jogar na tela (virou placa do palco): o pedido vem direto
+            screen.Request(VisualCommand.Play);
             Assert.That(screen.Screen, Is.EqualTo(VisualScreen.Gameplay));
             screen.Show(VisualScreen.Audio);
             screen.GetComponentInChildren<Toggle>().isOn = true;

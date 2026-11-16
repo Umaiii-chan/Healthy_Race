@@ -25,6 +25,22 @@ namespace HealthyRace.Core
         [SerializeField, Min(1f), Tooltip("Duração máxima de uma partida (s).")]
         private float _matchTimeLimitSeconds = 300f;
 
+        [SerializeField, Min(0f), Tooltip("Contagem de largada (s); 0 desliga.")]
+        private float _countdownSeconds = 3f;
+
+        [
+            SerializeField,
+            Tooltip("Vence quem chega primeiro (D1). Desligado: vence quem soma mais pontos.")
+        ]
+        private bool _victoryByArrival = true;
+
+        [
+            SerializeField,
+            Range(0, 100),
+            Tooltip("Bem-Estar final mínimo para a estrela de Bem-Estar.")
+        ]
+        private int _starWellbeingThreshold = 60;
+
         [Header("Pontos")]
         [SerializeField, Min(0)]
         private int _pointsPerLever = 150;
@@ -50,16 +66,45 @@ namespace HealthyRace.Core
         [SerializeField, Min(0)]
         private int _dnfPenalty = 500;
 
-        [Header("Lanche rápido")]
-        [SerializeField, Range(0.1f, 1f), Tooltip("Velocidade × este valor depois de comer.")]
-        private float _ultraSlowMultiplier = 0.5f;
+        [Header("Lanche rápido: pico e queda")]
+        [SerializeField, Range(1f, 2f), Tooltip("Velocidade × este valor no pico.")]
+        private float _rushMultiplier = 1.3f;
 
-        [SerializeField, Min(0f), Tooltip("Duração do efeito (s); comer de novo renova.")]
-        private float _ultraSlowSeconds = 5f;
+        [SerializeField, Min(0f), Tooltip("Duração do pico (s); outro lanche renova.")]
+        private float _rushSeconds = 2f;
+
+        [SerializeField, Range(0.1f, 1f), Tooltip("Velocidade × este valor na queda.")]
+        private float _crashMultiplier = 0.6f;
+
+        [SerializeField, Min(0f), Tooltip("Duração da queda depois de um lanche (s).")]
+        private float _crashSeconds = 4f;
+
+        [SerializeField, Min(0f), Tooltip("Queda extra por lanche comido ainda no pico (s).")]
+        private float _crashExtraPerChain = 2f;
+
+        [SerializeField, Min(0f), Tooltip("Queda máxima, mesmo encadeando lanches (s).")]
+        private float _crashMaxSeconds = 16f;
+
+        [
+            SerializeField,
+            Range(0f, 1f),
+            Tooltip("Com Bem-Estar 0 o pico dura esta fração do normal.")
+        ]
+        private float _lowWellbeingRushFactor = 0.25f;
+
+        [SerializeField, Min(1f), Tooltip("Com Bem-Estar 0 a queda dura este múltiplo do normal.")]
+        private float _lowWellbeingCrashFactor = 3f;
 
         [Header("Fadiga")]
         [SerializeField, Min(0f)]
-        private float _fatigueDurationSeconds = 2f;
+        private float _fatigueDurationSeconds = 1.2f;
+
+        [
+            SerializeField,
+            Min(0f),
+            Tooltip("Aviso antes da parada, com o jogador ainda andando (s).")
+        ]
+        private float _fatigueWarningSeconds = 1f;
 
         [SerializeField, Min(0)]
         private int _fatigueRecoveryWellbeing = 15;
@@ -90,6 +135,9 @@ namespace HealthyRace.Core
 
         public float PartnerWindowSeconds => _partnerWindowSeconds;
         public float MatchTimeLimitSeconds => _matchTimeLimitSeconds;
+        public float CountdownSeconds => _countdownSeconds;
+        public bool VictoryByArrival => _victoryByArrival;
+        public int StarWellbeingThreshold => _starWellbeingThreshold;
         public int PointsPerLever => _pointsPerLever;
         public int MaxTimeBonus => _maxTimeBonus;
         public int FirstPlaceArrivalBonus => _firstPlaceArrivalBonus;
@@ -98,9 +146,16 @@ namespace HealthyRace.Core
         public int UltraPenaltyPerItem => _ultraPenaltyPerItem;
         public int FatiguePenaltyPerEpisode => _fatiguePenaltyPerEpisode;
         public int DnfPenalty => _dnfPenalty;
-        public float UltraSlowMultiplier => _ultraSlowMultiplier;
-        public float UltraSlowSeconds => _ultraSlowSeconds;
+        public float RushMultiplier => _rushMultiplier;
+        public float RushSeconds => _rushSeconds;
+        public float CrashMultiplier => _crashMultiplier;
+        public float CrashSeconds => _crashSeconds;
+        public float CrashExtraPerChain => _crashExtraPerChain;
+        public float CrashMaxSeconds => _crashMaxSeconds;
+        public float LowWellbeingRushFactor => _lowWellbeingRushFactor;
+        public float LowWellbeingCrashFactor => _lowWellbeingCrashFactor;
         public float FatigueDurationSeconds => _fatigueDurationSeconds;
+        public float FatigueWarningSeconds => _fatigueWarningSeconds;
         public int FatigueRecoveryWellbeing => _fatigueRecoveryWellbeing;
         public int FatigueTriggerThreshold => _fatigueTriggerThreshold;
         public int FatigueRearmThreshold => _fatigueRearmThreshold;

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_Food_Donut
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Collectibles.FoodData
   _id: donut
-  _displayName: Donut
+  _displayName: Rosquinha
   _category: 1
   _basePoints: 0
   _wellbeingDelta: -14

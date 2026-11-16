@@ -46,7 +46,7 @@ O progresso salvo (fases concluídas e recordes) fica em `...\Healthy Race\Healt
 Para começar uma rodada do zero, apague esse arquivo.
 
 Eventos gravados: `largada`, `amostra` (a cada 1 s: posição, progresso na rota, Bem-Estar,
-peso, líder), `corredor_entrada` e `corredor_saida`, `coleta`, `fadiga`, `espinho`,
+estado do lanche — nenhum, pico ou queda — e líder), `corredor_entrada` e `corredor_saida`, `coleta`, `fadiga`, `espinho`,
 `alavanca`, `chegada`, `resultado`, `fim` e `abandono` (saída para o menu ou reinício).
 
 Para desligar o registro numa máquina, defina a preferência `HealthyRace_MatchLog = 0` (será

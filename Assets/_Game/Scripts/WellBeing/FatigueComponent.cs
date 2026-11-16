@@ -11,6 +11,9 @@ namespace HealthyRace.WellBeing
         [SerializeField, Min(0f)]
         private float _fatigueDurationSeconds = 2f;
 
+        [SerializeField, Min(0f), Tooltip("Aviso antes da parada: o jogador ainda anda (s).")]
+        private float _warningSeconds;
+
         [SerializeField]
         private int _recoveryWellbeing = 15;
 
@@ -31,6 +34,18 @@ namespace HealthyRace.WellBeing
         public event Action<FatigueReadiness> ReadinessChanged;
 
         public event Action<FatigueState> StateChanged;
+
+        /// <summary>A fadiga começou e a parada vem em <c>segundos</c>: hora de avisar o jogador.</summary>
+        public event Action<float> WarningStarted;
+
+        /// <summary>Verdadeiro entre o aviso e a parada.</summary>
+        public bool IsWarning { get; private set; }
+
+        public float WarningSeconds
+        {
+            get => _warningSeconds;
+            set => _warningSeconds = Mathf.Max(0f, value);
+        }
 
         public int FatigueEpisodeCount => _stateMachine?.EpisodeCount ?? 0;
 
@@ -73,6 +88,8 @@ namespace HealthyRace.WellBeing
                 StopCoroutine(_fatigueRoutine);
                 _fatigueRoutine = null;
             }
+
+            IsWarning = false;
         }
 
         public void Configure(
@@ -120,6 +137,8 @@ namespace HealthyRace.WellBeing
                 _fatigueRoutine = null;
             }
 
+            IsWarning = false;
+
             Transition(_stateMachine.BeginRecovery);
             _wellbeing?.ApplyDelta(_recoveryWellbeing);
             _playerController?.SetMovementEnabled(true);
@@ -164,6 +183,8 @@ namespace HealthyRace.WellBeing
                 _fatigueRoutine = null;
             }
 
+            IsWarning = false;
+
             if (!_halted)
             {
                 _playerController?.SetMovementEnabled(true);
@@ -198,6 +219,21 @@ namespace HealthyRace.WellBeing
 
         private IEnumerator CompleteAfterDelay()
         {
+            if (_warningSeconds > 0f)
+            {
+                // aviso: o jogador ainda se move e pode escolher onde vai parar
+                IsWarning = true;
+                WarningStarted?.Invoke(_warningSeconds);
+                yield return new WaitForSeconds(_warningSeconds);
+                IsWarning = false;
+                if (!isActiveAndEnabled || State != FatigueState.Fatigued)
+                {
+                    _fatigueRoutine = null;
+                    yield break;
+                }
+            }
+
+            _playerController?.SetMovementEnabled(false);
             yield return new WaitForSeconds(_fatigueDurationSeconds);
             _fatigueRoutine = null;
 
@@ -261,7 +297,12 @@ namespace HealthyRace.WellBeing
 
         private void BeginFatigue()
         {
-            _playerController?.SetMovementEnabled(false);
+            if (_warningSeconds <= 0f)
+            {
+                // sem aviso a parada é imediata, no mesmo passo em que a fadiga começa
+                _playerController?.SetMovementEnabled(false);
+            }
+
             _fatigueRoutine = StartCoroutine(CompleteAfterDelay());
         }
 

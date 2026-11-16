@@ -90,7 +90,18 @@ namespace HealthyRace.Tests.EditMode
                 p1.position = new Vector3(spawn.x + 0.5f, spawn.y + 0.5f);
                 p2.position = new Vector3(spawn.x + 10.5f, spawn.y + 0.5f);
                 var recorder = host.AddComponent<MatchRecorder>();
-                recorder.Begin(grid, 130f, () => 12.5f, p1, p2, _ => 80, i => i == 2);
+                recorder.Begin(
+                    grid,
+                    130f,
+                    () => 12.5f,
+                    p1,
+                    p2,
+                    _ => 80,
+                    i =>
+                        i == 2
+                            ? HealthyRace.Player.SnackState.Crash
+                            : HealthyRace.Player.SnackState.None
+                );
                 Assert.That(recorder.IsRecording, Is.True);
 
                 recorder.Food(1, "apple", true, 90);

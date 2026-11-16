@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using HealthyRace.Level;
 using HealthyRace.Visuals;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -80,8 +79,8 @@ namespace HealthyRace.Editor.Visuals
             _catalog.PlayerAnimator = BuildAnimations();
             EditorUtility.SetDirty(_catalog);
             var badge = CreateShape("SP_Badge", false);
-            var p1 = BuildPlayer(1, badge);
-            var p2 = BuildPlayer(2, badge);
+            BuildPlayer(1, badge);
+            BuildPlayer(2, badge);
 
             var dust = new GameObject("PF_VIS_VFX_" + FeedbackKind.Dust);
             dust.AddComponent<VisualEffectEmitter>().Configure(_catalog, FeedbackKind.Dust);
@@ -89,11 +88,8 @@ namespace HealthyRace.Editor.Visuals
 
             ConfigurePlayerPhysics();
 
-            var phaseScene = EditorSceneManager.OpenScene(Phase1ScenePath);
-            var phase = Object.FindFirstObjectByType<LevelBootstrap>();
-            Assign(phase, "_playerOneVisualPrefab", p1);
-            Assign(phase, "_playerTwoVisualPrefab", p2);
-            EditorSceneManager.SaveScene(phaseScene);
+            // As fases usam os corredores (Zuri e Tom, ver VisualAssetBuilder.Runners.cs);
+            // os prefabs dos brotos continuam só para a galeria e as pranchas antigas.
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

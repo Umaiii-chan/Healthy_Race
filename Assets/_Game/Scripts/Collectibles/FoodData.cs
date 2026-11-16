@@ -1,4 +1,3 @@
-using HealthyRace.Core;
 using UnityEngine;
 
 namespace HealthyRace.Collectibles
@@ -38,17 +37,11 @@ namespace HealthyRace.Collectibles
         [SerializeField]
         private AudioClip _collectSound;
 
-        /// <summary>
-        /// Multiplicador de velocidade passageiro ao comer (1 = nenhum). Os números do
-        /// ultraprocessado vêm de <see cref="BalanceConfig"/>.
-        /// </summary>
-        public float SlowMultiplier =>
-            _category == FoodCategory.UltraProcessed
-                ? BalanceConfig.Current.UltraSlowMultiplier
-                : 1f;
+        /// <summary>Lanche rápido: dá o pico e depois a queda (ver <c>SnackRush</c>).</summary>
+        public bool StartsRush => _category == FoodCategory.UltraProcessed;
 
-        public float SlowSeconds =>
-            _category == FoodCategory.UltraProcessed ? BalanceConfig.Current.UltraSlowSeconds : 0f;
+        /// <summary>Fruta e água (todo saudável, por enquanto) encerram a queda.</summary>
+        public bool EndsCrash => _category == FoodCategory.Healthy;
 
         public int BasePoints => _basePoints;
 

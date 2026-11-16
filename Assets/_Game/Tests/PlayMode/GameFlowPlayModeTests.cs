@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using HealthyRace.Audio;
 using HealthyRace.Core;
 using HealthyRace.Level;
+using HealthyRace.Player;
 using HealthyRace.UI;
 using HealthyRace.Visuals;
 using HealthyRace.WellBeing;
@@ -73,42 +74,106 @@ namespace HealthyRace.Tests.PlayMode
         {
             yield return Load(GameFlow.MenuScene);
 
-            var menu = Object.FindFirstObjectByType<MainMenuBootstrap>();
-            Assert.That(menu, Is.Not.Null, "A cena de menu precisa do MainMenuBootstrap.");
+            // o menu é a estufa jogável: a montagem das fases em modo menu
+            var menu = Object.FindFirstObjectByType<LevelBootstrap>();
+            Assert.That(menu, Is.Not.Null, "A cena de menu precisa da estufa jogável.");
+            Assert.That(menu.IsMenu, Is.True);
             Assert.That(menu.Screens, Is.Not.Null, "O prefab de telas deve estar atribuído.");
             Assert.That(menu.Screens.View.IsHidden, Is.False);
             Assert.That(menu.Screens.View.Screen, Is.EqualTo(VisualScreen.MainMenu));
+            Assert.That(menu.GreenhouseHud, Is.Null, "o menu não tem HUD de corrida");
+            Assert.That(menu.Foods, Is.Empty);
+
+            var stage = menu.MenuStage;
+            Assert.That(stage, Is.Not.Null);
+            Assert.That(stage.State, Is.EqualTo(MenuStage.Mode.Choosing));
             Assert.That(
-                Object.FindFirstObjectByType<EventSystem>(),
-                Is.Not.Null,
-                "Sem EventSystem os botões não recebem clique."
+                stage.Signs.Select(sign => sign.GetComponentInChildren<Text>().text),
+                Is.EqualTo(new[] { "Jogar", "Como jogar", "Áudio", "Sair" })
+            );
+            var events = Object.FindFirstObjectByType<EventSystem>();
+            Assert.That(events, Is.Not.Null, "Sem EventSystem as placas não recebem clique.");
+            Assert.That(
+                events.currentSelectedGameObject,
+                Is.SameAs(stage.Signs[0].gameObject),
+                "o teclado começa na placa Jogar"
             );
         }
 
         [UnityTest]
-        public IEnumerator MainMenu_Play_LoadsFirstLevel()
+        public IEnumerator MainMenu_JumpingIntoASign_ChoosesIt()
         {
             yield return Load(GameFlow.MenuScene);
-            var menu = Object.FindFirstObjectByType<MainMenuBootstrap>();
+            var menu = Object.FindFirstObjectByType<LevelBootstrap>();
+            var stage = menu.MenuStage;
+            var player = menu.PlayerOne;
+            var movement = player.GetComponent<PlayerMovement>();
 
-            // clica no botão de verdade: um botão sem ouvinte tem de quebrar este teste
-            var play = menu
-                .Screens.View.ScreenRoot(VisualScreen.MainMenu)
-                .GetComponentsInChildren<Button>()
-                .Single(button => button.name == "JOGAR");
-            play.onClick.Invoke();
-            yield return WaitForScene(GameFlow.SceneForLevel(1));
+            // parado embaixo da placa nada acontece: só o pulo alcança
+            var under = stage.SignPosition(1);
+            var body = player.GetComponent<Rigidbody2D>();
+            body.position = new Vector2(under.x, body.position.y);
+            player.transform.position = new Vector3(under.x, player.transform.position.y, 0f);
+            yield return new WaitForSeconds(0.4f);
+            Assert.That(menu.Screens.View.Screen, Is.EqualTo(VisualScreen.MainMenu));
 
-            Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(GameFlow.SceneForLevel(1)));
-            Assert.That(Object.FindFirstObjectByType<LevelBootstrap>(), Is.Not.Null);
-            Assert.That(GameFlow.CurrentLevel, Is.EqualTo(1));
+            movement.RequestJump();
+            yield return new WaitForSeconds(0.6f);
+            Assert.That(
+                menu.Screens.View.Screen,
+                Is.EqualTo(VisualScreen.Controls),
+                "pular na placa Como jogar abre a tela de controles"
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator MainMenu_Play_OpensReady_AndBothOnTheirPads_StartTheLevel()
+        {
+            yield return Load(GameFlow.MenuScene);
+            var menu = Object.FindFirstObjectByType<LevelBootstrap>();
+            var stage = menu.MenuStage;
+
+            // clica na placa de verdade: uma placa sem ouvinte tem de quebrar este teste
+            stage.Signs[0].onClick.Invoke();
+            Assert.That(stage.State, Is.EqualTo(MenuStage.Mode.Ready));
+            Assert.That(menu.Screens.View.IsHidden, Is.True, "o letreiro sai no Prontos?");
+            yield return new WaitForSeconds(0.3f);
+            Assert.That(stage.IsReady(1), Is.False);
+            Assert.That(stage.IsReady(2), Is.False);
+
+            // só um no vaso não começa a corrida
+            PutOnPad(menu.PlayerOne, stage.PadPosition(1));
+            yield return new WaitForSeconds(MenuStage.ReadyHoldSeconds + 0.5f);
+            Assert.That(stage.IsReady(1), Is.True);
+            Assert.That(stage.State, Is.EqualTo(MenuStage.Mode.Ready));
+
+            var level = stage.SelectedLevel;
+            PutOnPad(menu.PlayerTwo, stage.PadPosition(2));
+            yield return WaitForScene(GameFlow.SceneForLevel(level));
+
+            Assert.That(
+                SceneManager.GetActiveScene().name,
+                Is.EqualTo(GameFlow.SceneForLevel(level))
+            );
+            var loaded = Object.FindFirstObjectByType<LevelBootstrap>();
+            Assert.That(loaded, Is.Not.Null);
+            Assert.That(loaded.IsMenu, Is.False);
+            Assert.That(GameFlow.CurrentLevel, Is.EqualTo(level));
+        }
+
+        private static void PutOnPad(GameObject player, Vector2 pad)
+        {
+            var body = player.GetComponent<Rigidbody2D>();
+            body.linearVelocity = Vector2.zero;
+            body.position = new Vector2(pad.x, body.position.y);
+            player.transform.position = new Vector3(pad.x, player.transform.position.y, 0f);
         }
 
         [UnityTest]
         public IEnumerator EveryButton_EmitsItsSerializedCommand()
         {
             yield return Load(GameFlow.MenuScene);
-            var menu = Object.FindFirstObjectByType<MainMenuBootstrap>();
+            var menu = Object.FindFirstObjectByType<LevelBootstrap>();
 
             // Cópia das telas: tem os próprios ouvintes, mas ninguém do fluxo a
             // escuta, então clicar em "Sair" ou "Jogar" aqui não troca de cena.

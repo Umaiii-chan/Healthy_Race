@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_Food_Fish
   m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Collectibles.FoodData
   _id: fish
-  _displayName: Fish
+  _displayName: Peixe
   _category: 0
   _basePoints: 160
   _wellbeingDelta: 16

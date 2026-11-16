@@ -52,6 +52,11 @@ namespace HealthyRace.Level
             return _finishedPlayers.Contains(playerIndex);
         }
 
+        /// <summary>
+        /// Relógio usado para marcar a chegada. Sem ele, vale o tempo desde a carga da cena.
+        /// </summary>
+        public System.Func<float> Clock { get; set; }
+
         public float GetPlayerFinishTime(int playerIndex)
         {
             return _playerFinishTimes.TryGetValue(playerIndex, out var time) ? time : -1f;
@@ -155,7 +160,8 @@ namespace HealthyRace.Level
                 return false;
             }
 
-            var time = Time.timeSinceLevelLoad;
+            // o relógio da partida, quando há um: ele não conta a contagem de largada
+            var time = Clock != null ? Clock() : Time.timeSinceLevelLoad;
             _playerFinishTimes[playerIndex] = time;
 
             if (FirstFinishTime < 0f)

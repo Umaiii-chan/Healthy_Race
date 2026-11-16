@@ -26,8 +26,10 @@ namespace HealthyRace.Editor.Visuals
         public const string FoodDataRoot = Root + "ScriptableObjects/Food/";
         public const string CollectiblePrefabPath =
             Root + "Prefabs/Collectibles/PF_FoodCollectible.prefab";
-        public const string PlayerOneVisualPath = Root + "Prefabs/Visual/PF_VIS_Player_P1.prefab";
-        public const string PlayerTwoVisualPath = Root + "Prefabs/Visual/PF_VIS_Player_P2.prefab";
+
+        // os jogadores das fases são os corredores humanos: Zuri (P1) e Tom (P2)
+        public const string PlayerOneVisualPath = Root + "Prefabs/Visual/PF_VIS_Runner_Zuri.prefab";
+        public const string PlayerTwoVisualPath = Root + "Prefabs/Visual/PF_VIS_Runner_Tom.prefab";
 
         /// <summary>Mapa de cada fase e a cena que ele gera.</summary>
         public static readonly (string Map, string Scene)[] LevelScenes = BuildLevelList();

@@ -31,6 +31,37 @@ namespace HealthyRace.Player
             ApplyFatigueState(_fatigue?.State ?? FatigueState.Normal);
         }
 
+        /// <summary>
+        /// Esconde o visual provisório (halo, folha na cabeça, olhos e rótulo de fadiga) e
+        /// para de atualizá-lo. Com os corredores humanos o Bem-Estar aparece só na faixa
+        /// de cabeça, e uma folha na cabeça voltaria a fazer do personagem uma planta.
+        /// </summary>
+        public void HidePlaceholders()
+        {
+            foreach (
+                var placeholder in new[]
+                {
+                    _glowRenderer,
+                    _leafRenderer,
+                    _leftEyeRenderer,
+                    _rightEyeRenderer,
+                }
+            )
+            {
+                if (placeholder != null)
+                {
+                    placeholder.gameObject.SetActive(false);
+                }
+            }
+
+            if (_fatigueLabel != null)
+            {
+                _fatigueLabel.gameObject.SetActive(false);
+            }
+
+            enabled = false;
+        }
+
         private void OnDestroy()
         {
             Unsubscribe();

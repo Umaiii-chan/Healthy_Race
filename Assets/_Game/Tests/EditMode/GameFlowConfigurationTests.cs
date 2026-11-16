@@ -69,8 +69,17 @@ namespace HealthyRace.Tests.EditMode
                 .Select(i => (VisualCommand)commands.GetArrayElementAtIndex(i).enumValueIndex)
                 .ToArray();
 
+            // Jogar e Sair não são botões de tela: no menu jogável são placas penduradas
+            // (MenuStage), conferidas nos testes do palco
+            var onStage = new[] { VisualCommand.Play, VisualCommand.Quit };
             foreach (VisualCommand command in Enum.GetValues(typeof(VisualCommand)))
             {
+                if (onStage.Contains(command))
+                {
+                    Assert.That(present, Has.No.Member(command), $"{command} voltou à tela.");
+                    continue;
+                }
+
                 Assert.That(present, Does.Contain(command), $"Nenhum botão emite {command}.");
             }
         }
@@ -81,10 +90,28 @@ namespace HealthyRace.Tests.EditMode
             var scene = EditorSceneManager.OpenScene(MenuScenePath, OpenSceneMode.Single);
             Assert.That(scene.IsValid(), Is.True);
 
-            var menu = UnityEngine.Object.FindFirstObjectByType<MainMenuBootstrap>();
+            // o menu é a estufa jogável: a mesma montagem das fases, com o mapa de menu
+            var menu = UnityEngine.Object.FindFirstObjectByType<LevelBootstrap>();
             Assert.That(menu, Is.Not.Null);
-            var prefab = new SerializedObject(menu).FindProperty("_screensPrefab");
-            Assert.That(prefab.objectReferenceValue, Is.Not.Null);
+            var serialized = new SerializedObject(menu);
+            Assert.That(
+                serialized.FindProperty("_screensPrefab").objectReferenceValue,
+                Is.Not.Null
+            );
+            Assert.That(serialized.FindProperty("_inputActions").objectReferenceValue, Is.Not.Null);
+            var map = serialized.FindProperty("_map").objectReferenceValue as TextAsset;
+            Assert.That(map, Is.Not.Null);
+            var grid = LevelGrid.Parse(map.text);
+            Assert.That(grid.Theme["modo"], Is.EqualTo("menu"));
+            Assert.That(grid.Count(LevelGrid.SpawnOne), Is.EqualTo(1));
+            Assert.That(grid.Count(LevelGrid.SpawnTwo), Is.EqualTo(1));
+            Assert.That(
+                grid.Count(LevelGrid.DoorOne)
+                    + grid.Count(LevelGrid.Healthy)
+                    + grid.Count(LevelGrid.Fast),
+                Is.Zero,
+                "o menu não tem corrida: sem porta e sem comida"
+            );
         }
 
         [Test]

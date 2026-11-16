@@ -177,6 +177,61 @@ namespace HealthyRace.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator PerPlayerFood_GivesEachPlayerATurn_AndWaitsForTheOther()
+        {
+            var foodData = FoodData.Create("test_apple", "Apple", FoodCategory.Healthy, 100, 10);
+            var item = CreateCollectible(Vector2.zero, foodData, out var collectible);
+            var renderer = item.AddComponent<SpriteRenderer>();
+            collectible.Configure(foodData);
+            collectible.SetPerPlayer(2, _ => Color.magenta);
+            var collections = 0;
+            collectible.Collected += (_, _) => collections++;
+
+            var one = CreatePlayer("Player1", Vector2.zero, 50);
+            var oneWellbeing = one.GetComponent<WellbeingComponent>();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(oneWellbeing.CurrentValue, Is.EqualTo(60));
+            Assert.That(collectible.IsCollectedBy(oneWellbeing), Is.True);
+            Assert.That(collectible.IsCollected, Is.False, "ainda falta o outro jogador");
+            Assert.That(item.activeSelf, Is.True);
+            Assert.That(
+                renderer.color.a,
+                Is.EqualTo(FoodCollectible.WaitingAlpha).Within(0.001f),
+                "o item fica apagado enquanto espera"
+            );
+
+            // quem já pegou não pega de novo, nem saindo e voltando
+            one.transform.position = new Vector2(20f, 0f);
+            yield return new WaitForFixedUpdate();
+            one.transform.position = Vector2.zero;
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(oneWellbeing.CurrentValue, Is.EqualTo(60));
+            Assert.That(collections, Is.EqualTo(1));
+            one.transform.position = new Vector2(20f, 0f);
+            yield return new WaitForFixedUpdate();
+
+            var two = CreatePlayer("Player2", Vector2.zero, 50);
+            var twoWellbeing = two.GetComponent<WellbeingComponent>();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(twoWellbeing.CurrentValue, Is.EqualTo(60));
+            Assert.That(collectible.IsCollected, Is.True);
+            Assert.That(item.activeSelf, Is.False, "some quando os dois pegaram");
+            Assert.That(collections, Is.EqualTo(2));
+
+            collectible.ResetState();
+            Assert.That(collectible.IsCollected, Is.False);
+            Assert.That(collectible.IsCollectedBy(oneWellbeing), Is.False);
+            Assert.That(renderer.color.a, Is.EqualTo(1f).Within(0.001f));
+
+            Object.DestroyImmediate(foodData);
+        }
+
+        [UnityTest]
         public IEnumerator NonPlayerCollider_DoesNotTriggerFoodCollection()
         {
             var obstacle = new GameObject("Obstacle");

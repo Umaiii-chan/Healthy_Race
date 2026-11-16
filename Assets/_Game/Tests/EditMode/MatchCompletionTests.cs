@@ -60,6 +60,7 @@ namespace HealthyRace.Tests.EditMode
             var setup = CreateMatchSetup();
 
             setup.FinishLine.RecordFinish(1);
+            setup.Controller.Tick(1f);
             setup.FinishLine.RecordFinish(2);
 
             Assert.That(
@@ -114,12 +115,29 @@ namespace HealthyRace.Tests.EditMode
 
             // P2 finishes first
             setup.FinishLine.RecordFinish(2);
+            setup.Controller.Tick(1f);
             setup.FinishLine.RecordFinish(1);
 
             var results = setup.Controller.FinalResults;
             Assert.That(results.WinnerPlayerIndex, Is.EqualTo(2));
             Assert.That(results.Player2.Placement, Is.EqualTo(1));
             Assert.That(results.Player1.Placement, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void MatchCompletion_SameInstantArrival_IsATie_WhenEverythingElseIsEqual()
+        {
+            var setup = CreateMatchSetup();
+
+            // chegaram no mesmo passo: a ordem de processamento não pode decidir a corrida
+            setup.FinishLine.RecordFinish(2);
+            setup.FinishLine.RecordFinish(1);
+
+            var results = setup.Controller.FinalResults;
+            Assert.That(results.Race.Verdict, Is.EqualTo(HealthyRace.Scoring.RaceVerdict.Tie));
+            Assert.That(results.WinnerPlayerIndex, Is.Zero);
+            Assert.That(results.Player1.Stars, Is.GreaterThanOrEqualTo(1));
+            Assert.That(results.Player2.Stars, Is.GreaterThanOrEqualTo(1));
         }
 
         private MatchSetup CreateMatchSetup()

@@ -1,6 +1,6 @@
 using System;
+using HealthyRace.Core;
 using HealthyRace.Player;
-using HealthyRace.Puzzles;
 using HealthyRace.Scoring;
 using HealthyRace.UI;
 using HealthyRace.WellBeing;
@@ -25,6 +25,9 @@ namespace HealthyRace.Level
         public int FinalWellbeing;
         public int Placement;
         public PlayerScoreResult Score;
+
+        /// <summary>Estrelas da fase (0 a 3), independentes do rival.</summary>
+        public int Stars;
     }
 
     [Serializable]
@@ -36,6 +39,9 @@ namespace HealthyRace.Level
         public float TotalDuration;
         public bool HasDnf;
         public MatchScoreResult ScoreResult;
+
+        /// <summary>Resultado da corrida: quem chegou primeiro e por quanto.</summary>
+        public RaceResult Race;
     }
 
     /// <summary>
@@ -99,6 +105,9 @@ namespace HealthyRace.Level
 
         /// <summary>Tempo de partida decorrido (para de contar ao concluir).</summary>
         public float Elapsed => _elapsed;
+
+        /// <summary>Relógio parado (contagem de largada): o tempo de partida não anda.</summary>
+        public bool ClockPaused { get; set; }
         public int FirstFinisherIndex => _firstFinisherIndex;
         public MatchResultData FinalResults => _finalResults;
         public ScoreConfig ScoreConfig => _scoreConfig;
@@ -181,12 +190,14 @@ namespace HealthyRace.Level
         {
             if (_finishLine != null)
             {
+                _finishLine.Clock = () => _elapsed;
                 _finishLine.PlayerCrossedFinish -= HandlePlayerCrossedFinish;
                 _finishLine.PlayerCrossedFinish += HandlePlayerCrossedFinish;
             }
 
             if (_secondFinishLine != null && _secondFinishLine != _finishLine)
             {
+                _secondFinishLine.Clock = () => _elapsed;
                 _secondFinishLine.PlayerCrossedFinish -= HandlePlayerCrossedFinish;
                 _secondFinishLine.PlayerCrossedFinish += HandlePlayerCrossedFinish;
             }
@@ -241,7 +252,7 @@ namespace HealthyRace.Level
         /// </summary>
         public void Tick(float deltaTime)
         {
-            if (_state == MatchCompletionState.Concluded)
+            if (_state == MatchCompletionState.Concluded || ClockPaused)
             {
                 return;
             }
@@ -577,7 +588,13 @@ namespace HealthyRace.Level
             r1.Score = scoreResult.Player1;
             r2.Score = scoreResult.Player2;
 
-            int winner = scoreResult.WinnerPlayerIndex;
+            // D1: a corrida decide a fase; os pontos ficam como detalhe
+            var balance = BalanceConfig.Current;
+            var race = RaceOutcome.Decide(p1Input, p2Input);
+            var targetTime = _scoreConfig != null ? _scoreConfig.TargetTimeSeconds : 0f;
+            r1.Stars = RaceOutcome.Stars(p1Input, targetTime, balance.StarWellbeingThreshold);
+            r2.Stars = RaceOutcome.Stars(p2Input, targetTime, balance.StarWellbeingThreshold);
+            int winner = balance.VictoryByArrival ? race.Winner : scoreResult.WinnerPlayerIndex;
 
             return new MatchResultData
             {
@@ -588,6 +605,7 @@ namespace HealthyRace.Level
                 TotalDuration = Mathf.Max(_elapsed, Mathf.Max(p1Time, p2Time)),
                 HasDnf = r1.IsDnf || r2.IsDnf,
                 ScoreResult = scoreResult,
+                Race = race,
             };
         }
 

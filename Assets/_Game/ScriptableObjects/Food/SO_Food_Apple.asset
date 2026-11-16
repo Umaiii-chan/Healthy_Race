@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_Food_Apple
   m_EditorClassIdentifier: 
   _id: apple
-  _displayName: Apple
+  _displayName: "Ma\xE7\xE3"
   _category: 0
   _basePoints: 100
   _wellbeingDelta: 10
