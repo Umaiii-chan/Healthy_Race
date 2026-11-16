@@ -37,8 +37,28 @@ namespace HealthyRace.Level
             bandRect.anchorMax = new Vector2(1f, 1f);
             bandRect.pivot = new Vector2(0.5f, 1f);
             bandRect.sizeDelta = new Vector2(0f, LevelBootstrap.HudBandPixels);
-            band.GetComponent<Image>().color = new Color(0.08f, 0.13f, 0.1f);
+            // a faixa é o vão de cima da estufa: vidro claro, com uma viga de madeira
+            // embaixo, de onde o resto da fase começa
+            band.GetComponent<Image>().color = new Color32(0xD8, 0xEC, 0xE2, 255);
+            band.GetComponent<Image>().raycastTarget = false;
+            Beam(band.transform, 12f, new Color32(0x1E, 0x2A, 0x22, 255));
+            Beam(band.transform, 8f, new Color32(0xE3, 0xA3, 0x5E, 255), 2f);
             return canvasObject;
+        }
+
+        private static void Beam(Transform band, float height, Color color, float lift = 0f)
+        {
+            var beam = new GameObject("Viga", typeof(RectTransform), typeof(Image));
+            beam.transform.SetParent(band, false);
+            var rect = (RectTransform)beam.transform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(0f, lift);
+            rect.sizeDelta = new Vector2(0f, height);
+            var image = beam.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
         }
 
         /// <summary>HUD do jogador 1 no canto esquerdo, do jogador 2 no direito.</summary>

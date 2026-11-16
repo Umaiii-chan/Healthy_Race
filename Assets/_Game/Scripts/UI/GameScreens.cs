@@ -33,6 +33,18 @@ namespace HealthyRace.UI
         public bool IsMatchConcluded => _matchConcluded;
 
         /// <summary>
+        /// Quando definido, "Jogar" chama isto em vez de abrir a fase 1: o menu jogável
+        /// passa antes pelo "Prontos?".
+        /// </summary>
+        public System.Action PlayOverride { get; set; }
+
+        /// <summary>Mostra o menu principal (o letreiro; as opções são as placas do palco).</summary>
+        public void ShowMainMenu() => ShowScreen(VisualScreen.MainMenu);
+
+        /// <summary>Esconde todas as telas.</summary>
+        public void HideScreens() => _view.Hide();
+
+        /// <summary>
         /// Instancia as telas. <paramref name="inMatch"/> começa com tudo escondido e
         /// habilita a pausa; fora de partida abre no menu principal.
         /// </summary>
@@ -223,7 +235,15 @@ namespace HealthyRace.UI
             switch (command)
             {
                 case VisualCommand.Play:
-                    GameFlow.LoadLevel(1);
+                    if (PlayOverride != null)
+                    {
+                        PlayOverride();
+                    }
+                    else
+                    {
+                        GameFlow.LoadLevel(1);
+                    }
+
                     break;
                 case VisualCommand.Continue:
                     Resume();

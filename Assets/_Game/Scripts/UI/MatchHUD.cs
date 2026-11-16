@@ -94,6 +94,29 @@ namespace HealthyRace.UI
             );
         }
 
+        /// <summary>Janela final ou mensagem de estado em exibição; vazio quando não há.</summary>
+        public string StatusText =>
+            _finalWindowText != null && _finalWindowText.gameObject.activeSelf
+                ? _finalWindowText.text
+                : string.Empty;
+
+        /// <summary>
+        /// Mostra ou esconde o painel de texto. Com o HUD da estufa montado ele fica
+        /// escondido, mas segue recebendo os eventos: os números continuam disponíveis.
+        /// </summary>
+        public void SetLegacyPanelVisible(bool visible)
+        {
+            var group = GetComponent<CanvasGroup>();
+            if (group == null)
+            {
+                group = gameObject.AddComponent<CanvasGroup>();
+            }
+
+            group.alpha = visible ? 1f : 0f;
+            group.blocksRaycasts = visible;
+            group.interactable = visible;
+        }
+
         public void SetLevelName(string levelName)
         {
             if (_levelText != null)

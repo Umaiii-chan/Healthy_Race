@@ -206,6 +206,23 @@ namespace HealthyRace.UI
             Bind(wellbeing, fatigue);
         }
 
+        /// <summary>
+        /// Mostra ou esconde o painel de texto. Com o HUD da estufa montado ele fica
+        /// escondido, mas segue recebendo os eventos: os números continuam disponíveis.
+        /// </summary>
+        public void SetLegacyPanelVisible(bool visible)
+        {
+            var group = GetComponent<CanvasGroup>();
+            if (group == null)
+            {
+                group = gameObject.AddComponent<CanvasGroup>();
+            }
+
+            group.alpha = visible ? 1f : 0f;
+            group.blocksRaycasts = visible;
+            group.interactable = visible;
+        }
+
         public void Bind(WellbeingComponent wellbeing, FatigueComponent fatigue)
         {
             Unbind();

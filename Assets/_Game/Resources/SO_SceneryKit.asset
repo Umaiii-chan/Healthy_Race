@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55810d960b78c084383527fbd209f416, type: 3}
+  m_Name: SO_SceneryKit
+  m_EditorClassIdentifier: HealthyRace.Game::HealthyRace.Visuals.SceneryKit
+  ForkRight: {fileID: 21300000, guid: 54542dfb6ffed294cb9b6dba1dc70be9, type: 3}
+  ForkLeft: {fileID: 21300000, guid: 0b3ca31d9be694546a235d80e240aae3, type: 3}
+  LeverSign: {fileID: 21300000, guid: aff51e9386e9bf141aeed32697dc600e, type: 3}
+  FastBadge: {fileID: 21300000, guid: e0817fd73b6ece64a8c7b7c749b9afe0, type: 3}
+  Spikes: {fileID: 21300000, guid: 5d1e6a145fb2cfd4e81d225c0e5996f3, type: 3}
+  Hazard: {fileID: 21300000, guid: 8e418590842e62a4bba10a072862e272, type: 3}
+  Gate: {fileID: 21300000, guid: c7ccc169feca3fc40b915f3376f03594, type: 3}
+  GateCap: {fileID: 21300000, guid: d0c243f7b787d754a8f41165cc32ed11, type: 3}
+  Lift: {fileID: 21300000, guid: 7983ed9d3bfd0a442985c201a3b5dacf, type: 3}
+  LeverBase: {fileID: 21300000, guid: 90c4467de079f8345b155dd31039c09b, type: 3}
+  Knob: {fileID: 21300000, guid: 63e7174d5335fbe45aa418d1432c4bc3, type: 3}
+  HangingPot: {fileID: 21300000, guid: 800dc840e614f864db723714dfc70f4f, type: 3}
+  Light: {fileID: 21300000, guid: cb023e4710e6a424e8c9f22591d0eaf1, type: 3}
+  Landmarks:
+  - {fileID: 21300000, guid: 72e0997c53154204da3d8956b6a9c47f, type: 3}
+  - {fileID: 21300000, guid: 19702458bc718e648bd4a04e802e485e, type: 3}
+  - {fileID: 21300000, guid: fdbe8f29158eaae42a7f9f10376543a6, type: 3}
+  - {fileID: 21300000, guid: e31afd21008232b4697d73a8c9b79288, type: 3}
+  - {fileID: 21300000, guid: 722146b6d035ed446ae824a9c92608bf, type: 3}

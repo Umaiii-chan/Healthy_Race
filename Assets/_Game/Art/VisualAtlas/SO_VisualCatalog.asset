@@ -18,6 +18,20 @@ MonoBehaviour:
   - {fileID: -470792436, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -1653200035, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
   - {fileID: -850898946, guid: 1e69f1a360da1954cb95a915a278d97c, type: 3}
+  RunnerPortraits:
+  - {fileID: -1623961819, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -714461509, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -391697702, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: 1481112588, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: 611241918, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: 1453704536, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -1650164152, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -96638807, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -1854699224, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: -1126618120, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  RunnerPoses:
+  - {fileID: 1726241621, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
+  - {fileID: 282853077, guid: 7dd47a050ff698d4da7a702aa58dedeb, type: 3}
   Skins:
   - Head: {fileID: -1042718733, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
     Face: {fileID: 1529997596, guid: 207e94bd4759ef841bafc0b92bc1ef87, type: 3}
@@ -127,4 +141,4 @@ MonoBehaviour:
   Ring: {fileID: 21300000, guid: a0ac34d1ca597d54eaea9b4a4fdff852, type: 2}
   SpriteMaterial: {fileID: 2100000, guid: 357ab54b5c245b94f900ffe5a741d6f1, type: 2}
   PlayerOne: {r: 0.19215687, g: 0.5568628, b: 0.9411765, a: 1}
-  PlayerTwo: {r: 0.7529412, g: 0.41568628, b: 0.92156863, a: 1}
+  PlayerTwo: {r: 0.9490196, g: 0.6, b: 0.2901961, a: 1}

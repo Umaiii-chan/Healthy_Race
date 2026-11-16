@@ -39,6 +39,9 @@ namespace HealthyRace.Visuals
         [SerializeField]
         private CharacterRig _rig;
 
+        [SerializeField]
+        private RunnerRig _runner;
+
         private const float BlockedSecondsToPush = 0.08f;
         private const float FeetOffset = 0.6f;
 
@@ -63,6 +66,9 @@ namespace HealthyRace.Visuals
         public int PresentationUpdates { get; private set; }
         public CharacterRig Rig => _rig;
 
+        /// <summary>Rig dos corredores humanos (Zuri e Tom); nulo no rig antigo dos brotos.</summary>
+        public RunnerRig Runner => _runner;
+
         /// <summary>Verdadeiro enquanto o jogador anda contra algo sólido (caixa, parede).</summary>
         public bool IsBlocked { get; private set; }
 
@@ -70,6 +76,16 @@ namespace HealthyRace.Visuals
         public void ConfigureRig(CharacterRig rig)
         {
             _rig = rig;
+            PresentWellbeing(_lastWellbeing ?? 100);
+        }
+
+        /// <summary>
+        /// Liga o rig dos corredores. O Bem-Estar vai para a faixa de cabeça e o estado do
+        /// lanche escolhe o rosto e a passada; o corpo e a pele não mudam.
+        /// </summary>
+        public void ConfigureRunner(RunnerRig runner)
+        {
+            _runner = runner;
             PresentWellbeing(_lastWellbeing ?? 100);
         }
 
@@ -151,7 +167,9 @@ namespace HealthyRace.Visuals
         public void PresentWellbeing(int value)
         {
             var next = VisualCatalog.AppearanceFor(value);
-            if (_catalog != null && (_body != null || _rig != null))
+            if (_runner != null)
+                _runner.SetWellbeing(value / (float)WellbeingComponent.MaximumValue);
+            if (_catalog != null && (_body != null || _rig != null || _runner != null))
             {
                 if (Application.isPlaying && Appearance != next)
                     VisualFeedback.Emit(
@@ -233,6 +251,8 @@ namespace HealthyRace.Visuals
                 _animator.SetInteger("Action", (int)action);
             if (_rig != null)
                 _rig.SetExpression(ExpressionFor(action));
+            if (_runner != null)
+                SyncRunner();
             // poeira nos dois contatos com o chão: a saída do pulo e a aterrissagem
             if (
                 Application.isPlaying
@@ -288,6 +308,11 @@ namespace HealthyRace.Visuals
                 _rig.ReduceMotion = ReduceFlashes;
             }
 
+            if (_runner != null)
+            {
+                _runner.ReduceMotion = ReduceFlashes;
+            }
+
             if (_movement == null)
             {
                 _blockedFor = 0f;
@@ -305,6 +330,12 @@ namespace HealthyRace.Visuals
                 _rig.SetExpression(ExpressionFor(_action));
             }
 
+            if (_runner != null)
+            {
+                _runner.SetFacing(input);
+                SyncRunner();
+            }
+
             var pushing = Mathf.Abs(input) > 0.5f && _movement.IsGrounded && HasSolidAhead(input);
             _blockedFor = pushing ? _blockedFor + Time.deltaTime : 0f;
             IsBlocked = _blockedFor >= BlockedSecondsToPush;
@@ -319,6 +350,64 @@ namespace HealthyRace.Visuals
             || (_movement != null && _movement.IsCrashing)
                 ? CharacterExpression.Effort
                 : CharacterExpression.Normal;
+
+        /// <summary>
+        /// Rosto e animação do corredor a partir da ação e do estado do lanche. Chamado a
+        /// cada quadro: o pico e a queda começam e acabam no meio de uma corrida, sem a
+        /// ação mudar.
+        /// </summary>
+        private void SyncRunner()
+        {
+            var rushing = _movement != null && _movement.IsRushing;
+            var crashing = _movement != null && _movement.IsCrashing;
+            _runner.SetFace(RunnerFaceFor(_action, rushing, crashing));
+            if (_animator == null || _animator.runtimeAnimatorController == null)
+                return;
+            var animation = RunnerAnimationFor(_action, rushing, crashing);
+            if (_animator.GetInteger("Action") != animation)
+                _animator.SetInteger("Action", animation);
+        }
+
+        /// <summary>
+        /// Número de ação do controlador dos corredores: correndo no pico usa a passada
+        /// de pico, correndo na queda usa o passo arrastado; o resto é a própria ação.
+        /// </summary>
+        public static int RunnerAnimationFor(VisualAction action, bool rushing, bool crashing)
+        {
+            if (action == VisualAction.Move)
+            {
+                if (rushing)
+                    return RunnerRig.RushAction;
+                if (crashing)
+                    return RunnerRig.CrashAction;
+            }
+
+            return (int)action;
+        }
+
+        /// <summary>Rosto do corredor: o fim de partida e a fadiga vêm antes do lanche.</summary>
+        public static RunnerFace RunnerFaceFor(VisualAction action, bool rushing, bool crashing)
+        {
+            switch (action)
+            {
+                case VisualAction.Victory:
+                    return RunnerFace.Rush;
+                case VisualAction.Defeat:
+                case VisualAction.Fatigue:
+                    return RunnerFace.Effort;
+            }
+
+            if (crashing)
+                return RunnerFace.Sleepy;
+            if (rushing)
+                return RunnerFace.Rush;
+            return
+                action == VisualAction.Push
+                || action == VisualAction.Jump
+                || action == VisualAction.Interact
+                ? RunnerFace.Effort
+                : RunnerFace.Neutral;
+        }
 
         /// <summary>Consulta (só leitura) se há algo sólido encostado na frente do jogador.</summary>
         private bool HasSolidAhead(float direction)
