@@ -33,10 +33,10 @@ namespace HealthyRace.Level
         public const float FixedDeltaTime = 0.02f;
 
         /// <summary>Prazo do segundo jogador depois que o primeiro chega à porta.</summary>
-        public const float PartnerWindowSeconds = 45f;
+        public static float PartnerWindowSeconds => BalanceConfig.Current.PartnerWindowSeconds;
 
         /// <summary>Duração máxima de uma partida.</summary>
-        public const float MatchTimeLimitSeconds = 300f;
+        public static float MatchTimeLimitSeconds => BalanceConfig.Current.MatchTimeLimitSeconds;
 
         public const float LiftSpeed = 5f;
         public const float GateOpenDelay = 1.2f;
@@ -131,6 +131,7 @@ namespace HealthyRace.Level
         private MatchHUD _matchHud;
         private SharedCameraController _cameraController;
         private MatchCompletionController _matchController;
+        private MatchRecorder _recorder;
         private MatchResultsPanel _resultsPanel;
         private GameScreens _screens;
 
@@ -813,7 +814,9 @@ namespace HealthyRace.Level
                 {
                     AudioService.Instance.PlaySfx(AudioClipId.Sfx_Lever);
                     // quem puxou (o mais perto da alavanca) ganha os pontos do mecanismo
-                    _matchController?.RegisterPuzzleSolved(ClosestPlayer(lever.transform.position));
+                    var puller = ClosestPlayer(lever.transform.position);
+                    _matchController?.RegisterPuzzleSolved(puller);
+                    _recorder?.Lever(puller);
                     StartCoroutine(OpenGateAfterDelay(door));
                 };
                 _gates.Add((lever, door));
@@ -976,6 +979,16 @@ namespace HealthyRace.Level
             {
                 hud.RegisterFoodCollected(collectible.FoodData);
                 hud.AddScore(collectible.FoodData.BasePoints);
+            }
+
+            if (_recorder != null && collector != null)
+            {
+                _recorder.Food(
+                    hud == _playerOneHud ? 1 : 2,
+                    collectible.FoodData.Id,
+                    healthy,
+                    collector.CurrentValue
+                );
             }
 
             if (_visualCatalog != null)
@@ -1255,6 +1268,13 @@ namespace HealthyRace.Level
             var fatigue = player.GetComponent<FatigueComponent>();
             if (fatigue != null)
             {
+                var balance = BalanceConfig.Current;
+                fatigue.Configure(
+                    balance.FatigueDurationSeconds,
+                    balance.FatigueRecoveryWellbeing,
+                    balance.FatigueTriggerThreshold,
+                    balance.FatigueRearmThreshold
+                );
                 fatigue.StateChanged += state =>
                 {
                     if (state == FatigueState.Fatigued)
@@ -1285,71 +1305,20 @@ namespace HealthyRace.Level
 
         private void CreateCamera()
         {
-            var cameraObject = new GameObject(
-                "Camera Compartilhada",
-                typeof(Camera),
-                typeof(AudioListener)
+            _cameraController = LevelCameraSetup.Create(
+                transform,
+                _grid,
+                _spawnOne,
+                _spawnTwo,
+                _playerOne.transform,
+                _playerTwo.transform,
+                _foliage
             );
-            cameraObject.transform.SetParent(transform, false);
-            cameraObject.tag = "MainCamera";
-            var camera = cameraObject.GetComponent<Camera>();
-            camera.orthographic = true;
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.12f, 0.19f, 0.15f);
-            // a faixa de cima é do HUD: a câmera desenha só abaixo dela
-            camera.rect = new Rect(0f, 0f, 1f, 1f - HudBandPixels / 1080f);
-            camera.orthographicSize = MinimumViewHeight * 0.5f;
-            var midpoint = (_spawnOne + _spawnTwo) * 0.5f;
-            cameraObject.transform.position = new Vector3(midpoint.x, midpoint.y, -10f);
-
-            _cameraController = cameraObject.AddComponent<SharedCameraController>();
-            _cameraController.Configure(_playerOne.transform, _playerTwo.transform);
-            _cameraController.SetPlayableBounds(
-                new Bounds(
-                    new Vector3(_grid.Width * 0.5f, _grid.Height * 0.5f, 0f),
-                    new Vector3(_grid.Width, _grid.Height, 20f)
-                ),
-                true
-            );
-            // afasta até caber a fase inteira, na altura ou na largura (fases largas)
-            var viewAspect = 1920f / (1080f - HudBandPixels);
-            _cameraController.SetZoomLimits(
-                MinimumViewHeight * 0.5f,
-                Mathf.Max(_grid.Height * 0.5f, _grid.Width * 0.5f / viewAspect)
-            );
-            _cameraController.SetPadding(new Vector2(4f, 3f));
-            if (_foliage != null)
-            {
-                _foliage.Configure(cameraObject.transform, FoliageFollowFactor, 0f, 0f);
-            }
         }
 
         private void CreateHud()
         {
-            var canvasObject = new GameObject(
-                "HUD",
-                typeof(RectTransform),
-                typeof(Canvas),
-                typeof(CanvasScaler),
-                typeof(GraphicRaycaster)
-            );
-            canvasObject.transform.SetParent(transform, false);
-            var canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 10;
-            var scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 1f;
-
-            var band = new GameObject("FaixaDoHud", typeof(RectTransform), typeof(Image));
-            band.transform.SetParent(canvasObject.transform, false);
-            var bandRect = (RectTransform)band.transform;
-            bandRect.anchorMin = new Vector2(0f, 1f);
-            bandRect.anchorMax = new Vector2(1f, 1f);
-            bandRect.pivot = new Vector2(0.5f, 1f);
-            bandRect.sizeDelta = new Vector2(0f, HudBandPixels);
-            band.GetComponent<Image>().color = new Color(0.08f, 0.13f, 0.1f);
+            var canvasObject = LevelHudSetup.CreateCanvas(transform);
 
             _matchHud = new GameObject("Match HUD", typeof(RectTransform)).AddComponent<MatchHUD>();
             _matchHud.Initialize(canvasObject.transform, Vector2.zero);
@@ -1364,33 +1333,19 @@ namespace HealthyRace.Level
             var p1Fatigue = _playerOne.GetComponent<FatigueComponent>();
             var p2Fatigue = _playerTwo.GetComponent<FatigueComponent>();
 
-            _playerOneHud = new GameObject(
-                "P1 HUD",
-                typeof(RectTransform)
-            ).AddComponent<PlayerHUD>();
-            _playerOneHud.Initialize(
+            _playerOneHud = LevelHudSetup.CreatePlayerHud(
                 canvasObject.transform,
-                "P1",
+                1,
                 PlayerColor(1),
                 p1Wellbeing,
-                p1Fatigue,
-                new Vector2(0f, 1f),
-                new Vector2(0f, 1f),
-                new Vector2(12f, -4f)
+                p1Fatigue
             );
-            _playerTwoHud = new GameObject(
-                "P2 HUD",
-                typeof(RectTransform)
-            ).AddComponent<PlayerHUD>();
-            _playerTwoHud.Initialize(
+            _playerTwoHud = LevelHudSetup.CreatePlayerHud(
                 canvasObject.transform,
-                "P2",
+                2,
                 PlayerColor(2),
                 p2Wellbeing,
-                p2Fatigue,
-                new Vector2(1f, 1f),
-                new Vector2(1f, 1f),
-                new Vector2(-12f, -4f)
+                p2Fatigue
             );
 
             _screens = GameScreens.Create(_screensPrefab, _inputActions, true, transform);
@@ -1420,14 +1375,23 @@ namespace HealthyRace.Level
                 20,
                 _playerOneHud,
                 _playerTwoHud,
-                null,
                 scoreConfig: Scoring.ScoreConfig.CreateForRace(TargetTimeSeconds),
                 secondFinishLine: _playerTwoDoor,
                 requireBothAtDoors: false,
                 timeLimitSeconds: MatchTimeLimitSeconds
             );
+            StartRecording(p1Wellbeing, p2Wellbeing, p1Fatigue, p2Fatigue);
             _matchController.MatchConcluded += results =>
             {
+                RecordResults(results, p1Fatigue, p2Fatigue);
+                foreach (var result in new[] { results.Player1, results.Player2 })
+                {
+                    if (!result.IsDnf)
+                    {
+                        SaveGame.RecordFinish(_grid.LevelNumber, result.FinishTime);
+                    }
+                }
+
                 AudioService.Instance.PlaySfx(
                     results.WinnerPlayerIndex == 0 ? AudioClipId.Sfx_Tie : AudioClipId.Sfx_Victory
                 );
@@ -1439,6 +1403,95 @@ namespace HealthyRace.Level
                     ToResultData(results.Player2, _playerTwoHud, p2Fatigue)
                 );
             };
+        }
+
+        // =====================================================================
+        // Registro de partida (playtest)
+        // =====================================================================
+        private void StartRecording(
+            WellbeingComponent p1Wellbeing,
+            WellbeingComponent p2Wellbeing,
+            FatigueComponent p1Fatigue,
+            FatigueComponent p2Fatigue
+        )
+        {
+            if (!MatchRecorder.Enabled)
+            {
+                return;
+            }
+
+            _recorder = gameObject.AddComponent<MatchRecorder>();
+            var p1Movement = _playerOne.GetComponent<PlayerMovement>();
+            var p2Movement = _playerTwo.GetComponent<PlayerMovement>();
+            _recorder.Begin(
+                _grid,
+                TargetTimeSeconds,
+                () => _matchController != null ? _matchController.Elapsed : 0f,
+                _playerOne.transform,
+                _playerTwo.transform,
+                i => (i == 1 ? p1Wellbeing : p2Wellbeing)?.CurrentValue ?? 0,
+                i => (i == 1 ? p1Movement : p2Movement)?.IsSluggish ?? false
+            );
+            if (p1Fatigue != null)
+            {
+                p1Fatigue.StateChanged += state =>
+                {
+                    if (state == FatigueState.Fatigued)
+                        _recorder?.Fatigue(1);
+                };
+            }
+
+            if (p2Fatigue != null)
+            {
+                p2Fatigue.StateChanged += state =>
+                {
+                    if (state == FatigueState.Fatigued)
+                        _recorder?.Fatigue(2);
+                };
+            }
+
+            foreach (var spike in _spikes)
+            {
+                spike.PlayerPenalized += (player, _) => _recorder?.Spike(player);
+            }
+
+            _matchController.PlayerFinished += (player, seconds) =>
+                _recorder?.Finish(player, seconds);
+        }
+
+        private void RecordResults(
+            MatchResultData results,
+            FatigueComponent p1Fatigue,
+            FatigueComponent p2Fatigue
+        )
+        {
+            if (_recorder == null)
+            {
+                return;
+            }
+
+            foreach (
+                var (result, hud, fatigue) in new[]
+                {
+                    (results.Player1, _playerOneHud, p1Fatigue),
+                    (results.Player2, _playerTwoHud, p2Fatigue),
+                }
+            )
+            {
+                _recorder.Result(
+                    result.PlayerIndex,
+                    !result.IsDnf,
+                    result.FinishTime,
+                    result.Placement,
+                    result.Score.FinalScore,
+                    result.FinalWellbeing,
+                    hud != null ? hud.HealthyFoodCount : 0,
+                    hud != null ? hud.UltraProcessedFoodCount : 0,
+                    fatigue != null ? fatigue.FatigueEpisodeCount : 0
+                );
+            }
+
+            _recorder.End(results.WinnerPlayerIndex);
         }
 
         private static PlayerResultData ToResultData(

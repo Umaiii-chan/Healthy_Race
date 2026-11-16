@@ -81,7 +81,7 @@ namespace HealthyRace.Visuals
             + $"Alimentos saudáveis / ultra     {data.Player.HealthyFoods} / {data.Player.UltraProcessedFoods}\n"
             + $"Bem-Estar     {data.Player.Wellbeing}/100\nFadigas     {data.Player.FatigueEpisodes}\n"
             + $"Tempo     {(data.Finished ? Clock(data.Seconds) : "Não concluiu")}\n\n"
-            + $"Alimentos     +{Number(data.HealthyPoints)}\nPuzzle     +{Number(data.PuzzlePoints)}\n"
+            + $"Alimentos     +{Number(data.HealthyPoints)}\nAlavancas     +{Number(data.PuzzlePoints)}\n"
             + $"Bônus de tempo     +{Number(data.TimeBonus)}\nBônus de chegada     +{Number(data.ArrivalBonus)}\n"
             + $"Bônus de Bem-Estar     +{Number(data.WellbeingBonus)}\n\n"
             + $"Penalidade ultra     −{Number(data.UltraPenalty)}\nPenalidade fadiga     −{Number(data.FatiguePenalty)}\n"

@@ -209,7 +209,7 @@ def build(spec):
             put(4, l, "C")
         if last:
             for dy in (0, 1):
-                put(W - 5, s + dy, "P")
+                put(W - 4, s + dy, "P")
                 put(W - 3, s + dy, "Q")
         else:
             for x in lay.turn:

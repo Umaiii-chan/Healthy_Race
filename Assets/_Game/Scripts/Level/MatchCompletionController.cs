@@ -89,7 +89,6 @@ namespace HealthyRace.Level
         private WellbeingComponent _playerTwoWellbeing;
         private PlayerHUD _playerOneHud;
         private PlayerHUD _playerTwoHud;
-        private CooperativePuzzleController _finalPuzzle;
         private MatchResultData _finalResults;
 
         public MatchCompletionState State => _state;
@@ -141,7 +140,6 @@ namespace HealthyRace.Level
             int dnfPenalty = 20,
             PlayerHUD p1Hud = null,
             PlayerHUD p2Hud = null,
-            CooperativePuzzleController finalPuzzle = null,
             ScoreConfig scoreConfig = null,
             FinishLine secondFinishLine = null,
             bool requireBothAtDoors = false,
@@ -164,7 +162,6 @@ namespace HealthyRace.Level
             _dnfPenalty = Mathf.Max(0, dnfPenalty);
             _playerOneHud = p1Hud;
             _playerTwoHud = p2Hud;
-            _finalPuzzle = finalPuzzle;
             _scoreConfig = scoreConfig;
 
             BindFinishLine();
@@ -543,10 +540,8 @@ namespace HealthyRace.Level
             var p1Fatigue = _playerOne != null ? _playerOne.GetComponent<FatigueComponent>() : null;
             var p2Fatigue = _playerTwo != null ? _playerTwo.GetComponent<FatigueComponent>() : null;
 
-            int p1Puzzles =
-                (_finalPuzzle != null && _finalPuzzle.IsSolved ? 1 : 0) + _puzzlesSolved[1];
-            int p2Puzzles =
-                (_finalPuzzle != null && _finalPuzzle.IsSolved ? 1 : 0) + _puzzlesSolved[2];
+            int p1Puzzles = _puzzlesSolved[1];
+            int p2Puzzles = _puzzlesSolved[2];
 
             var p1Input = new ScoreInput
             {

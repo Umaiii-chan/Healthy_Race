@@ -31,8 +31,7 @@ namespace HealthyRace.Tests.EditMode
             AssertPlayerMap(
                 "Player1",
                 new[] { "<Keyboard>/a", "<Keyboard>/d" },
-                new[] { "<Keyboard>/w", "<Keyboard>/space" },
-                "<Keyboard>/e"
+                new[] { "<Keyboard>/w", "<Keyboard>/space" }
             );
         }
 
@@ -42,8 +41,7 @@ namespace HealthyRace.Tests.EditMode
             AssertPlayerMap(
                 "Player2",
                 new[] { "<Keyboard>/leftArrow", "<Keyboard>/rightArrow" },
-                new[] { "<Keyboard>/upArrow" },
-                "<Keyboard>/rightCtrl"
+                new[] { "<Keyboard>/upArrow" }
             );
         }
 
@@ -98,8 +96,7 @@ namespace HealthyRace.Tests.EditMode
         private static void AssertPlayerMap(
             string mapName,
             IReadOnlyCollection<string> moveBindings,
-            IReadOnlyCollection<string> jumpBindings,
-            string interactBinding
+            IReadOnlyCollection<string> jumpBindings
         )
         {
             var map = AssetDatabase
@@ -107,7 +104,6 @@ namespace HealthyRace.Tests.EditMode
                 .FindActionMap(mapName, true);
             var move = map.FindAction("Move", true);
             var jump = map.FindAction("Jump", true);
-            var interact = map.FindAction("Interact", true);
 
             Assert.That(move.type, Is.EqualTo(InputActionType.Value));
             Assert.That(move.expectedControlType, Is.EqualTo("Vector2"));
@@ -117,7 +113,7 @@ namespace HealthyRace.Tests.EditMode
             );
             Assert.That(GetKeyboardPaths(move), Is.EquivalentTo(moveBindings));
             Assert.That(GetKeyboardPaths(jump), Is.EquivalentTo(jumpBindings));
-            Assert.That(GetKeyboardPaths(interact), Is.EquivalentTo(new[] { interactBinding }));
+            Assert.That(map.FindAction("Interact", false), Is.Null, "Interagir saiu do jogo (D6).");
         }
 
         private static IEnumerable<string> GetKeyboardPaths(InputAction action)
