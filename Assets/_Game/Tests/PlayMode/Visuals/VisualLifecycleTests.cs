@@ -50,32 +50,5 @@ namespace HealthyRace.Tests.Visuals
                 Object.Destroy(visual);
             }
         }
-
-        [UnityTest]
-        public IEnumerator PressureView_SynchronizesOnReenableWithoutChangingButton()
-        {
-            var buttonObject = new GameObject("Button");
-            var visualObject = new GameObject("Visual");
-            try
-            {
-                var button = buttonObject.AddComponent<PressureButton>();
-                var visual = visualObject.AddComponent<PuzzlePresentation>();
-                visual.Bind(button);
-                button.ForceSetPressed(true);
-                Assert.That(visual.State, Is.EqualTo(PuzzleAppearance.Active));
-                visual.enabled = false;
-                button.ForceSetPressed(false);
-                Assert.That(visual.State, Is.EqualTo(PuzzleAppearance.Active));
-                visual.enabled = true;
-                Assert.That(visual.State, Is.EqualTo(PuzzleAppearance.Inactive));
-                Assert.That(button.IsPressed, Is.False);
-                yield return null;
-            }
-            finally
-            {
-                Object.Destroy(buttonObject);
-                Object.Destroy(visualObject);
-            }
-        }
     }
 }

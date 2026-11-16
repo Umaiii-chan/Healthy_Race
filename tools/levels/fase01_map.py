@@ -184,7 +184,7 @@ def build_floor(g, k):
         put(4, l, "C")
     if last:
         for dy in (0, 1):
-            put(59, s + dy, "P")
+            put(60, s + dy, "P")
             put(61, s + dy, "Q")
     else:
         # elevador do fim do andar até o longo do andar de cima. Embaixo dele há

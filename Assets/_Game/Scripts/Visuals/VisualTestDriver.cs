@@ -185,62 +185,42 @@ namespace HealthyRace.Visuals
             AddButton(go.transform, "Galeria", 240, () => _screen.Show(VisualScreen.Gameplay));
             AddButton(go.transform, "Pausa", 460, () => _screen.Show(VisualScreen.Pause));
             AddButton(go.transform, "Resultados", 680, () => _screen.Show(VisualScreen.Results));
-            _animationLabel = AddButton(
-                go.transform,
-                "Anim: Idle",
-                900,
-                () =>
+            _animationLabel = AddButton(go.transform, "Anim: Idle", 900, () =>
+            {
+                _animation = (_animation + 1) % 12;
+                foreach (var player in _players)
+                    player.Play((VisualAction)_animation);
+                _animationLabel.text = "Anim: " + (VisualAction)_animation;
+            });
+            AddButton(go.transform, "Coleta / reset", 1120, () =>
+            {
+                foreach (var food in _foods)
                 {
-                    _animation = (_animation + 1) % 12;
-                    foreach (var player in _players)
-                        player.Play((VisualAction)_animation);
-                    _animationLabel.text = "Anim: " + (VisualAction)_animation;
+                    if (_collected)
+                        food.ResetPresentation();
+                    else
+                        food.Pickup();
                 }
-            );
-            AddButton(
-                go.transform,
-                "Coleta / reset",
-                1120,
-                () =>
-                {
-                    foreach (var food in _foods)
-                    {
-                        if (_collected)
-                            food.ResetPresentation();
-                        else
-                            food.Pickup();
-                    }
-                    _collected = !_collected;
-                }
-            );
-            AddButton(
-                go.transform,
-                "Puzzle / perigo",
-                1340,
-                () =>
-                {
-                    _puzzle = (_puzzle + 1) % 4;
-                    foreach (var puzzle in _puzzles)
-                        puzzle.Present((PuzzleAppearance)_puzzle);
-                    _hazard.PresentWarning(_puzzle / 3f);
-                }
-            );
-            _effectLabel = AddButton(
-                go.transform,
-                "VFX: coleta",
-                1560,
-                () =>
-                {
-                    VisualFeedback.Emit(
-                        _catalog,
-                        (FeedbackKind)_effect,
-                        new Vector3(10.5f, 3.25f, 0),
-                        _reduced
-                    );
-                    _effectLabel.text = "VFX " + (_effect + 1) + "/11";
-                    _effect = (_effect + 1) % 11;
-                }
-            );
+                _collected = !_collected;
+            });
+            AddButton(go.transform, "Puzzle / perigo", 1340, () =>
+            {
+                _puzzle = (_puzzle + 1) % 4;
+                foreach (var puzzle in _puzzles)
+                    puzzle.Present((PuzzleAppearance)_puzzle);
+                _hazard.PresentWarning(_puzzle / 3f);
+            });
+            _effectLabel = AddButton(go.transform, "VFX: coleta", 1560, () =>
+            {
+                VisualFeedback.Emit(
+                    _catalog,
+                    (FeedbackKind)_effect,
+                    new Vector3(10.5f, 3.25f, 0),
+                    _reduced
+                );
+                _effectLabel.text = "VFX " + (_effect + 1) + "/11";
+                _effect = (_effect + 1) % 11;
+            });
         }
 
         private static Text AddButton(
